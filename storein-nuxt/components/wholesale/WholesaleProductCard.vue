@@ -91,15 +91,26 @@
            style="background: linear-gradient(135deg, rgba(245,158,11,0.07), rgba(217,119,6,0.04)); border: 1px solid rgba(245,158,11,0.22);">
 
         <!-- Wholesale price row -->
-        <div class="flex items-baseline justify-between px-3 pt-2.5 pb-1">
-          <span class="text-[10px] font-bold"
+        <div class="flex items-start justify-between px-3 pt-2.5 pb-1">
+          <span class="text-[10px] font-bold mt-0.5"
                 style="color: #92400e; background: rgba(245,158,11,0.12); padding: 2px 7px; border-radius: 20px;">
             قیمت عمده
           </span>
-          <span class="font-black font-fanum"
-                style="font-size: clamp(13px, 3.5vw, 17px); color: #b45309; line-height: 1.2;">
-            {{ formatPrice(wholesaleVariant.wholesalePrice) }}
-          </span>
+          <div class="flex flex-col items-end">
+            <span v-if="wholesaleDiscountPct > 0"
+                  class="font-fanum text-[10px] line-through"
+                  style="color: var(--color-text-disabled);">
+              {{ formatPrice(wholesaleVariant.wholesalePrice) }}
+            </span>
+            <span class="font-black font-fanum"
+                  :style="{
+                    fontSize: 'clamp(13px, 3.5vw, 17px)',
+                    color: wholesaleDiscountPct > 0 ? '#16a34a' : '#b45309',
+                    lineHeight: '1.2',
+                  }">
+              {{ formatPrice(effectiveWholesalePrice) }}
+            </span>
+          </div>
         </div>
 
         <!-- Divider -->
@@ -264,12 +275,22 @@ const activeVariant = computed(() =>
 // Alias for template compatibility
 const wholesaleVariant = activeVariant
 
-const minQty     = computed(() => activeVariant.value?.wholesaleMinQty || 10)
-const savings    = computed(() => Math.max(0, (activeVariant.value?.price ?? 0) - (activeVariant.value?.wholesalePrice ?? 0)))
+const minQty = computed(() => activeVariant.value?.wholesaleMinQty || 10)
+
+const wholesaleDiscountPct = computed(() => props.product?.wholesaleDiscountPercentage ?? 0)
+
+// Effective wholesale price after applying system discount
+const effectiveWholesalePrice = computed(() => {
+  const base = activeVariant.value?.wholesalePrice ?? 0
+  if (!base || wholesaleDiscountPct.value <= 0) return base
+  return Math.round(base * (1 - wholesaleDiscountPct.value / 100))
+})
+
+const savings    = computed(() => Math.max(0, (activeVariant.value?.price ?? 0) - effectiveWholesalePrice.value))
 const savingsPct = computed(() => {
   const wv = activeVariant.value
   if (!wv?.price || !wv?.wholesalePrice) return 0
-  return Math.round((1 - wv.wholesalePrice / wv.price) * 100)
+  return Math.round((1 - effectiveWholesalePrice.value / wv.price) * 100)
 })
 
 const qty = ref(10)

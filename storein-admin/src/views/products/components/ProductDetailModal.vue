@@ -108,6 +108,9 @@
                     <p class="font-bold text-sm" :class="discountPct > 0 ? 'text-red-500' : 'text-text-disabled'">
                       {{ discountPct > 0 ? discountPct + '٪' : '—' }}
                     </p>
+                    <p v-if="detail.wholesaleDiscountPercentage > 0" class="text-[10px] mt-0.5 font-bold" style="color: #b45309;">
+                      عمده: {{ detail.wholesaleDiscountPercentage }}٪
+                    </p>
                   </div>
                 </div>
 
@@ -190,6 +193,14 @@
                               <span v-if="v.comparePrice > 0" class="block text-text-disabled line-through text-[10px]">
                                 {{ formatPrice(v.comparePrice) }}
                               </span>
+                              <template v-if="v.wholesalePrice > 0">
+                                <span v-if="detail.wholesaleDiscountPercentage > 0" class="block text-text-disabled line-through text-[10px]">
+                                  عمده: {{ formatPrice(v.wholesalePrice) }}
+                                </span>
+                                <span class="block text-[10px] font-bold" style="color: #b45309;">
+                                  {{ detail.wholesaleDiscountPercentage > 0 ? 'عمده (با تخفیف): ' : 'عمده: ' }}{{ formatPrice(Math.round(v.wholesalePrice * (1 - (detail.wholesaleDiscountPercentage ?? 0) / 100))) }}
+                                </span>
+                              </template>
                             </div>
                           </td>
                           <td class="px-3 py-2 text-center font-fanum font-bold"
@@ -245,14 +256,20 @@ const allImages = computed(() => {
 
 const discountPct = computed(() => {
   if (!detail.value) return 0
+  const sysPct = Math.max(
+    detail.value.discountPercentage ?? 0,
+    detail.value.wholesaleDiscountPercentage ?? 0,
+  )
   const maxCompare = Math.max(
     0,
     ...(detail.value.variants ?? [])
       .filter(v => v.comparePrice > 0 && v.isActive !== false)
       .map(v => v.comparePrice),
   )
-  if (!maxCompare || !detail.value.minPrice || maxCompare <= detail.value.minPrice) return 0
-  return Math.round((1 - detail.value.minPrice / maxCompare) * 100)
+  const variantPct = (!maxCompare || !detail.value.minPrice || maxCompare <= detail.value.minPrice)
+    ? 0
+    : Math.round((1 - detail.value.minPrice / maxCompare) * 100)
+  return Math.max(sysPct, variantPct)
 })
 
 watch(() => props.modelValue, async (open) => {

@@ -385,7 +385,7 @@ watch(() => props.product, (p) => {
 const wholesaleMinQty = computed(() => selectedVariant.value?.wholesaleMinQty || 10)
 const wholesaleQty    = ref(10)
 const wholesaleLineTotal = computed(() =>
-  (selectedVariant.value?.wholesalePrice ?? 0) * wholesaleQty.value
+  wholesaleDiscountedPrice.value * wholesaleQty.value
 )
 
 watch(wholesaleMinQty, (v) => { wholesaleQty.value = v }, { immediate: true })

@@ -13,6 +13,7 @@ import { User, UserDocument } from '../user/entities/user.schema';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Cart, CartItem, CartSummary } from './cart.interface';
+import { DiscountsService } from '../../discounts/discounts.service';
 
 const CART_TTL = 60 * 60 * 24 * 7;
 const cartKey  = (uid: string) => `cart:${uid}`;
@@ -23,6 +24,7 @@ export class CartService {
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(User.name)    private userModel:    Model<UserDocument>,
     @Inject(REDIS_CLIENT)      private redis: Redis,
+    private readonly discountsService: DiscountsService,
   ) {}
 
   async getCart(userId: string): Promise<CartSummary> {
@@ -86,7 +88,7 @@ export class CartService {
     const [product, user] = await Promise.all([
       this.productModel
         .findById(dto.productId)
-        .select('name slug thumbnail variants')
+        .select('name slug thumbnail variants category brand')
         .lean<ProductDocument>(),
       this.userModel.findById(userId).select('role').lean<UserDocument>(),
     ]);
@@ -110,11 +112,29 @@ export class CartService {
         `موجودی کافی نیست. حداکثر ${variant.stock} عدد`,
       );
 
-    const { price, comparePrice, isWholesalePrice } = this.resolvePrice(
+    let { price, comparePrice, isWholesalePrice } = this.resolvePrice(
       variant,
       newQty,
       isWholesale,
     );
+
+    // Apply wholesale system discount on top of the base wholesale price
+    if (isWholesalePrice) {
+      const categoryId = (product.category as any)?.toString() ?? '';
+      const brandId    = (product.brand as any)?.toString() ?? '';
+      const priceInfo  = await this.discountsService.calculateDiscountedPrice({
+        originalPrice:  variant.price,
+        wholesalePrice: variant.wholesalePrice ?? undefined,
+        productId:      dto.productId,
+        categoryId,
+        brandId,
+        customerGroup:  'wholesale',
+      });
+      if (priceInfo.discountAmount > 0) {
+        comparePrice = price;              // original wholesale price becomes the compare (strikethrough)
+        price        = priceInfo.finalPrice;
+      }
+    }
 
     if (existing) {
       existing.quantity         = newQty;

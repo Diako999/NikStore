@@ -509,7 +509,7 @@ export class ProductService {
     return { products, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async findById(id: string): Promise<ProductDocument> {
+  async findById(id: string): Promise<any> {
     if (!Types.ObjectId.isValid(id))
       throw new BadRequestException('شناسه معتبر نیست');
     const product = await this.productModel
@@ -519,6 +519,7 @@ export class ProductService {
       .populate('brand', 'name slug')
       .lean<ProductDocument>();
     if (!product) throw new NotFoundException('محصول یافت نشد');
+    await this.attachBulkDiscounts([product as any]);
     return product;
   }
 
