@@ -345,8 +345,13 @@ export class DiscountsService {
         orderId:        new Types.ObjectId(orderId),
         discountAmount,
       }),
+      // TODO: per-user race (TOCTOU between validateCoupon countDocuments and here)
+      // requires unique compound index on (discountId, userId) or a Mongoose transaction.
       this.discountModel.updateOne(
-        { _id: new Types.ObjectId(discountId) },
+        {
+          _id: new Types.ObjectId(discountId),
+          $expr: { $lt: ['$usageCount', { $ifNull: ['$maxUsageCount', Number.MAX_SAFE_INTEGER] }] },
+        },
         { $inc: { usageCount: 1 } },
       ),
     ]);

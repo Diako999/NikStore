@@ -86,7 +86,7 @@ describe('OrderService', () => {
     };
     cartService      = { getRawCart: jest.fn(), clearCart: jest.fn() };
     productService   = { findById: jest.fn(), findManyByIds: jest.fn(), adjustStock: jest.fn().mockResolvedValue({}), bulkAdjustStock: jest.fn().mockResolvedValue(undefined) };
-    discountService  = { validate: jest.fn(), recordUsage: jest.fn().mockResolvedValue(undefined) };
+    discountService  = { validateCoupon: jest.fn(), recordCouponUsage: jest.fn().mockResolvedValue(undefined) };
     eventEmitter     = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -191,10 +191,12 @@ describe('OrderService', () => {
     });
 
     it('applies coupon discount and records usage after order creation', async () => {
-      discountService.validate.mockResolvedValue({
+      const discountId = new Types.ObjectId().toString();
+      discountService.validateCoupon.mockResolvedValue({
         isValid:        true,
         discountAmount: 2_000_000,
-        coupon:         { _id: new Types.ObjectId() },
+        message:        'ok',
+        discountId,
       });
 
       await service.createFromCart(userId, {
@@ -209,7 +211,23 @@ describe('OrderService', () => {
           couponCode: 'SAVE20',
         }),
       );
-      expect(discountService.recordUsage).toHaveBeenCalled();
+      expect(discountService.recordCouponUsage).toHaveBeenCalledWith(
+        expect.any(String),   // discountId
+        userId,
+        expect.any(String),   // orderId
+        2_000_000,
+      );
+    });
+
+    it('rejects order when coupon is invalid', async () => {
+      discountService.validateCoupon.mockResolvedValue({
+        isValid: false, discountAmount: 0, message: 'کد تخفیف منقضی شده است',
+      });
+
+      await expect(
+        service.createFromCart(userId, { addressId: addrId.toString(), couponCode: 'EXPIRED' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(orderModel.create).not.toHaveBeenCalled();
     });
   });
 

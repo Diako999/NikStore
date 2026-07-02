@@ -8,6 +8,7 @@ import { ProductModule } from '../product/product.module';
 import { UserModule } from '../user/user.module';
 import { AppLoggerService }  from '../../common/logger/app-logger.service';
 import { GatewayModule }     from '../../common/gateway/gateway.module';
+import { DiscountsModule }   from '../../discounts/discounts.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { GatewayModule }     from '../../common/gateway/gateway.module';
     ProductModule,
     UserModule,
     GatewayModule,
+    DiscountsModule,
   ],
   controllers: [OrderController],
   providers: [OrderService, AppLoggerService],

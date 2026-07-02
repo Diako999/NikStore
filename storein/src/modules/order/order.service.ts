@@ -22,6 +22,7 @@ import type { UserDocument } from '../user/entities/user.schema';
 import { User } from '../user/entities/user.schema';
 import { AppLoggerService }      from '../../common/logger/app-logger.service';
 import { NotificationsGateway }  from '../../common/gateway/notifications.gateway';
+import { DiscountsService }      from '../../discounts/discounts.service';
 
 @Injectable()
 export class OrderService {
@@ -33,6 +34,7 @@ export class OrderService {
     private eventEmitter: EventEmitter2,
     private readonly logger: AppLoggerService,
     private readonly gateway: NotificationsGateway,
+    private readonly discountsService: DiscountsService,
   ) {
     this.logger.setContext('OrderService');
   }
@@ -92,9 +94,25 @@ export class OrderService {
 
     const subtotal = itemsToOrder.reduce((s, i) => s + i.price * i.quantity, 0);
 
-    let discount = 0;
+    let discount   = 0;
+    let couponCode: string | undefined;
+    let couponId:   string | undefined;
 
-    const total = subtotal - discount;
+    if (dto.couponCode) {
+      const result = await this.discountsService.validateCoupon(
+        userId,
+        dto.couponCode,
+        subtotal,
+      );
+      if (!result.isValid) {
+        throw new BadRequestException(result.message);
+      }
+      discount   = result.discountAmount;
+      couponCode = dto.couponCode.toUpperCase().trim();
+      couponId   = result.discountId;
+    }
+
+    const total = Math.max(0, subtotal - discount);
 
     const isWholesaleUser = (user as any).role === 'wholesale';
 
@@ -126,6 +144,7 @@ export class OrderService {
       subtotal,
       discount,
       total,
+      couponCode,
       note: dto.note,
     });
 
@@ -137,6 +156,15 @@ export class OrderService {
       })),
     );
     await this.cartService.clearCart(userId);
+
+    if (couponId) {
+      await this.discountsService.recordCouponUsage(
+        couponId,
+        userId,
+        (order._id as any).toString(),
+        discount,
+      );
+    }
 
     this.logger.log('Order created', {
       orderId:     (order._id as any).toString(),
