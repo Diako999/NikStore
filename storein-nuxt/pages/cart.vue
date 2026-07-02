@@ -81,8 +81,21 @@
                     <span v-for="attr in item.attributes" :key="attr.key" class="text-xs text-text-secondary bg-surface px-2 py-0.5 rounded-lg border border-surface-border">{{ attr.key }}: {{ attr.value }}</span>
                   </div>
                   <div class="flex items-center justify-between mt-auto flex-wrap gap-3 pt-1">
+                    <!-- 3-level price display for wholesale items -->
                     <div>
-                      <div v-if="item.comparePrice > item.price" class="text-text-disabled line-through text-xs font-fanum leading-none mb-0.5">{{ formatPrice(item.comparePrice) }}</div>
+                      <!-- Level 1: retail price — only when system discount is also active -->
+                      <div v-if="item.retailPrice" class="flex items-center gap-1.5 leading-none mb-0.5">
+                        <span class="text-text-disabled line-through text-[11px] font-fanum">{{ formatPrice(item.retailPrice) }}</span>
+                        <span class="text-[9px] text-text-disabled opacity-70 font-bold">خرده</span>
+                      </div>
+                      <!-- Level 2: wholesale price — crossed out when system discount active -->
+                      <div v-if="item.comparePrice > item.price" class="flex items-center gap-1.5 leading-none mb-0.5">
+                        <span :class="['line-through text-xs font-fanum', item.retailPrice ? 'text-amber-700/60' : 'text-text-disabled']">
+                          {{ formatPrice(item.comparePrice) }}
+                        </span>
+                        <span v-if="item.retailPrice" class="text-[9px] text-amber-700/60 font-bold">عمده</span>
+                      </div>
+                      <!-- Level 3: final price -->
                       <div class="text-text-primary font-bold font-fanum">{{ formatPrice(item.price) }}</div>
                       <div class="text-text-secondary text-xs font-fanum mt-0.5">جمع: {{ formatPrice(item.price * item.quantity) }}</div>
                     </div>
@@ -179,10 +192,27 @@
                 <span class="text-text-secondary">تعداد</span>
                 <span class="font-fanum text-text-primary">{{ formatNumber(cartStore.wholesaleItems.reduce((s,i)=>s+i.quantity,0)) }} عدد</span>
               </div>
-              <div v-if="wholesaleSavings > 0" class="flex justify-between text-success">
-                <span>صرفه‌جویی</span>
-                <span class="font-fanum">− {{ formatPrice(wholesaleSavings) }}</span>
-              </div>
+              <!-- Savings breakdown: show two rows when both wholesale + system discount are active -->
+              <template v-if="wholesaleSavings > 0">
+                <template v-if="wholesaleRetailSavings > 0">
+                  <div class="flex justify-between text-success text-xs">
+                    <span>قیمت عمده</span>
+                    <span class="font-fanum">− {{ formatPrice(wholesaleRetailSavings) }}</span>
+                  </div>
+                  <div class="flex justify-between text-success text-xs">
+                    <span>تخفیف سیستم</span>
+                    <span class="font-fanum">− {{ formatPrice(wholesaleDiscountSavings) }}</span>
+                  </div>
+                  <div class="flex justify-between text-success font-bold border-t border-success/20 pt-1 mt-0.5">
+                    <span>کل صرفه‌جویی</span>
+                    <span class="font-fanum">− {{ formatPrice(wholesaleSavings) }}</span>
+                  </div>
+                </template>
+                <div v-else class="flex justify-between text-success">
+                  <span>صرفه‌جویی</span>
+                  <span class="font-fanum">− {{ formatPrice(wholesaleSavings) }}</span>
+                </div>
+              </template>
               <div class="flex justify-between items-center">
                 <span class="text-text-secondary">ارسال</span>
                 <span class="text-xs font-bold text-success bg-success/10 px-2.5 py-0.5 rounded-full">رایگان</span>
@@ -261,7 +291,23 @@ const confirmingClear = ref(false)
 const subtotal         = computed(() => cartStore.items.reduce((s, i) => { const base = i.comparePrice > i.price ? i.comparePrice : i.price; return s + base * i.quantity }, 0))
 const savings          = computed(() => subtotal.value - cartStore.totalPrice)
 const retailSavings    = computed(() => cartStore.retailItems.reduce((s, i) => s + Math.max(0, (i.comparePrice - i.price) * i.quantity), 0))
-const wholesaleSavings = computed(() => cartStore.wholesaleItems.reduce((s, i) => s + Math.max(0, (i.comparePrice - i.price) * i.quantity), 0))
+
+// Total wholesale savings measured from the highest known price (retailPrice when available, else comparePrice)
+const wholesaleSavings = computed(() =>
+  cartStore.wholesaleItems.reduce((s, i) => {
+    const base = i.retailPrice ?? (i.comparePrice > i.price ? i.comparePrice : i.price)
+    return s + Math.max(0, (base - i.price) * i.quantity)
+  }, 0),
+)
+// Savings breakdown — only non-zero when system discount is also active
+const wholesaleRetailSavings   = computed(() =>
+  cartStore.wholesaleItems.reduce((s, i) =>
+    s + (i.retailPrice ? Math.max(0, (i.retailPrice - i.comparePrice) * i.quantity) : 0), 0),
+)
+const wholesaleDiscountSavings = computed(() =>
+  cartStore.wholesaleItems.reduce((s, i) =>
+    s + Math.max(0, ((i.comparePrice ?? i.price) - i.price) * i.quantity), 0),
+)
 
 function itemKey(item) { return `${item.productId}-${item.variantId}` }
 

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -20,6 +21,8 @@ const cartKey  = (uid: string) => `cart:${uid}`;
 
 @Injectable()
 export class CartService {
+  private readonly logger = new Logger(CartService.name);
+
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(User.name)    private userModel:    Model<UserDocument>,
@@ -119,6 +122,7 @@ export class CartService {
     );
 
     // Apply wholesale system discount on top of the base wholesale price
+    let retailPrice: number | undefined;
     if (isWholesalePrice) {
       const categoryId = (product.category as any)?.toString() ?? '';
       const brandId    = (product.brand as any)?.toString() ?? '';
@@ -131,8 +135,13 @@ export class CartService {
         customerGroup:  'wholesale',
       });
       if (priceInfo.discountAmount > 0) {
-        comparePrice = price;              // original wholesale price becomes the compare (strikethrough)
-        price        = priceInfo.finalPrice;
+        retailPrice  = comparePrice as number;  // save retail price for 3-level UI display
+        comparePrice = price;                   // original wholesale price → shown as middle strikethrough
+        price        = priceInfo.finalPrice;    // discounted wholesale price → final price
+        this.logger.log(
+          `Wholesale discount applied: product=${dto.productId} ` +
+          `retail=${retailPrice} wholesale=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
+        );
       }
     }
 
@@ -141,6 +150,7 @@ export class CartService {
       existing.price            = price;
       existing.comparePrice     = comparePrice;
       existing.isWholesalePrice = isWholesalePrice;
+      if (retailPrice !== undefined) existing.retailPrice = retailPrice;
     } else {
       const item: CartItem = {
         productId:        dto.productId,
@@ -151,6 +161,7 @@ export class CartService {
         thumbnail:        product.thumbnail ?? null,
         price,
         comparePrice,
+        retailPrice,
         quantity:         dto.quantity,
         stock:            variant.stock,
         attributes:       variant.attributes ?? [],
