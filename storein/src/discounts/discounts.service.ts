@@ -366,7 +366,7 @@ export class DiscountsService {
     productId:      string;
     categoryId:     string;
     brandId?:       string;
-    customerGroup?: 'wholesale' | 'vip';
+    customerGroup?: 'wholesale' | 'vip' | 'retail';
     quantity?:      number;
   }): Promise<DiscountPriceResult> {
     const { originalPrice, wholesalePrice, productId, categoryId, brandId, customerGroup, quantity } = params;
@@ -395,10 +395,14 @@ export class DiscountsService {
         if (now < new Date(d.startDate) || now > new Date(d.endDate)) return false;
       }
 
-      // Customer group check
+      // Customer group check: null = all users; specific = matching group only
       if (d.customerGroup) {
-        if (!isWholesaleCustomer)               return false;
-        if (d.customerGroup !== customerGroup)  return false;
+        if (d.customerGroup === 'retail') {
+          if (isWholesaleCustomer) return false;
+        } else {
+          if (!isWholesaleCustomer)              return false;
+          if (d.customerGroup !== customerGroup) return false;
+        }
       }
 
       // Quantity check

@@ -248,8 +248,10 @@ export class ProductService {
       return true;
     };
 
-    // Public: no customerGroup restriction (shown to all visitors)
-    const publicDiscounts = activeDiscounts.filter((d) => !d.customerGroup && isTimeValid(d));
+    // Public: no customerGroup restriction OR retail-only (both shown to retail visitors)
+    const publicDiscounts = activeDiscounts.filter(
+      (d) => (!d.customerGroup || d.customerGroup === 'retail') && isTimeValid(d),
+    );
     // Wholesale: restricted to wholesale/vip customers
     const wholesaleDiscounts = activeDiscounts.filter(
       (d) => (d.customerGroup === 'wholesale' || d.customerGroup === 'vip') && isTimeValid(d),

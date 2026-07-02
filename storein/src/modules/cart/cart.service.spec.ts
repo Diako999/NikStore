@@ -210,9 +210,14 @@ describe('CartService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('does NOT call calculateDiscountedPrice for retail users', async () => {
+    it('calls calculateDiscountedPrice with customerGroup retail for retail users', async () => {
       await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 1 });
-      expect(discountsService.calculateDiscountedPrice).not.toHaveBeenCalled();
+      expect(discountsService.calculateDiscountedPrice).toHaveBeenCalledWith(
+        expect.objectContaining({
+          customerGroup: 'retail',
+          originalPrice: RETAIL_PRICE,
+        }),
+      );
     });
   });
 

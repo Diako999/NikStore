@@ -121,12 +121,13 @@ export class CartService {
       isWholesale,
     );
 
-    // Apply wholesale system discount on top of the base wholesale price
+    // Apply system discount on top of the resolved price
+    const categoryId = (product.category as any)?.toString() ?? '';
+    const brandId    = (product.brand as any)?.toString() ?? '';
     let retailPrice: number | undefined;
+
     if (isWholesalePrice) {
-      const categoryId = (product.category as any)?.toString() ?? '';
-      const brandId    = (product.brand as any)?.toString() ?? '';
-      const priceInfo  = await this.discountsService.calculateDiscountedPrice({
+      const priceInfo = await this.discountsService.calculateDiscountedPrice({
         originalPrice:  variant.price,
         wholesalePrice: variant.wholesalePrice ?? undefined,
         productId:      dto.productId,
@@ -141,6 +142,22 @@ export class CartService {
         this.logger.log(
           `Wholesale discount applied: product=${dto.productId} ` +
           `retail=${retailPrice} wholesale=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
+        );
+      }
+    } else {
+      const priceInfo = await this.discountsService.calculateDiscountedPrice({
+        originalPrice: variant.price,
+        productId:     dto.productId,
+        categoryId,
+        brandId,
+        customerGroup: 'retail',
+      });
+      if (priceInfo.discountAmount > 0) {
+        comparePrice = price;               // original retail price → shown as strikethrough
+        price        = priceInfo.finalPrice; // discounted retail price → final price
+        this.logger.log(
+          `Retail discount applied: product=${dto.productId} ` +
+          `original=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
         );
       }
     }
