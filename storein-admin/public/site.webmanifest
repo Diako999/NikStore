@@ -1,12 +1,12 @@
 {
-  "name": "استورین | پنل مدیریت",
-  "short_name": "استورین ادمین",
-  "description": "پنل مدیریت فروشگاه استورین",
+  "name": "نیک | پنل مدیریت",
+  "short_name": "نیک ادمین",
+  "description": "پنل مدیریت فروشگاه نیک",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f1117",
-  "theme_color": "#863bff",
+  "background_color": "#171717",
+  "theme_color": "#171717",
   "lang": "fa",
   "dir": "rtl",
   "icons": [

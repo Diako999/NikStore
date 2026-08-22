@@ -150,7 +150,7 @@
         <span class="text-sm font-medium text-text-primary">{{ userName }}</span>
         <span class="text-xs text-primary font-medium">ادمین سیستم</span>
       </div>
-      <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+      <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-[#171717] font-bold text-sm flex-shrink-0">
         {{ userInitial }}
       </div>
     </div>

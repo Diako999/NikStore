@@ -6,7 +6,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const settings = ref(null)
   let fetched = false
 
-  const siteName = computed(() => settings.value?.siteName ?? 'استورین')
+  const siteName = computed(() => settings.value?.siteName ?? 'نیک')
   const tagline  = computed(() => settings.value?.tagline  ?? 'فروشگاه تخصصی عینک‌های طبی و آفتابی')
   const logoUrl  = computed(() => settings.value?.logoUrl  ?? '')
 

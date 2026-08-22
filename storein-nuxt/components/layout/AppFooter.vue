@@ -21,7 +21,7 @@
             </div>
 
             <p class="footer-muted text-sm leading-relaxed max-w-xs">
-              {{ store.footerTagline || store.tagline || 'فروشگاه تخصصی عینک‌های طبی و آفتابی' }}
+              {{ store.footerTagline || store.tagline || 'فروشگاه نیک' }}
             </p>
           </div>
 
@@ -121,13 +121,13 @@
 
             <!-- Email -->
             <li data-testid="contact-email">
-              <a :href="`mailto:${store.email || 'support@storein.ir'}`" class="contact-item contact-item--link">
+              <a :href="`mailto:${store.email || 'support@nikstore.ir'}`" class="contact-item contact-item--link">
                 <span class="contact-icon">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                   </svg>
                 </span>
-                <span dir="ltr" class="footer-muted text-sm transition-colors">{{ store.email || 'support@storein.ir' }}</span>
+                <span dir="ltr" class="footer-muted text-sm transition-colors">{{ store.email || 'support@nikstore.ir' }}</span>
               </a>
             </li>
 
@@ -261,33 +261,33 @@ if (!store.siteName) {
 
 <style scoped>
 .site-footer {
-  background-color: var(--color-footer-bg, #0D1526);
-  color: var(--color-footer-text, #D1D5DB);
+  background-color: var(--color-footer-bg, #171717);
+  color: var(--color-footer-text, #F5F5F5);
 }
 
 /* ── Top glow line ─────────────────────────────── */
 .footer-top-glow {
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(27,79,138,0.6) 30%,
-    rgba(59,111,190,0.6) 70%,
+    rgba(198,255,52,0.6) 30%,
+    rgba(214,255,107,0.6) 70%,
     transparent 100%
   );
 }
 
 .footer-radial-glow {
-  background: radial-gradient(ellipse at top, rgba(27,79,138,0.12) 0%, transparent 70%);
+  background: radial-gradient(ellipse at top, rgba(198,255,52,0.10) 0%, transparent 70%);
 }
 
 /* ── Brand dot ─────────────────────────────────── */
 .brand-dot {
-  background: linear-gradient(135deg, #1B4F8A, #3B6FBE);
-  box-shadow: 0 0 8px rgba(27,79,138,0.6);
+  background: linear-gradient(135deg, #C6FF34, #A2D12A);
+  box-shadow: 0 0 8px rgba(198,255,52,0.5);
 }
 
 /* ── Muted text ────────────────────────────────── */
 .footer-muted {
-  color: var(--color-footer-muted, #9CA3AF);
+  color: var(--color-footer-muted, #A3A3A3);
 }
 
 /* ── Section headings ──────────────────────────── */
@@ -306,7 +306,7 @@ if (!store.siteName) {
   width: 3px;
   height: 14px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, #3B6FBE, #1B4F8A);
+  background: linear-gradient(180deg, #D6FF6B, #C6FF34);
   flex-shrink: 0;
 }
 
@@ -327,7 +327,7 @@ if (!store.siteName) {
 .footer-link-arrow {
   opacity: 0;
   transition: opacity 0.18s ease;
-  color: #3B6FBE;
+  color: #C6FF34;
   flex-shrink: 0;
 }
 .footer-link:hover .footer-link-arrow {
@@ -349,10 +349,10 @@ if (!store.siteName) {
   text-decoration: none;
 }
 .social-icon:hover {
-  color: #fff;
-  background: rgba(27,79,138,0.35);
-  border-color: rgba(59,111,190,0.45);
-  box-shadow: 0 0 14px rgba(27,79,138,0.35);
+  color: #171717;
+  background: rgba(198,255,52,0.85);
+  border-color: rgba(198,255,52,0.9);
+  box-shadow: 0 0 14px rgba(198,255,52,0.35);
   transform: translateY(-2px);
 }
 
@@ -370,12 +370,12 @@ if (!store.siteName) {
   transition: background 0.18s;
 }
 .contact-item--link:hover .contact-icon {
-  background: rgba(27,79,138,0.35);
-  border-color: rgba(27,79,138,0.5);
-  color: #93c5fd;
+  background: rgba(198,255,52,0.22);
+  border-color: rgba(198,255,52,0.4);
+  color: #C6FF34;
 }
 .contact-item--link:hover span.footer-muted {
-  color: #e2e8f0;
+  color: #F5F5F5;
 }
 .contact-icon {
   width: 1.75rem;
@@ -385,9 +385,9 @@ if (!store.siteName) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(27,79,138,0.15);
-  color: #3B6FBE;
-  border: 1px solid rgba(27,79,138,0.2);
+  background: rgba(198,255,52,0.12);
+  color: #C6FF34;
+  border: 1px solid rgba(198,255,52,0.2);
 }
 
 /* ── Trust strip ───────────────────────────────── */
@@ -408,8 +408,8 @@ if (!store.siteName) {
   transition: border-color 0.2s, background 0.2s;
 }
 .trust-badge:hover {
-  border-color: rgba(27,79,138,0.3);
-  background: rgba(27,79,138,0.08);
+  border-color: rgba(198,255,52,0.3);
+  background: rgba(198,255,52,0.08);
 }
 
 .trust-badge-icon {
@@ -420,8 +420,8 @@ if (!store.siteName) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(27,79,138,0.2);
-  color: #3B6FBE;
+  background: rgba(198,255,52,0.18);
+  color: #C6FF34;
 }
 
 /* ── Copyright ─────────────────────────────────── */

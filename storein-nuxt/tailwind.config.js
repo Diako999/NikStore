@@ -28,9 +28,9 @@ export default {
           border:  '#DDE3EC',
         },
         text: {
-          primary:   '#1A202C',
-          secondary: '#6B7280',
-          disabled:  '#C4CBD6',
+          primary:   '#171717',
+          secondary: '#4B5A3A',
+          disabled:  '#9CB68A',
         },
         wholesale: {
           DEFAULT: '#f59e0b',

@@ -336,7 +336,7 @@ async function fetchUser() {
   try {
     const { data } = await userService.getById(route.params.id)
     user.value = data
-    document.title = `${data.firstName ?? data.phone} | ادمین استورین`
+    document.title = `${data.firstName ?? data.phone} | ادمین نیک`
   } catch {
     ui.addToast('خطا در بارگذاری کاربر', 'error')
   } finally {
@@ -383,5 +383,5 @@ async function toggleBlock() {
 }
 
 onMounted(() => Promise.allSettled([fetchUser(), fetchRecentOrders(), fetchUserReviews()]))
-onUnmounted(() => { document.title = 'استورین | پنل مدیریت' })
+onUnmounted(() => { document.title = 'نیک | پنل مدیریت' })
 </script>

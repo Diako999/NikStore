@@ -91,7 +91,7 @@ const brandVisible = ref(false)
 let _timerFired    = false
 let _settingsFired = false
 
-const brandChars = computed(() => (settingsStore.siteName || 'استورین').split(''))
+const brandChars = computed(() => (settingsStore.siteName || 'نیک').split(''))
 
 function _checkBrand() {
   if (_timerFired && _settingsFired && !brandVisible.value) {

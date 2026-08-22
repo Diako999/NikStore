@@ -10,7 +10,7 @@
 
         <!-- App icon -->
         <div class="shrink-0 w-11 h-11 rounded-xl bg-brand/10 flex items-center justify-center">
-          <img src="/favicon.svg" alt="" width="28" height="28" />
+          <img src="/nik-logo.png" alt="" width="28" height="28" class="object-contain rounded-full" />
         </div>
 
         <!-- Text -->

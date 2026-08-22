@@ -22,7 +22,7 @@ export function useSiteHead() {
 
   useHead({
     titleTemplate: (title) => {
-      const site = settings.siteName || 'استورین'
+      const site = settings.siteName || 'نیک'
       return title ? `${title} | ${site}` : site
     },
   })

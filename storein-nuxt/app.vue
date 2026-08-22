@@ -31,7 +31,7 @@ useSeoMeta({
 
 useHead({
   titleTemplate: (t) => {
-    const site = settingsStore.siteName || 'استورین'
+    const site = settingsStore.siteName || 'نیک'
     return t ? `${t} | ${site}` : site
   },
   link: [

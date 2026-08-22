@@ -235,7 +235,7 @@ useHead({
         datePublished: p.publishedAt, dateModified: p.updatedAt,
         url: `${config.public.siteUrl}/blog/${p.slug}`,
         author:    { '@type': 'Organization', name: settingsStore.siteName },
-        publisher: { '@type': 'Organization', name: settingsStore.siteName, logo: { '@type': 'ImageObject', url: `${config.public.siteUrl}/favicon.svg` } },
+        publisher: { '@type': 'Organization', name: settingsStore.siteName, logo: { '@type': 'ImageObject', url: `${config.public.siteUrl}/nik-logo.png` } },
         keywords: (p.tags || []).join(', '),
       }),
     }]

@@ -21,13 +21,13 @@ vi.mock('~/stores/settings.store', async () => {
   return {
     useSettingsStore: defineStore('settings', {
       state: () => ({
-        siteName:        'استورین',
+        siteName:        'نیک',
         logoUrl:         '',
         tagline:         'فروشگاه تخصصی عینک',
         footerTagline:   '',
         footerCopyright: 'تمامی حقوق محفوظ است',
         footerLinks:     [],
-        email:     'test@storein.ir',
+        email:     'test@nikstore.ir',
         phone:     '09123456789',
         mobiles:   [],
         address:   '',
@@ -62,12 +62,12 @@ describe('AppFooter', () => {
 
   describe('brand column', () => {
     it('renders siteName text when no logoUrl', () => {
-      const wrapper = factory({ siteName: 'استورین', logoUrl: '' })
-      expect(wrapper.text()).toContain('استورین')
+      const wrapper = factory({ siteName: 'نیک', logoUrl: '' })
+      expect(wrapper.text()).toContain('نیک')
     })
 
     it('renders logo img when logoUrl is set', () => {
-      const wrapper = factory({ logoUrl: 'https://cdn.test/logo.png', siteName: 'استورین' })
+      const wrapper = factory({ logoUrl: 'https://cdn.test/logo.png', siteName: 'نیک' })
       const img = wrapper.find('img')
       expect(img.exists()).toBe(true)
       expect(img.attributes('src')).toBe('https://cdn.test/logo.png')
@@ -157,7 +157,7 @@ describe('AppFooter', () => {
 
     it('falls back to default email when store.email is empty', () => {
       const wrapper = factory({ email: '' })
-      expect(wrapper.find('[data-testid="contact-email"]').text()).toContain('support@storein.ir')
+      expect(wrapper.find('[data-testid="contact-email"]').text()).toContain('support@nikstore.ir')
     })
 
     it('shows store phone', () => {
@@ -237,8 +237,8 @@ describe('AppFooter', () => {
 
   describe('copyright', () => {
     it('shows footerCopyright text', () => {
-      const wrapper = factory({ footerCopyright: 'تمامی حقوق برای استورین محفوظ است' })
-      expect(wrapper.find('[data-testid="copyright"]').text()).toContain('تمامی حقوق برای استورین محفوظ است')
+      const wrapper = factory({ footerCopyright: 'تمامی حقوق برای نیک محفوظ است' })
+      expect(wrapper.find('[data-testid="copyright"]').text()).toContain('تمامی حقوق برای نیک محفوظ است')
     })
 
     it('shows current year in copyright', () => {

@@ -200,7 +200,7 @@ async function fetchOrder() {
   try {
     const { data } = await orderService.getById(route.params.id)
     order.value = data
-    document.title = `${data.orderNumber} | ادمین استورین`
+    document.title = `${data.orderNumber} | ادمین نیک`
   } catch {
     ui.addToast('خطا در بارگذاری سفارش', 'error')
   } finally {
@@ -223,5 +223,5 @@ async function updateStatus(newStatus) {
 }
 
 onMounted(fetchOrder)
-onUnmounted(() => { document.title = 'استورین | پنل مدیریت' })
+onUnmounted(() => { document.title = 'نیک | پنل مدیریت' })
 </script>

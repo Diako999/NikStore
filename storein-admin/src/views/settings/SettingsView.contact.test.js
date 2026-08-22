@@ -57,11 +57,11 @@ import { settingsService } from '@/services/settings.service'
 import { logger } from '@/utils/logger'
 
 const baseSettings = {
-  siteName: 'استورین', tagline: '', logoUrl: '', faviconUrl: '',
+  siteName: 'نیک', tagline: '', logoUrl: '', faviconUrl: '',
   description: '', keywords: '', ogImage: '',
   social: { instagram: '', telegram: '', twitter: '', whatsapp: '', linkedin: '', youtube: '' },
   footerTagline: '', footerCopyright: '', footerLinks: [],
-  phone: '08733177189', mobiles: [], email: 'test@storein.ir',
+  phone: '08733177189', mobiles: [], email: 'test@nikstore.ir',
   addresses: [],  // [{ text, mapsUrl }]
   payment: { gateway: 'mock', zarinpalMerchantId: '', zarinpalSandbox: true },
   sms: { provider: 'mock', kavenegarApiKey: '', kavenegarSender: '', kavenegarOtpTemplate: '' },

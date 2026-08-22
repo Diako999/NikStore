@@ -47,14 +47,14 @@ describe('AppSplash', () => {
       expect(w.find('[aria-hidden="true"]').exists()).toBe(true)
     })
 
-    it('shows brand name استورین', () => {
+    it('shows brand name نیک', () => {
       const w = factory()
-      expect(w.find('.splash__brand').text()).toContain('استورین')
+      expect(w.find('.splash__brand').text()).toContain('نیک')
     })
 
-    it('shows tagline containing عینک', () => {
+    it('shows tagline containing نیک', () => {
       const w = factory()
-      expect(w.find('.splash__tagline').text()).toContain('عینک')
+      expect(w.find('.splash__tagline').text()).toContain('نیک')
     })
 
     it('renders exactly 3 loading dots', () => {

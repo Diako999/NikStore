@@ -38,7 +38,7 @@ const sizeClasses = computed(() => ({
 }[props.size] ?? 'px-4 py-2 text-sm'))
 
 const variantClasses = computed(() => ({
-  primary:   'bg-primary text-white hover:bg-primary-dark active:scale-[0.98]',
+  primary:   'bg-primary text-[#171717] hover:bg-primary-dark active:scale-[0.98]',
   secondary: 'bg-surface text-text-primary border border-border hover:bg-border',
   danger:    'bg-error text-white hover:bg-red-600 active:scale-[0.98]',
   ghost:     'text-text-secondary hover:bg-surface hover:text-text-primary',

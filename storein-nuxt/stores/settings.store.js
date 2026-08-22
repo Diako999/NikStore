@@ -7,8 +7,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const loading  = ref(false)
   let   fetched  = false
 
-  const siteName        = computed(() => settings.value?.siteName        ?? 'استورین')
-  const tagline         = computed(() => settings.value?.tagline         ?? 'فروشگاه تخصصی عینک‌های طبی و آفتابی')
+  const siteName        = computed(() => settings.value?.siteName        ?? 'نیک')
+  const tagline         = computed(() => settings.value?.tagline         ?? 'فروشگاه نیک')
   const description     = computed(() => settings.value?.description     ?? '')
   const keywords        = computed(() => settings.value?.keywords        ?? '')
   const logoUrl         = computed(() => settings.value?.logoUrl         ?? '')
@@ -28,7 +28,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const footerTagline   = computed(() => settings.value?.footerTagline   ?? '')
   const footerCopyright = computed(() => settings.value?.footerCopyright ?? `تمامی حقوق برای ${settings.value?.siteName ?? ''} محفوظ است`)
   const footerLinks     = computed(() => settings.value?.footerLinks     ?? [])
-  const theme           = computed(() => settings.value?.theme ?? { preset: 'blue', primaryColor: '#1B4F8A', defaultMode: 'light' })
+  const theme           = computed(() => settings.value?.theme ?? { preset: 'lime', primaryColor: '#C6FF34', defaultMode: 'light' })
   const trustItems      = computed(() => settings.value?.trustItems?.length
     ? settings.value.trustItems
     : [

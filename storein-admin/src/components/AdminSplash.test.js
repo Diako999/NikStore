@@ -7,11 +7,11 @@ vi.mock('@/utils/logger', () => ({
 
 vi.mock('@/stores/settings.store', () => ({
   useSettingsStore: () => ({
-    siteName: 'استورین',
-    tagline: 'فروشگاه تخصصی عینک',
+    siteName: 'نیک',
+    tagline: 'فروشگاه نیک',
     logoUrl: '',
     // Non-null so the brandVisible watch fires immediately in tests
-    settings: { siteName: 'استورین', tagline: 'فروشگاه تخصصی عینک' },
+    settings: { siteName: 'نیک', tagline: 'فروشگاه نیک' },
   }),
 }))
 
@@ -59,11 +59,11 @@ describe('AdminSplash', () => {
       expect(factory().find('[aria-hidden="true"]').exists()).toBe(true)
     })
 
-    it('shows brand name استورین after timer + settings ready', async () => {
+    it('shows brand name نیک after timer + settings ready', async () => {
       const w = factory()
       vi.advanceTimersByTime(1000)
       await w.vm.$nextTick()
-      expect(w.find('.adm-brand').text()).toContain('استورین')
+      expect(w.find('.adm-brand').text()).toContain('نیک')
     })
 
     it('shows پنل مدیریت badge after timer + settings ready', async () => {

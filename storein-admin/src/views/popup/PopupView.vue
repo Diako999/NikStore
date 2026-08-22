@@ -340,7 +340,7 @@
               {{ previewPopup.description }}
             </p>
             <button v-if="previewPopup.buttonText"
-              class="w-full py-3 rounded-xl bg-primary text-white font-bold text-sm">
+              class="w-full py-3 rounded-xl bg-primary text-[#171717] font-bold text-sm">
               {{ previewPopup.buttonText }}
             </button>
           </div>

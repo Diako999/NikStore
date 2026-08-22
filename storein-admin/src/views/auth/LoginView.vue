@@ -5,7 +5,7 @@
       <!-- Brand -->
       <div class="flex flex-col items-center mb-8">
         <div class="login-brand-icon">
-          <img src="/favicon.svg" alt="لوگو استورین" class="w-11 h-11" draggable="false" />
+          <img src="/favicon.svg" alt="لوگو نیک" class="w-11 h-11" draggable="false" />
         </div>
         <h1 class="text-[22px] font-bold text-white mt-4 tracking-tight">{{ settingsStore.siteName }}</h1>
         <p class="text-slate-500 text-sm mt-0.5">پنل مدیریت</p>

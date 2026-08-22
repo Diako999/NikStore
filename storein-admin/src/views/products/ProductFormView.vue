@@ -290,7 +290,7 @@
           <button type="button"
             :disabled="savingPublish || savingDraft"
             data-testid="btn-publish"
-            class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark shadow-sm shadow-primary/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+            class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-[#171717] text-sm font-semibold hover:bg-primary-dark shadow-sm shadow-primary/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
             @click="publish">
             <svg v-if="savingPublish" class="w-3.5 h-3.5 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>

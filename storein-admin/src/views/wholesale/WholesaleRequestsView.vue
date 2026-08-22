@@ -11,7 +11,7 @@
           :class="[
             'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
             currentStatus === s.value
-              ? 'bg-primary text-white'
+              ? 'bg-primary text-[#171717]'
               : 'bg-surface text-text-secondary hover:bg-surface-hover',
           ]"
         >

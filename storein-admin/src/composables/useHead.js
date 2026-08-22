@@ -13,7 +13,7 @@ function upsertFavicon(url) {
 
 /**
  * Reactively syncs site name + page title to document.title for the admin panel.
- * Format: "صفحه – استورین | پنل مدیریت"  or  "استورین | پنل مدیریت"
+ * Format: "صفحه – نیک | پنل مدیریت"  or  "نیک | پنل مدیریت"
  *
  * @param {import('vue').Ref} settings — reactive settings ref from settingsStore
  * @param {import('vue').Ref<string>} [routeTitle] — optional current page title
@@ -21,7 +21,7 @@ function upsertFavicon(url) {
 export function useAdminHead(settings, routeTitle) {
   watchEffect(() => {
     const s = settings.value
-    const siteName = s?.siteName ?? 'استورین'
+    const siteName = s?.siteName ?? 'نیک'
     const base = `${siteName} | پنل مدیریت`
     const page = routeTitle?.value
     document.title = page ? `${page} – ${base}` : base

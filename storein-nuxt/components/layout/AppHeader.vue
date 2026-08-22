@@ -19,7 +19,7 @@
 
       <!-- Logo — rightmost on desktop (order-3) -->
       <NuxtLink :to="'/'" class="flex items-center gap-2 shrink-0 leading-tight md:order-1">
-        <img src="/favicon.svg" :alt="`لوگو ${settingsStore.siteName}`" class="w-8 h-8 shrink-0" draggable="false" />
+        <img src="/nik-logo.png" :alt="`لوگو ${settingsStore.siteName}`" class="w-8 h-8 shrink-0 object-contain rounded-full" draggable="false" />
         <div class="flex flex-col items-start">
           <span class="text-brand font-bold text-xl tracking-tight">{{ settingsStore.siteName }}</span>
           <span class="hidden md:block -mt-0.5 text-xs" style="color: var(--color-text-secondary);">{{ settingsStore.tagline }}</span>

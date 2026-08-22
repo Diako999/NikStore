@@ -16,7 +16,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiInternalUrl: process.env.API_INTERNAL_URL || 'http://localhost:3001',
     public: {
-      siteUrl:    process.env.NUXT_PUBLIC_SITE_URL || 'https://storein.ir',
+      siteUrl:    process.env.NUXT_PUBLIC_SITE_URL || 'https://nikstore.ir',
       apiBaseUrl: '/api/v1',
     },
   },
@@ -27,16 +27,16 @@ export default defineNuxtConfig({
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
       meta: [
-        { name: 'theme-color',      content: '#863bff' },
-        { name: 'application-name', content: 'استورین' },
+        { name: 'theme-color',      content: '#171717' },
+        { name: 'application-name', content: 'نیک' },
         { name: 'format-detection', content: 'telephone=no' },
-        { property: 'og:site_name', content: 'استورین' },
+        { property: 'og:site_name', content: 'نیک' },
         { property: 'og:locale',    content: 'fa_IR' },
       ],
       link: [
         { rel: 'icon',      href: '/favicon.svg', type: 'image/svg+xml' },
         { rel: 'manifest',  href: '/site.webmanifest' },
-        { rel: 'alternate', hreflang: 'fa-IR', href: 'https://storein.ir/' },
+        { rel: 'alternate', hreflang: 'fa-IR', href: 'https://nikstore.ir/' },
       ],
     },
   },

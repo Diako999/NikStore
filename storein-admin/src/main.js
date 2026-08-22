@@ -79,7 +79,7 @@ setTokenProvider(() => useAuthStore().token)
 
 app.mount('#app')
 
-logger.info('storein-admin started', {
+logger.info('nik-admin started', {
   version: import.meta.env.VITE_APP_VERSION,
   env:     import.meta.env.MODE,
 }, 'Bootstrap')

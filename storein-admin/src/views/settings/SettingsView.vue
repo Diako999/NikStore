@@ -42,7 +42,7 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             <AdminInput v-model="form.siteName"
-              label="نام سایت" placeholder="استورین" required
+              label="نام سایت" placeholder="نیک" required
               hint="در تب مرورگر و عنوان صفحات نمایش داده می‌شود" />
             <AdminInput v-model="form.tagline"
               label="شعار سایت" placeholder="فروشگاه تخصصی عینک‌های طبی و آفتابی"
@@ -179,7 +179,7 @@
               hint="اگر خالی باشد از شعار اصلی استفاده می‌شود" />
             <AdminInput v-model="form.footerCopyright"
               label="متن کپی‌رایت"
-              placeholder="تمامی حقوق برای استورین محفوظ است" />
+              placeholder="تمامی حقوق برای نیک محفوظ است" />
           </div>
 
           <!-- Footer links -->

@@ -209,7 +209,7 @@
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
                 <input :value="cur.navbarBg" @input="e => setCur('navbarBg', e.target.value)" dir="ltr"
                   class="field-input flex-1 font-mono text-sm"
-                  :placeholder="colorMode === 'dark' ? '#1E293B (خالی = پیش‌فرض)' : '#FFFFFF (خالی = پیش‌فرض)'" />
+                  :placeholder="colorMode === 'dark' ? '#232323 (خالی = پیش‌فرض)' : '#CDFC8A (خالی = پیش‌فرض)'" />
               </div>
             </div>
             <div>
@@ -220,7 +220,7 @@
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
                 <input :value="cur.navbarBorder" @input="e => setCur('navbarBorder', e.target.value)" dir="ltr"
                   class="field-input flex-1 font-mono text-sm"
-                  :placeholder="colorMode === 'dark' ? '#334155 (خالی = پیش‌فرض)' : '#DDE3EC (خالی = پیش‌فرض)'" />
+                  :placeholder="colorMode === 'dark' ? '#3A3A3A (خالی = پیش‌فرض)' : '#B9E58F (خالی = پیش‌فرض)'" />
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@
                    backgroundColor: cur.navbarBg || (colorMode === 'dark' ? '#1E293B' : '#FFFFFF'),
                    borderBottom: `1px solid ${cur.navbarBorder || (colorMode === 'dark' ? '#334155' : '#DDE3EC')}`
                  }">
-              <span class="font-bold text-sm" :style="{ color: navbarTextColorCur }">استورین</span>
+              <span class="font-bold text-sm" :style="{ color: navbarTextColorCur }">نیک</span>
               <div class="flex-1 h-5 rounded"
                    :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E5E7EB' }"></div>
               <div class="w-5 h-5 rounded-full" :style="{ backgroundColor: activeColor }"></div>
@@ -268,7 +268,7 @@
                   @input="e => setCur('footerBg', e.target.value)"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
                 <input :value="cur.footerBg" @input="e => setCur('footerBg', e.target.value)" dir="ltr"
-                  class="field-input flex-1 font-mono text-sm" placeholder="#111827 (خالی = پیش‌فرض)" />
+                  class="field-input flex-1 font-mono text-sm" placeholder="#171717 (خالی = پیش‌فرض)" />
               </div>
             </div>
             <div>
@@ -278,7 +278,7 @@
                   @input="e => setCur('footerText', e.target.value)"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
                 <input :value="cur.footerText" @input="e => setCur('footerText', e.target.value)" dir="ltr"
-                  class="field-input flex-1 font-mono text-sm" placeholder="#D1D5DB (خالی = پیش‌فرض)" />
+                  class="field-input flex-1 font-mono text-sm" placeholder="#F5F5F5 (خالی = پیش‌فرض)" />
               </div>
             </div>
           </div>
@@ -286,7 +286,7 @@
             <div class="h-16 px-4 py-3 flex items-start gap-4"
                  :style="{ backgroundColor: cur.footerBg || '#111827' }">
               <div>
-                <p class="font-bold text-sm" :style="{ color: cur.footerText || '#D1D5DB' }">استورین</p>
+                <p class="font-bold text-sm" :style="{ color: cur.footerText || '#D1D5DB' }">نیک</p>
                 <p class="text-xs mt-0.5" :style="{ color: cur.footerText || '#9CA3AF', opacity: 0.7 }">فروشگاه تخصصی عینک</p>
               </div>
               <div class="flex-1"></div>
@@ -318,7 +318,7 @@
               class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
             <input :value="cur.pageBg" @input="e => setCur('pageBg', e.target.value)" dir="ltr"
               class="field-input flex-1 font-mono text-sm"
-              :placeholder="colorMode === 'dark' ? '#0F172A (خالی = پیش‌فرض)' : '#F4F6F9 (خالی = پیش‌فرض)'" />
+              :placeholder="colorMode === 'dark' ? '#171717 (خالی = پیش‌فرض)' : '#EAFCD1 (خالی = پیش‌فرض)'" />
           </div>
           <!-- Preview -->
           <div class="rounded-xl border border-border overflow-hidden">
@@ -372,7 +372,7 @@
               class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
             <input :value="cur.sidebarBg" @input="e => setCur('sidebarBg', e.target.value)" dir="ltr"
               class="field-input flex-1 font-mono text-sm"
-              :placeholder="colorMode === 'dark' ? '#020617 (خالی = پیش‌فرض)' : '#0F172A (خالی = پیش‌فرض)'" />
+              :placeholder="colorMode === 'dark' ? '#121212 (خالی = پیش‌فرض)' : '#171717 (خالی = پیش‌فرض)'" />
           </div>
           <div class="flex rounded-xl overflow-hidden border border-border h-24">
             <div class="w-16 flex flex-col gap-1.5 p-2"

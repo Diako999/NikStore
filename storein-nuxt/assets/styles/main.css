@@ -94,17 +94,17 @@
 
 /* ── Dark mode: body + Tailwind static color overrides ───── */
 html.dark body {
-  background-color: var(--color-body-bg, #0F172A);
-  color: #F1F5F9;
+  background-color: var(--color-body-bg, #171717);
+  color: #F5F5F5;
 }
 
 /* Override Tailwind static bg classes in dark mode */
-html.dark .bg-surface        { background-color: var(--color-body-bg, #0F172A); }
-html.dark .bg-surface-card   { background-color: #1E293B; }
-html.dark .border-surface-border { border-color: #334155; }
-html.dark .text-text-primary    { color: #F1F5F9; }
-html.dark .text-text-secondary  { color: #94A3B8; }
-html.dark .text-text-disabled   { color: #475569; }
-html.dark .hover\:bg-surface:hover { background-color: #1E293B; }
-html.dark .skeleton { background-color: #334155; }
+html.dark .bg-surface        { background-color: var(--color-body-bg, #171717); }
+html.dark .bg-surface-card   { background-color: #232323; }
+html.dark .border-surface-border { border-color: #3A3A3A; }
+html.dark .text-text-primary    { color: #F5F5F5; }
+html.dark .text-text-secondary  { color: #A3A3A3; }
+html.dark .text-text-disabled   { color: #5C5C5C; }
+html.dark .hover\:bg-surface:hover { background-color: #232323; }
+html.dark .skeleton { background-color: #3A3A3A; }
 html.dark .hover\:bg-red-50:hover { background-color: rgba(153,27,27,0.15); }
