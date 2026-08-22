@@ -109,8 +109,6 @@ await useAsyncData('products-list', async () => {
     ...(productStore.filters.category          ? { category:      productStore.filters.category                  } : {}),
     ...(productStore.filters.brand             ? { brand:         productStore.filters.brand                     } : {}),
     ...(productStore.filters.genders?.length   ? { gender:        productStore.filters.genders.join(',')         } : {}),
-    ...(productStore.filters.frameShapes?.length ? { frameShape:  productStore.filters.frameShapes.join(',')     } : {}),
-    ...(productStore.filters.frameMaterials?.length ? { frameMaterial: productStore.filters.frameMaterials.join(',') } : {}),
     ...(productStore.filters.minPrice          ? { minPrice:      productStore.filters.minPrice                  } : {}),
     ...(productStore.filters.maxPrice          ? { maxPrice:      productStore.filters.maxPrice                  } : {}),
     ...(productStore.filters.inStock           ? { inStock:       true                                           } : {}),

@@ -12,15 +12,13 @@ export const useProductStore = defineStore('product', () => {
   const limit          = ref(24)
 
   const filters = reactive({
-    sortBy:         'newest',
-    category:       null,
-    brand:          null,
-    genders:        [],
-    frameShapes:    [],
-    frameMaterials: [],
-    minPrice:       null,
-    maxPrice:       null,
-    inStock:        false,
+    sortBy:   'newest',
+    category: null,
+    brand:    null,
+    genders:  [],
+    minPrice: null,
+    maxPrice: null,
+    inStock:  false,
   })
 
   // ── Fetch products ─────────────────────────────────────────────
@@ -34,14 +32,12 @@ export const useProductStore = defineStore('product', () => {
         sort: filters.sortBy,
         ...extraParams,
       }
-      if (filters.category)               params.category      = filters.category
-      if (filters.brand)                  params.brand         = filters.brand
-      if (filters.genders?.length)        params.gender        = filters.genders.join(',')
-      if (filters.frameShapes?.length)    params.frameShape    = filters.frameShapes.join(',')
-      if (filters.frameMaterials?.length) params.frameMaterial = filters.frameMaterials.join(',')
-      if (filters.minPrice)               params.minPrice      = filters.minPrice
-      if (filters.maxPrice)               params.maxPrice      = filters.maxPrice
-      if (filters.inStock)                params.inStock       = true
+      if (filters.category)        params.category = filters.category
+      if (filters.brand)           params.brand    = filters.brand
+      if (filters.genders?.length) params.gender   = filters.genders.join(',')
+      if (filters.minPrice)        params.minPrice = filters.minPrice
+      if (filters.maxPrice)        params.maxPrice = filters.maxPrice
+      if (filters.inStock)         params.inStock  = true
 
       const { data } = await productService.getAll(params)
       products.value = data?.products ?? data?.items ?? []
@@ -76,16 +72,14 @@ export const useProductStore = defineStore('product', () => {
   }
 
   function resetFilters() {
-    filters.sortBy         = 'newest'
-    filters.category       = null
-    filters.brand          = null
-    filters.genders        = []
-    filters.frameShapes    = []
-    filters.frameMaterials = []
-    filters.minPrice       = null
-    filters.maxPrice       = null
-    filters.inStock        = false
-    page.value             = 1
+    filters.sortBy   = 'newest'
+    filters.category = null
+    filters.brand    = null
+    filters.genders  = []
+    filters.minPrice = null
+    filters.maxPrice = null
+    filters.inStock  = false
+    page.value       = 1
   }
 
   function setPage(p) {
@@ -96,29 +90,25 @@ export const useProductStore = defineStore('product', () => {
   function toQueryParams() {
     const q = {}
     if (filters.sortBy && filters.sortBy !== 'newest') q.sort        = filters.sortBy
-    if (filters.category)               q.category      = filters.category
-    if (filters.brand)                  q.brand         = filters.brand
-    if (filters.genders?.length)        q.gender        = filters.genders.join(',')
-    if (filters.frameShapes?.length)    q.frameShape    = filters.frameShapes.join(',')
-    if (filters.frameMaterials?.length) q.frameMaterial = filters.frameMaterials.join(',')
-    if (filters.minPrice)               q.minPrice      = filters.minPrice
-    if (filters.maxPrice)               q.maxPrice      = filters.maxPrice
-    if (filters.inStock)                q.inStock       = '1'
-    if (page.value > 1)                 q.page          = page.value
+    if (filters.category)        q.category = filters.category
+    if (filters.brand)           q.brand    = filters.brand
+    if (filters.genders?.length) q.gender   = filters.genders.join(',')
+    if (filters.minPrice)        q.minPrice = filters.minPrice
+    if (filters.maxPrice)        q.maxPrice = filters.maxPrice
+    if (filters.inStock)         q.inStock  = '1'
+    if (page.value > 1)          q.page     = page.value
     return q
   }
 
   function fromQueryParams(query) {
-    filters.sortBy         = query.sort          || query.sortBy || 'newest'
-    filters.category       = query.category      || null
-    filters.brand          = query.brand         || null
-    filters.genders        = query.gender        ? query.gender.split(',')        : []
-    filters.frameShapes    = query.frameShape    ? query.frameShape.split(',')    : []
-    filters.frameMaterials = query.frameMaterial ? query.frameMaterial.split(',') : []
-    filters.minPrice       = query.minPrice      ? Number(query.minPrice)         : null
-    filters.maxPrice       = query.maxPrice      ? Number(query.maxPrice)         : null
-    filters.inStock        = query.inStock       === '1'
-    page.value             = query.page          ? Number(query.page)             : 1
+    filters.sortBy   = query.sort     || query.sortBy || 'newest'
+    filters.category = query.category || null
+    filters.brand    = query.brand    || null
+    filters.genders  = query.gender   ? query.gender.split(',') : []
+    filters.minPrice = query.minPrice ? Number(query.minPrice)  : null
+    filters.maxPrice = query.maxPrice ? Number(query.maxPrice)  : null
+    filters.inStock  = query.inStock  === '1'
+    page.value       = query.page     ? Number(query.page)      : 1
   }
 
   const totalPages = computed(() => Math.ceil(total.value / limit.value))

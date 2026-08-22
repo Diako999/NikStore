@@ -95,50 +95,6 @@
                 </div>
               </div>
 
-              <!-- Frame Shape -->
-              <div class="border-b border-surface-border px-4 py-3">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  شکل فریم
-                </p>
-                <div class="grid grid-cols-3 gap-2">
-                  <button
-                    v-for="shape in FRAME_SHAPES"
-                    :key="shape.value"
-                    @click="toggleArray('frameShapes', shape.value)"
-                    :class="[
-                      'px-2 py-1.5 rounded-lg border text-xs transition-all',
-                      localFilters.frameShapes.includes(shape.value)
-                        ? 'border-brand bg-brand/10 text-brand font-medium'
-                        : 'border-surface-border text-text-secondary',
-                    ]"
-                  >
-                    {{ shape.label }}
-                  </button>
-                </div>
-              </div>
-
-              <!-- Frame Material -->
-              <div class="border-b border-surface-border px-4 py-3">
-                <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
-                  جنس فریم
-                </p>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="mat in FRAME_MATERIALS"
-                    :key="mat.value"
-                    @click="toggleArray('frameMaterials', mat.value)"
-                    :class="[
-                      'px-3 py-1.5 rounded-full border text-sm transition-all',
-                      localFilters.frameMaterials.includes(mat.value)
-                        ? 'border-brand bg-brand/10 text-brand font-medium'
-                        : 'border-surface-border text-text-secondary',
-                    ]"
-                  >
-                    {{ mat.label }}
-                  </button>
-                </div>
-              </div>
-
               <!-- Price Range -->
               <div class="border-b border-surface-border px-4 py-3">
                 <p class="text-xs font-semibold text-text-secondary uppercase tracking-wide mb-3">
@@ -217,9 +173,8 @@
 </template>
 
 <script setup>
-import { reactive, watch, computed, onMounted } from 'vue'
+import { reactive, watch, computed } from 'vue'
 import { useCategoryStore } from '~/stores/category.store'
-import { useFrameAttributeStore } from '~/stores/frame-attribute.store'
 import { GENDER_OPTIONS } from '~/utils/constants'
 import { formatNumber } from '~/utils/formatters'
 
@@ -230,37 +185,27 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'apply', 'clear'])
 
-const categoryStore       = useCategoryStore()
-const frameAttributeStore = useFrameAttributeStore()
-
-const FRAME_SHAPES    = computed(() => frameAttributeStore.frameShapes)
-const FRAME_MATERIALS = computed(() => frameAttributeStore.frameMaterials)
-
-onMounted(() => frameAttributeStore.fetch())
+const categoryStore = useCategoryStore()
 
 // Local copy — allows "Cancel" without modifying the real filters
 const localFilters = reactive({
-  category:       null,
-  brand:          null,
-  genders:        [],
-  frameShapes:    [],
-  frameMaterials: [],
-  minPrice:       null,
-  maxPrice:       null,
-  inStock:        false,
+  category: null,
+  brand:    null,
+  genders:  [],
+  minPrice: null,
+  maxPrice: null,
+  inStock:  false,
 })
 
 // Sync local copy from props when drawer opens
 watch(() => props.modelValue, (open) => {
   if (open) {
-    localFilters.category       = props.filters.category
-    localFilters.brand          = props.filters.brand
-    localFilters.genders        = [...(props.filters.genders || [])]
-    localFilters.frameShapes    = [...(props.filters.frameShapes || [])]
-    localFilters.frameMaterials = [...(props.filters.frameMaterials || [])]
-    localFilters.minPrice       = props.filters.minPrice
-    localFilters.maxPrice       = props.filters.maxPrice
-    localFilters.inStock        = props.filters.inStock
+    localFilters.category = props.filters.category
+    localFilters.brand    = props.filters.brand
+    localFilters.genders  = [...(props.filters.genders || [])]
+    localFilters.minPrice = props.filters.minPrice
+    localFilters.maxPrice = props.filters.maxPrice
+    localFilters.inStock  = props.filters.inStock
   }
 })
 
@@ -287,7 +232,7 @@ function onPriceInput(type, event) {
 }
 
 function close()         { emit('update:modelValue', false) }
-function applyAndClose() { emit('apply', { ...localFilters, genders: [...localFilters.genders], frameShapes: [...localFilters.frameShapes], frameMaterials: [...localFilters.frameMaterials] }); close() }
+function applyAndClose() { emit('apply', { ...localFilters, genders: [...localFilters.genders] }); close() }
 function clearAndClose() { emit('clear'); close() }
 </script>
 

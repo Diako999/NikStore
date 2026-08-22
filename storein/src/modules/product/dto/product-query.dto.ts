@@ -37,12 +37,6 @@ export class ProductQueryDto {
   @IsOptional() @IsString()
   gender?: string;
 
-  @IsOptional() @IsString()
-  frameShape?: string;
-
-  @IsOptional() @IsString()
-  frameMaterial?: string;
-
   @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
   page?: number = 1;
 
