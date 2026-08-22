@@ -3,7 +3,7 @@ const APP_DIR = '/var/www/storein'
 module.exports = {
   apps: [
     {
-      name:    'storein-backend',
+      name:    'nik-backend',
       cwd:     `${APP_DIR}/storein`,
       script:  'node',
       args:    'dist/main',
@@ -19,7 +19,7 @@ module.exports = {
       out_file:   '/var/log/pm2/backend-out.log',
     },
     {
-      name:    'storein-nuxt',
+      name:    'nik-storefront',
       cwd:     `${APP_DIR}/storein-nuxt`,
       script:  'node',
       args:    '.output/server/index.mjs',
@@ -33,7 +33,7 @@ module.exports = {
       out_file:   '/var/log/pm2/nuxt-out.log',
     },
     {
-      name:    'storein-admin',
+      name:    'nik-admin',
       cwd:     `${APP_DIR}/storein-admin`,
       script:  'node',
       args:    'server.js',

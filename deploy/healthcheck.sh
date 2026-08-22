@@ -19,9 +19,9 @@ check_service() {
     fi
 }
 
-check_service "storein-backend" "http://localhost:3001/api/v1/health"
-check_service "storein-nuxt"    "http://localhost:3000/"
-check_service "storein-admin"   "http://localhost:4001/"
+check_service "nik-backend"    "http://localhost:3001/api/v1/health"
+check_service "nik-storefront" "http://localhost:3000/"
+check_service "nik-admin"      "http://localhost:4001/"
 
 if ! mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
     echo "$TIMESTAMP ⚠️  MongoDB DOWN → restarting..." >> "$LOG"
