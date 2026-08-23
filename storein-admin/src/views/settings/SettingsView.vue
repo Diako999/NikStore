@@ -136,7 +136,7 @@
             <p class="text-[#1a0dab] dark:text-[#8ab4f8] text-lg font-medium leading-tight">
               {{ form.siteName || 'نام سایت' }}
             </p>
-            <p class="text-[#006621] dark:text-[#34a853] text-xs my-0.5">storein.ir ›</p>
+            <p class="text-[#006621] dark:text-[#34a853] text-xs my-0.5">nikstore.ir ›</p>
             <p class="text-[#545454] dark:text-gray-400 text-sm leading-relaxed line-clamp-2">
               {{ form.description || 'توضیحات متا در اینجا نمایش داده می‌شود...' }}
             </p>
@@ -229,7 +229,7 @@
               label="شماره تلفن ثابت" placeholder="۰۸۷-۳۳۱۷۷۱۸۹" dir="ltr"
               hint="در فوتر سایت نمایش داده می‌شود" />
             <AdminInput v-model="form.email"
-              label="ایمیل پشتیبانی" placeholder="support@storein.ir" dir="ltr" />
+              label="ایمیل پشتیبانی" placeholder="support@nikstore.ir" dir="ltr" />
           </div>
 
           <!-- Mobile numbers (multi) -->

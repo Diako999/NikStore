@@ -7,7 +7,7 @@ import { Product, ProductDocument, ProductStatus } from '../product/entities/pro
 import { Blog, BlogDocument, BlogStatus }           from '../blog/entities/blog.schema';
 import { Category, CategoryDocument }              from '../category/entities/category.schema';
 
-const BASE = 'https://storein.ir';
+const BASE = 'https://nikstore.ir';
 
 function urlEntry(loc: string, lastmod: string, priority: string, changefreq: string): string {
   return `  <url><loc>${BASE}${loc}</loc><lastmod>${lastmod}</lastmod><priority>${priority}</priority><changefreq>${changefreq}</changefreq></url>`;

@@ -12,4 +12,4 @@ Disallow: /payment/
 Disallow: /user/
 Disallow: /api/
 
-Sitemap: https://storein.ir/sitemap.xml
+Sitemap: https://nikstore.ir/sitemap.xml

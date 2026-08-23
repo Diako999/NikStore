@@ -55,15 +55,15 @@ const defaultPages: PageSeed[] = [
     slug:            'contact',
     status:          'published',
     order:           2,
-    excerpt:         'راه‌های ارتباطی با تیم پشتیبانی استورین',
+    excerpt:         'راه‌های ارتباطی با تیم پشتیبانی نیک',
     metaTitle:       'تماس با استورین',
-    metaDescription: 'با تیم پشتیبانی استورین از طریق تلفن، ایمیل یا شبکه‌های اجتماعی در ارتباط باشید',
+    metaDescription: 'با تیم پشتیبانی نیک از طریق تلفن، ایمیل یا شبکه‌های اجتماعی در ارتباط باشید',
     content: `<h2>تماس با ما</h2>
-<p>تیم پشتیبانی استورین آماده پاسخگویی به سوالات شماست.</p>
+<p>تیم پشتیبانی نیک آماده پاسخگویی به سوالات شماست.</p>
 <h2>اطلاعات تماس</h2>
 <ul>
 <li><strong>تلفن:</strong> ۰۲۱-۱۲۳۴۵۶۷۸</li>
-<li><strong>ایمیل:</strong> support@storein.ir</li>
+<li><strong>ایمیل:</strong> support@nikstore.ir</li>
 <li><strong>ساعات پشتیبانی:</strong> شنبه تا چهارشنبه، ۹ صبح تا ۶ عصر</li>
 </ul>
 <h2>آدرس</h2>
