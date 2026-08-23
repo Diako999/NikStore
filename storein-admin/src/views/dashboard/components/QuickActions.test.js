@@ -11,7 +11,6 @@ function buildRouter() {
       { path: '/products/create',    name: 'product-create',      component: { template: '<div/>' } },
       { path: '/orders',             name: 'orders',              component: { template: '<div/>' } },
       { path: '/reviews',            name: 'reviews',             component: { template: '<div/>' } },
-      { path: '/wholesale',          name: 'wholesale-requests',  component: { template: '<div/>' } },
       { path: '/categories',         name: 'categories',          component: { template: '<div/>' } },
     ],
   })
@@ -25,39 +24,18 @@ function mountComp(props = {}) {
 }
 
 describe('QuickActions', () => {
-  it('renders 5 quick-action cards', async () => {
+  it('renders 4 quick-action cards', async () => {
     const wrapper = mountComp()
     await wrapper.vm.$router.isReady()
     const links = wrapper.findAll('a')
-    expect(links.length).toBe(5)
+    expect(links.length).toBe(4)
   })
 
-  it('shows wholesale card with correct label', async () => {
+  it('shows no badge when pendingOrders/pendingReviews are 0', async () => {
     const wrapper = mountComp()
     await wrapper.vm.$router.isReady()
-    expect(wrapper.text()).toContain('درخواست‌های عمده')
-  })
-
-  it('shows no badge when pendingWholesale is 0', async () => {
-    const wrapper = mountComp({ pendingWholesale: 0 })
-    await wrapper.vm.$router.isReady()
-    const badges = wrapper.findAll('[class*="bg-amber"]')
+    const badges = wrapper.findAll('[class*="bg-error"]')
     expect(badges.length).toBe(0)
-  })
-
-  it('shows amber badge with count when pendingWholesale > 0', async () => {
-    const wrapper = mountComp({ pendingWholesale: 5 })
-    await wrapper.vm.$router.isReady()
-    const badge = wrapper.find('span[class*="bg-amber-5"]')
-    expect(badge.exists()).toBe(true)
-    expect(badge.text()).toBe('5')
-  })
-
-  it('caps badge display at 99+', async () => {
-    const wrapper = mountComp({ pendingWholesale: 150 })
-    await wrapper.vm.$router.isReady()
-    const badge = wrapper.find('span[class*="bg-amber-5"]')
-    expect(badge.text()).toBe('99+')
   })
 
   it('shows error badge for pending orders', async () => {
@@ -68,19 +46,17 @@ describe('QuickActions', () => {
     expect(badges[0].text()).toBe('3')
   })
 
-  it('adds highlight styling when pendingWholesale > 0', async () => {
-    const wrapper = mountComp({ pendingWholesale: 2 })
+  it('shows error badge for pending reviews', async () => {
+    const wrapper = mountComp({ pendingReviews: 7 })
     await wrapper.vm.$router.isReady()
-    const links = wrapper.findAll('a')
-    const wholesaleLink = links.find(l => l.text().includes('درخواست‌های عمده'))
-    expect(wholesaleLink?.classes().join(' ')).toContain('amber')
+    const badges = wrapper.findAll('[class*="bg-error"]')
+    expect(badges.length).toBeGreaterThan(0)
   })
 
-  it('wholesale card links to wholesale-requests route', async () => {
-    const wrapper = mountComp()
+  it('caps badge display at 99+', async () => {
+    const wrapper = mountComp({ pendingOrders: 150 })
     await wrapper.vm.$router.isReady()
-    const links = wrapper.findAll('a')
-    const wholesaleLink = links.find(l => l.text().includes('درخواست‌های عمده'))
-    expect(wholesaleLink?.attributes('href')).toBe('/wholesale')
+    const badge = wrapper.find('[class*="bg-error"]')
+    expect(badge.text()).toBe('99+')
   })
 })

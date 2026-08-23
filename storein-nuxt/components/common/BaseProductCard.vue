@@ -137,7 +137,6 @@ import BaseRating   from './BaseRating.vue'
 import { formatPrice } from '~/utils/formatters'
 import { PRODUCT_PLACEHOLDER } from '~/utils/constants'
 import { useCartStore }  from '~/stores/cart.store'
-import { useAuthStore }  from '~/stores/auth.store'
 
 const props = defineProps({
   product:  { type: Object,  default: () => ({}) },
@@ -150,7 +149,6 @@ defineEmits(['click', 'add-to-cart', 'toggle-wish'])
 
 const router    = useRouter()
 const cartStore = useCartStore()
-const auth      = useAuthStore()
 
 const isInCart = computed(() =>
   cartStore.items.some(item => item.productId === props.product._id)
@@ -210,41 +208,20 @@ const variantDiscountPct     = computed(() => {
   return Math.round((1 - dv.price / dv.comparePrice) * 100)
 })
 const systemDiscountPct      = computed(() => props.product?.discountPercentage          ?? 0)
-const wholesaleDiscountPct   = computed(() => props.product?.wholesaleDiscountPercentage ?? 0)
-
-// For wholesale users: use minWholesalePrice base + wholesale discount
-const isWholesaleUser = computed(() => auth.isWholesale)
-const minWholesalePrice = computed(() => props.product?.minWholesalePrice ?? 0)
-
-const wholesaleFinalPrice = computed(() => {
-  const base = minWholesalePrice.value
-  if (!base) return 0
-  if (wholesaleDiscountPct.value <= 0) return base
-  return Math.round(base * (1 - wholesaleDiscountPct.value / 100))
-})
 
 // Effective discount badge % shown on the card
-const discount = computed(() => {
-  if (isWholesaleUser.value && minWholesalePrice.value > 0) {
-    return wholesaleDiscountPct.value
-  }
-  return Math.max(variantDiscountPct.value, systemDiscountPct.value)
-})
+const discount = computed(() =>
+  Math.max(variantDiscountPct.value, systemDiscountPct.value)
+)
 
 // The "before" price shown crossed-out
 const maxComparePrice = computed(() => {
-  if (isWholesaleUser.value && minWholesalePrice.value > 0 && wholesaleDiscountPct.value > 0) {
-    return minWholesalePrice.value
-  }
   if (systemDiscountPct.value > variantDiscountPct.value) return props.product?.minPrice ?? 0
   return discountVariant.value?.comparePrice ?? 0
 })
 
 // The final price shown on the card
 const displayPrice = computed(() => {
-  if (isWholesaleUser.value && minWholesalePrice.value > 0) {
-    return wholesaleFinalPrice.value || minWholesalePrice.value
-  }
   if (systemDiscountPct.value > variantDiscountPct.value) {
     return props.product?.finalPrice ?? props.product?.minPrice ?? 0
   }

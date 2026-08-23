@@ -95,77 +95,34 @@
       <!-- ④ Price -->
       <div class="pb-4 border-b border-surface-border">
 
-        <!-- قیمت عمده برای کاربران wholesale -->
-        <template v-if="auth.isWholesale && selectedVariant?.wholesalePrice">
-          <div class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full mb-2">
-            <span>🏪</span>
-            <span>قیمت عمده — حداقل {{ selectedVariant.wholesaleMinQty || 10 }} عدد</span>
+        <!-- variant-level manual discount (comparePrice set on variant) -->
+        <template v-if="activeDiscountMode === 'variant'">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-text-disabled line-through text-sm font-fanum">
+              {{ formatPrice(selectedVariant.comparePrice) }}
+            </span>
+            <BaseBadge variant="red" size="sm">{{ discountPercent }}٪ تخفیف</BaseBadge>
           </div>
-          <!-- wholesale discount active: show crossed-out original wholesale price -->
-          <template v-if="wholesaleDiscountPct > 0">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-text-disabled line-through text-sm font-fanum">
-                {{ formatPrice(selectedVariant.wholesalePrice) }}
-              </span>
-              <BaseBadge variant="red" size="sm">{{ wholesaleDiscountPct }}٪ تخفیف</BaseBadge>
-            </div>
-            <div class="text-2xl font-black text-success font-fanum">
-              {{ formatPrice(wholesaleDiscountedPrice) }}
-            </div>
-          </template>
-          <template v-else>
-            <div class="text-2xl font-black text-amber-600 font-fanum">
-              {{ formatPrice(selectedVariant.wholesalePrice) }}
-            </div>
-          </template>
-          <div class="text-sm line-through mt-0.5 font-fanum" style="color: var(--color-text-disabled);">
-            قیمت خرده: {{ formatPrice(selectedVariant.price) }}
+          <div class="text-2xl font-black text-text-primary font-fanum">
+            {{ formatPrice(selectedVariant?.price || product.minPrice) }}
           </div>
         </template>
-
-        <!-- قیمت معمولی -->
+        <!-- system-level discount from admin discount panel -->
+        <template v-else-if="activeDiscountMode === 'system'">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-text-disabled line-through text-sm font-fanum">
+              {{ formatPrice(selectedVariant?.price || product.minPrice) }}
+            </span>
+            <BaseBadge variant="red" size="sm">{{ product.discountPercentage }}٪ تخفیف</BaseBadge>
+          </div>
+          <div class="text-2xl font-black text-success font-fanum">
+            {{ formatPrice(systemFinalPrice) }}
+          </div>
+        </template>
         <template v-else>
-          <!-- variant-level manual discount (comparePrice set on variant) -->
-          <template v-if="activeDiscountMode === 'variant'">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-text-disabled line-through text-sm font-fanum">
-                {{ formatPrice(selectedVariant.comparePrice) }}
-              </span>
-              <BaseBadge variant="red" size="sm">{{ discountPercent }}٪ تخفیف</BaseBadge>
-            </div>
-            <div class="text-2xl font-black text-text-primary font-fanum">
-              {{ formatPrice(selectedVariant?.price || product.minPrice) }}
-            </div>
-          </template>
-          <!-- system-level discount from admin discount panel -->
-          <template v-else-if="activeDiscountMode === 'system'">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="text-text-disabled line-through text-sm font-fanum">
-                {{ formatPrice(selectedVariant?.price || product.minPrice) }}
-              </span>
-              <BaseBadge variant="red" size="sm">{{ product.discountPercentage }}٪ تخفیف</BaseBadge>
-            </div>
-            <div class="text-2xl font-black text-success font-fanum">
-              {{ formatPrice(systemFinalPrice) }}
-            </div>
-          </template>
-          <template v-else>
-            <div class="text-2xl font-black text-text-primary font-fanum">
-              {{ formatPrice(selectedVariant?.price || product.minPrice) }}
-            </div>
-          </template>
-
-          <!-- Wholesale teaser for non-wholesale users (UXID-009) -->
-          <NuxtLink
-            v-if="product.minWholesalePrice"
-            to="/wholesale"
-            class="mt-2 inline-flex items-center gap-2 text-xs bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1.5 rounded-lg hover:bg-amber-100 transition-colors"
-          >
-            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-            <span>خریداران عمده این محصول را ارزان‌تر می‌خرند — عضویت رایگان</span>
-          </NuxtLink>
+          <div class="text-2xl font-black text-text-primary font-fanum">
+            {{ formatPrice(selectedVariant?.price || product.minPrice) }}
+          </div>
         </template>
 
       </div>
@@ -188,80 +145,6 @@
       <!-- ⑥ Action buttons -->
       <div ref="cartButtonRef" class="flex flex-col gap-3">
 
-        <!-- Wholesale order panel — only for wholesale users with a wholesale price -->
-        <div
-          v-if="auth.isWholesale && selectedVariant?.wholesalePrice"
-          class="rounded-2xl p-4 flex flex-col gap-3 bg-wholesale/10 border border-wholesale-border"
-        >
-          <!-- Label + running total -->
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-wholesale-dark flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-              <span class="font-bold text-wholesale-dark text-sm">سفارش عمده</span>
-              <span class="text-xs text-warning opacity-80">حداقل {{ formatNumber(wholesaleMinQty) }} عدد</span>
-            </div>
-            <span class="text-sm text-wholesale-dark font-fanum font-bold">
-              {{ formatPrice(wholesaleLineTotal) }} تومان
-            </span>
-          </div>
-
-          <!-- Stepper + add button -->
-          <div class="flex flex-col gap-1">
-            <div class="flex gap-3 items-center">
-              <div
-                class="flex items-center rounded-xl overflow-hidden shrink-0 bg-bg"
-                :class="wholesaleQtyExceedsStock ? 'border border-error' : 'border border-wholesale/40'"
-              >
-                <button
-                  type="button"
-                  @click="decreaseWholesaleQty"
-                  class="w-10 h-11 flex items-center justify-center text-2xl text-wholesale-dark transition-colors hover:bg-wholesale/10"
-                  aria-label="کاهش تعداد"
-                >−</button>
-                <input
-                  type="number"
-                  v-model.number="wholesaleQty"
-                  @change="onWholesaleQtyChange"
-                  @blur="onWholesaleQtyChange"
-                  class="pi-qty-input w-14 text-[15px] font-bold font-fanum text-center bg-transparent border-none outline-none text-text-primary"
-                  :min="wholesaleMinQty"
-                  :aria-label="`تعداد، حداقل ${wholesaleMinQty}`"
-                />
-                <button
-                  type="button"
-                  @click="wholesaleQty += wholesaleMinQty"
-                  class="w-10 h-11 flex items-center justify-center text-2xl text-wholesale-dark transition-colors hover:bg-wholesale/10"
-                  aria-label="افزایش تعداد"
-                >+</button>
-              </div>
-
-              <button
-                type="button"
-                :disabled="!isInStock || addingToCartWholesale || wholesaleQtyExceedsStock"
-                @click="handleAddToCartWholesale"
-                class="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm text-white bg-wholesale hover:bg-wholesale-dark transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_rgba(245,158,11,0.35)]"
-              >
-                <span
-                  v-if="addingToCartWholesale"
-                  class="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"
-                  aria-hidden="true"
-                />
-                <template v-else>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                    <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                  </svg>
-                  افزودن به سبد عمده
-                </template>
-              </button>
-            </div>
-            <p v-if="wholesaleQtyExceedsStock" class="text-xs text-error font-semibold text-center">
-              فقط {{ selectedVariant?.stock }} عدد موجود است
-            </p>
-          </div>
-        </div>
-
         <BaseButton
           variant="primary"
           size="lg"
@@ -274,7 +157,7 @@
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            {{ auth.isWholesale && selectedVariant?.wholesalePrice ? 'خرید تکی' : 'افزودن به سبد خرید' }}
+            افزودن به سبد خرید
           </template>
           <template v-else>ناموجود</template>
         </BaseButton>
@@ -350,7 +233,6 @@ import { ref, computed, watch } from 'vue'
 import { useCartStore }     from '~/stores/cart.store'
 import { useWishlistStore } from '~/stores/wishlist.store'
 import { useUiStore }       from '~/stores/ui.store'
-import { useAuthStore }     from '~/stores/auth.store'
 import { formatPrice, formatNumber, calcDiscount } from '~/utils/formatters'
 import BaseRating   from '~/components/common/BaseRating.vue'
 import BaseBadge    from '~/components/common/BaseBadge.vue'
@@ -366,12 +248,10 @@ const emit = defineEmits(['add-to-cart', 'variant-change'])
 const cartStore     = useCartStore()
 const wishlistStore = useWishlistStore()
 const ui            = useUiStore()
-const auth          = useAuthStore()
 
-const addingToCart         = ref(false)
-const addingToCartWholesale = ref(false)
-const cartButtonRef        = ref(null)
-const shareCopied          = ref(false)
+const addingToCart  = ref(false)
+const cartButtonRef = ref(null)
+const shareCopied   = ref(false)
 
 // ── Variants ──────────────────────────────────────────────────────
 const colorVariants  = computed(() => props.product?.variants ?? [])
@@ -380,34 +260,6 @@ const selectedVariant = ref(null)
 watch(() => props.product, (p) => {
   if (p?.variants?.length) selectedVariant.value = p.variants[0]
 }, { immediate: true })
-
-// ── Wholesale qty stepper ─────────────────────────────────────────
-const wholesaleMinQty = computed(() => selectedVariant.value?.wholesaleMinQty || 10)
-const wholesaleQty    = ref(10)
-const wholesaleLineTotal = computed(() =>
-  wholesaleDiscountedPrice.value * wholesaleQty.value
-)
-
-watch(wholesaleMinQty, (v) => { wholesaleQty.value = v }, { immediate: true })
-
-const wholesaleQtyExceedsStock = computed(() => {
-  const stock = selectedVariant.value?.stock ?? Infinity
-  return wholesaleQty.value > stock
-})
-
-function decreaseWholesaleQty() {
-  const next = wholesaleQty.value - wholesaleMinQty.value
-  if (next >= wholesaleMinQty.value) wholesaleQty.value = next
-}
-
-function onWholesaleQtyChange() {
-  const stock = selectedVariant.value?.stock ?? Infinity
-  if (!wholesaleQty.value || wholesaleQty.value < wholesaleMinQty.value) {
-    wholesaleQty.value = wholesaleMinQty.value
-  } else if (wholesaleQty.value > stock) {
-    wholesaleQty.value = stock
-  }
-}
 
 function selectVariant(variant) {
   if (variant.stock === 0) return
@@ -423,14 +275,6 @@ const discountPercent = computed(() => {
 })
 
 const systemDiscountPct   = computed(() => props.product?.discountPercentage ?? 0)
-const wholesaleDiscountPct = computed(() => props.product?.wholesaleDiscountPercentage ?? 0)
-
-// Discounted wholesale price for the currently selected variant
-const wholesaleDiscountedPrice = computed(() => {
-  const base = selectedVariant.value?.wholesalePrice || 0
-  if (!base || wholesaleDiscountPct.value <= 0) return base
-  return Math.round(base * (1 - wholesaleDiscountPct.value / 100))
-})
 
 // The price the system discount yields for the selected variant
 const systemFinalPrice = computed(() => {
@@ -504,20 +348,6 @@ async function handleAddToCart() {
   }
 }
 
-async function handleAddToCartWholesale() {
-  if (!isInStock.value || addingToCartWholesale.value) return
-  addingToCartWholesale.value = true
-  try {
-    await cartStore.addItem(props.product._id, selectedVariant.value?._id, wholesaleQty.value)
-    ui.addToast(`${formatNumber(wholesaleQty.value)} عدد به سبد عمده افزوده شد ✓`, 'success')
-    emit('add-to-cart', selectedVariant.value?._id)
-  } catch (e) {
-    ui.addToast(e?.response?.data?.message || 'خطا در افزودن به سبد عمده', 'error')
-  } finally {
-    addingToCartWholesale.value = false
-  }
-}
-
 // ── Attribute helpers ─────────────────────────────────────────────
 // attributes is [{key,value}] array — never access as object
 function getAttr(variant, key) {
@@ -555,9 +385,3 @@ const guarantees = [
 
 defineExpose({ cartButtonRef })
 </script>
-
-<style scoped>
-.pi-qty-input::-webkit-inner-spin-button,
-.pi-qty-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-.pi-qty-input { -moz-appearance: textfield; appearance: textfield; }
-</style>

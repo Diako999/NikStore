@@ -40,15 +40,6 @@
       <!-- Main content -->
       <div class="lg:col-span-2 space-y-5">
 
-        <!-- Wholesale order badge -->
-        <div v-if="isWholesaleOrder"
-             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-wholesale/10 border border-wholesale-border">
-          <svg class="w-4 h-4 text-wholesale-dark flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-          </svg>
-          <span class="font-bold text-wholesale-dark text-sm">سفارش عمده — ارسال رایگان</span>
-        </div>
-
         <!-- STEP 0: آدرس تحویل -->
         <div v-show="currentStep === 0" :inert="currentStep !== 0">
           <div class="rounded-2xl border border-surface-border p-5 space-y-4 bg-card">
@@ -432,19 +423,12 @@ definePageMeta({ layout: 'default', middleware: ['auth'] })
 useSeoMeta({ title: 'تکمیل خرید', robots: 'noindex' })
 
 const router    = useRouter()
-const route     = useRoute()
 const cartStore = useCartStore()
 const auth      = useAuthStore()
 const ui        = useUiStore()
 
-const orderType        = computed(() => route.query.type || 'retail')
-const isWholesaleOrder = computed(() => orderType.value === 'wholesale')
-const checkoutItems    = computed(() =>
-  isWholesaleOrder.value ? cartStore.wholesaleItems : cartStore.retailItems
-)
-const checkoutTotal    = computed(() =>
-  checkoutItems.value.reduce((s, i) => s + i.price * i.quantity, 0)
-)
+const checkoutItems = computed(() => cartStore.items)
+const checkoutTotal = computed(() => cartStore.totalPrice)
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="%23e2e8f0"%3E%3Crect width="56" height="56"/%3E%3C/svg%3E'
 
@@ -555,7 +539,6 @@ async function placeOrder() {
   try {
     const orderDto = {
       addressId: selectedAddressId.value,
-      orderType: orderType.value,
       ...(orderNote.value.trim() ? { note: orderNote.value.trim() } : {}),
       ...(couponApplied.value && couponCode.value ? { couponCode: couponCode.value.trim() } : {}),
     }

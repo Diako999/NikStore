@@ -72,10 +72,6 @@ export const PANEL_PERMISSIONS = [
   },
   { key: 'discounts', label: 'کدهای تخفیف', icon: '🎟️', group: 'فروشگاه' },
 
-  // ── عمده ──────────────────────────────────────────────────────────────────
-  { key: 'wholesale',        label: 'درخواست‌های عمده', icon: '🏪', group: 'عمده' },
-  { key: 'wholesale-orders', label: 'سفارشات عمده',     icon: '📋', group: 'عمده' },
-
   // ── مدیریت ────────────────────────────────────────────────────────────────
   { key: 'users',   label: 'کاربران',       icon: '👥', group: 'مدیریت' },
   { key: 'reviews', label: 'نظرات محصولات', icon: '⭐', group: 'مدیریت' },

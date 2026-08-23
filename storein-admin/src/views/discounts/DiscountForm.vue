@@ -23,69 +23,6 @@
 
     <form v-else @submit.prevent="submit" class="dfp-form">
 
-      <!-- ── Step 0: مخاطب تخفیف ── -->
-      <div class="kind-grid kind-grid--3">
-        <label class="kind-card" :class="{ 'kind-card--on': form.customerGroup === '' }">
-          <input type="radio" v-model="form.customerGroup" value="" class="sr-only"/>
-          <div class="kind-icon kind-icon--green">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-              <path d="M16 3.13a4 4 0 010 7.75"/>
-            </svg>
-          </div>
-          <div class="kind-text">
-            <span class="kind-title">همه مشتریان</span>
-            <span class="kind-sub">عمده‌فروشی و تک‌فروشی</span>
-          </div>
-          <div class="kind-check" :class="{ 'kind-check--on': form.customerGroup === '' }">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-          </div>
-        </label>
-
-        <label class="kind-card" :class="{ 'kind-card--on': form.customerGroup === 'wholesale' }">
-          <input type="radio" v-model="form.customerGroup" value="wholesale" class="sr-only"/>
-          <div class="kind-icon kind-icon--blue">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-          </div>
-          <div class="kind-text">
-            <span class="kind-title">فقط عمده‌فروشی</span>
-            <span class="kind-sub">ویژه مشتریان عمده</span>
-          </div>
-          <div class="kind-check" :class="{ 'kind-check--on': form.customerGroup === 'wholesale' }">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-          </div>
-        </label>
-
-        <label class="kind-card" :class="{ 'kind-card--on': form.customerGroup === 'retail' }">
-          <input type="radio" v-model="form.customerGroup" value="retail" class="sr-only"/>
-          <div class="kind-icon kind-icon--purple">
-            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 01-8 0"/>
-            </svg>
-          </div>
-          <div class="kind-text">
-            <span class="kind-title">فقط تک‌فروشی</span>
-            <span class="kind-sub">ویژه مشتریان عادی</span>
-          </div>
-          <div class="kind-check" :class="{ 'kind-check--on': form.customerGroup === 'retail' }">
-            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-            </svg>
-          </div>
-        </label>
-      </div>
-
       <!-- ── Section 1: اطلاعات پایه ── -->
       <div class="section-card">
         <div class="section-head">
@@ -422,8 +359,8 @@
               </div>
             </div>
           </div>
-          <div v-if="form.customerGroup === 'wholesale'" class="field-group mt-3">
-            <label class="fl">حداقل تعداد سفارش (عمده)</label>
+          <div class="field-group mt-3">
+            <label class="fl">حداقل تعداد سفارش <span class="opt">اختیاری</span></label>
             <div class="input-wrap" style="max-width:200px">
               <span class="input-icon">
                 <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -489,7 +426,6 @@ const loadingForm = ref(false)
 const saving      = ref(false)
 
 const form = reactive({
-  customerGroup:    '',   // '' = همه | 'wholesale' = عمده | 'retail' = تک
   title:            '',
   description:      '',
   discountType:     'percentage',
@@ -666,8 +602,7 @@ function buildPayload() {
                     : undefined,
     brandIds:     (tt === 'brands' || tt === 'brand_category') ? form.brandIds : undefined,
     minOrderAmount: form.minOrderAmount || undefined,
-    minQuantity:    form.customerGroup === 'wholesale' ? (form.minQuantity || undefined) : undefined,
-    customerGroup:  form.customerGroup || undefined,
+    minQuantity:    form.minQuantity || undefined,
     maxUsageCount:  form.maxUsageCount || undefined,
     priority:       form.priority ?? 0,
   }
@@ -702,7 +637,6 @@ async function loadEdit() {
     const { data } = await discountService.getById(route.params.id)
     const tt = data.targetType ?? 'all'
     Object.assign(form, {
-      customerGroup:    data.customerGroup ?? (data.kind === 'wholesale' ? 'wholesale' : ''),
       title:            data.title,
       description:      data.description ?? '',
       discountType:     data.discountType,
@@ -774,48 +708,6 @@ onMounted(async () => {
 /* ── Form ── */
 .dfp-form { display: flex; flex-direction: column; gap: 1rem; }
 
-/* ── Kind cards ── */
-.kind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.kind-grid--3 { grid-template-columns: repeat(3, 1fr); }
-.kind-card {
-  display: flex; align-items: center; gap: 0.875rem;
-  padding: 1rem 1.1rem; border-radius: 14px;
-  border: 2px solid var(--color-border);
-  background: var(--color-card);
-  cursor: pointer; transition: all 0.18s;
-  position: relative;
-}
-.kind-card:hover { border-color: rgba(27,79,138,0.35); }
-.kind-card--on { border-color: rgba(27,79,138,0.6); background: rgba(27,79,138,0.05); }
-
-.kind-icon {
-  width: 44px; height: 44px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-}
-.kind-icon--red    { background: rgba(239,68,68,0.12);  color: #ef4444; }
-.kind-icon--blue   { background: rgba(37,99,235,0.12);  color: #2563eb; }
-.kind-icon--green  { background: rgba(22,163,74,0.12);  color: #16a34a; }
-.kind-icon--purple { background: rgba(139,92,246,0.12); color: #7c3aed; }
-html.dark .kind-icon--red    { background: rgba(239,68,68,0.18); }
-html.dark .kind-icon--blue   { background: rgba(37,99,235,0.18); }
-html.dark .kind-icon--green  { background: rgba(22,163,74,0.18); }
-html.dark .kind-icon--purple { background: rgba(139,92,246,0.18); }
-
-.kind-text { flex: 1; min-width: 0; }
-.kind-title { display: block; font-size: 0.85rem; font-weight: 700; color: var(--color-text-primary); }
-.kind-sub   { display: block; font-size: 0.68rem; color: var(--color-text-disabled); margin-top: 2px; }
-
-.kind-check {
-  width: 20px; height: 20px; border-radius: 50%;
-  border: 2px solid var(--color-border);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; transition: all 0.15s; color: transparent;
-}
-.kind-check--on {
-  background: #1B4F8A; border-color: #1B4F8A; color: white;
-}
-
 /* ── Section cards ── */
 .section-card {
   background: var(--color-card);
@@ -824,7 +716,6 @@ html.dark .kind-icon--purple { background: rgba(139,92,246,0.18); }
   overflow: hidden;
 }
 .section-card--timed  { border-color: rgba(239,68,68,0.2); }
-.section-card--wholesale { border-color: rgba(37,99,235,0.2); }
 
 .section-head {
   display: flex; align-items: flex-start; gap: 0.875rem;
@@ -1091,7 +982,6 @@ html.dark .target-summary { color: #93C5FD; background: rgba(147,197,253,0.08); 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
 
 @media (max-width: 540px) {
-  .kind-grid, .kind-grid--3 { grid-template-columns: 1fr; }
   .two-col     { grid-template-columns: 1fr; }
   .date-grid   { grid-template-columns: 1fr; }
   .target-grid { grid-template-columns: repeat(2, 1fr); }

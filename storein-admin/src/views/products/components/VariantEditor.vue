@@ -92,27 +92,6 @@
           </div>
         </div>
 
-        <!-- Wholesale pricing -->
-        <div class="mb-4 rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/10 p-3">
-          <p class="text-xs font-bold text-amber-700 dark:text-amber-400 mb-2">🏪 قیمت عمده (اختیاری)</p>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="field-label text-amber-700 dark:text-amber-400">قیمت عمده (تومان)</label>
-              <PriceInput
-                v-model="variant.wholesalePrice"
-                placeholder="0"
-                class="field-input text-left"
-              />
-            </div>
-            <div>
-              <label class="field-label text-amber-700 dark:text-amber-400">حداقل تعداد عمده</label>
-              <input v-model.number="variant.wholesaleMinQty" type="number" min="1" step="1" dir="ltr"
-                     placeholder="10"
-                     class="field-input text-left" />
-            </div>
-          </div>
-        </div>
-
         <!-- Variant Images -->
         <div v-if="productImages.length" class="mb-4">
           <div class="flex items-center justify-between mb-2">
@@ -469,14 +448,14 @@ function clearVariantImages(variantIdx) {
 
 // ── Variant helpers ────────────────────────────────────────
 function newVariant() {
-  return { sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {}, wholesalePrice: null, wholesaleMinQty: 10, images: [] }
+  return { sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {}, images: [] }
 }
 function addVariant() {
   emit('update:modelValue', [...props.modelValue, newVariant()])
 }
 function duplicateVariant(idx) {
   const src = props.modelValue[idx]
-  const copy = { sku: src.sku, price: src.price, comparePrice: src.comparePrice, costPrice: src.costPrice ?? null, stock: src.stock, attributes: { ...src.attributes }, wholesalePrice: src.wholesalePrice ?? null, wholesaleMinQty: src.wholesaleMinQty ?? 10, images: [...(src.images ?? [])] }
+  const copy = { sku: src.sku, price: src.price, comparePrice: src.comparePrice, costPrice: src.costPrice ?? null, stock: src.stock, attributes: { ...src.attributes }, images: [...(src.images ?? [])] }
   const updated = [...props.modelValue]
   updated.splice(idx + 1, 0, copy)
   emit('update:modelValue', updated)

@@ -1,16 +1,14 @@
 import {
-  Injectable, NotFoundException, BadRequestException, ConflictException, Logger,
+  Injectable, NotFoundException, BadRequestException, Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { User, UserDocument, UserRole, WholesaleStatus } from './entities/user.schema';
+import { User, UserDocument } from './entities/user.schema';
 import { Order, OrderDocument, OrderStatus } from '../order/entities/order.schema';
 import { Review, ReviewDocument } from '../review/entities/review.schema';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { WholesaleRequestDto } from './dto/wholesale-request.dto';
-import { NotificationsGateway } from '../../common/gateway/notifications.gateway';
 
 const MAX_ADDRESSES = 10;
 
@@ -22,7 +20,6 @@ export class UserService {
     @InjectModel(User.name)   private userModel:   Model<UserDocument>,
     @InjectModel(Order.name)  private orderModel:  Model<OrderDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
-    private readonly gateway: NotificationsGateway,
   ) {}
 
   // ── Profile ───────────────────────────────────────────────────
@@ -189,48 +186,6 @@ export class UserService {
     ]);
 
     return { items: reviews, total, totalPages: Math.ceil(total / limit) };
-  }
-
-  // ── Wholesale ─────────────────────────────────────────────────
-  async requestWholesale(userId: string, dto: WholesaleRequestDto) {
-    const user = await this.userModel.findById(userId);
-    if (!user) throw new NotFoundException('کاربر یافت نشد');
-
-    if (user.wholesaleStatus === WholesaleStatus.PENDING)
-      throw new ConflictException('درخواست قبلی شما در انتظار بررسی است');
-    if (user.wholesaleStatus === WholesaleStatus.APPROVED)
-      throw new ConflictException('حساب شما قبلاً تأیید شده است');
-
-    user.wholesaleStatus      = WholesaleStatus.PENDING;
-    user.wholesaleCompanyName = dto.companyName;
-    user.wholesaleNationalId  = dto.nationalId;
-    user.wholesaleDescription = dto.description;
-    await user.save();
-
-    const userName = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || (user.phone ?? '');
-    this.gateway.emitNewWholesaleRequest({
-      userId:      (user._id as any).toString(),
-      userName,
-      companyName: dto.companyName,
-      createdAt:   new Date().toISOString(),
-    });
-
-    return { message: 'درخواست شما با موفقیت ثبت شد و در حال بررسی است' };
-  }
-
-  async getWholesaleStatus(userId: string) {
-    const user = await this.userModel
-      .findById(userId)
-      .select('role wholesaleStatus wholesaleCompanyName wholesaleApprovedAt wholesaleRejectedReason')
-      .lean<UserDocument>();
-    if (!user) throw new NotFoundException();
-    return {
-      status:         user.wholesaleStatus ?? WholesaleStatus.NONE,
-      isWholesale:    user.role === UserRole.WHOLESALE,
-      companyName:    user.wholesaleCompanyName,
-      approvedAt:     user.wholesaleApprovedAt,
-      rejectedReason: user.wholesaleRejectedReason,
-    };
   }
 
   async toggleBlock(userId: string): Promise<any> {

@@ -10,7 +10,6 @@ import { Model, Types } from 'mongoose';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import { Product, ProductDocument } from '../product/entities/product.schema';
-import { User, UserDocument } from '../user/entities/user.schema';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Cart, CartItem, CartSummary } from './cart.interface';
@@ -25,7 +24,6 @@ export class CartService {
 
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(User.name)    private userModel:    Model<UserDocument>,
     @Inject(REDIS_CLIENT)      private redis: Redis,
     private readonly discountsService: DiscountsService,
   ) {}
@@ -63,38 +61,11 @@ export class CartService {
     return this.buildSummary(cart);
   }
 
-  private resolvePrice(
-    variant: any,
-    quantity: number,
-    isWholesale: boolean,
-  ): { price: number; comparePrice: number | null; isWholesalePrice: boolean } {
-    if (
-      isWholesale &&
-      variant.wholesalePrice &&
-      variant.wholesalePrice > 0 &&
-      quantity >= (variant.wholesaleMinQty ?? 10)
-    ) {
-      return {
-        price:            variant.wholesalePrice,
-        comparePrice:     variant.price,
-        isWholesalePrice: true,
-      };
-    }
-    return {
-      price:            variant.price,
-      comparePrice:     variant.comparePrice ?? null,
-      isWholesalePrice: false,
-    };
-  }
-
   async addItem(userId: string, dto: AddToCartDto): Promise<CartSummary> {
-    const [product, user] = await Promise.all([
-      this.productModel
-        .findById(dto.productId)
-        .select('name slug thumbnail variants category brand')
-        .lean<ProductDocument>(),
-      this.userModel.findById(userId).select('role').lean<UserDocument>(),
-    ]);
+    const product = await this.productModel
+      .findById(dto.productId)
+      .select('name slug thumbnail variants category brand')
+      .lean<ProductDocument>();
     if (!product) throw new NotFoundException('محصول یافت نشد');
 
     const variant = product.variants.find(
@@ -103,9 +74,8 @@ export class CartService {
     if (!variant || !variant.isActive)
       throw new NotFoundException('ویریانت یافت نشد');
 
-    const isWholesale = user?.role === 'wholesale';
-    const cart        = await this.loadCart(userId);
-    const existing    = cart.items.find(
+    const cart     = await this.loadCart(userId);
+    const existing = cart.items.find(
       (i) => i.productId === dto.productId && i.variantId === dto.variantId,
     );
     const newQty = (existing?.quantity ?? 0) + dto.quantity;
@@ -115,75 +85,45 @@ export class CartService {
         `موجودی کافی نیست. حداکثر ${variant.stock} عدد`,
       );
 
-    let { price, comparePrice, isWholesalePrice } = this.resolvePrice(
-      variant,
-      newQty,
-      isWholesale,
-    );
+    let price        = variant.price;
+    let comparePrice = variant.comparePrice ?? null;
 
-    // Apply system discount on top of the resolved price
+    // Apply system discount on top of the base price
     const categoryId = (product.category as any)?.toString() ?? '';
     const brandId    = (product.brand as any)?.toString() ?? '';
-    let retailPrice: number | undefined;
 
-    if (isWholesalePrice) {
-      const priceInfo = await this.discountsService.calculateDiscountedPrice({
-        originalPrice:  variant.price,
-        wholesalePrice: variant.wholesalePrice ?? undefined,
-        productId:      dto.productId,
-        categoryId,
-        brandId,
-        customerGroup:  'wholesale',
-      });
-      if (priceInfo.discountAmount > 0) {
-        retailPrice  = comparePrice as number;  // save retail price for 3-level UI display
-        comparePrice = price;                   // original wholesale price → shown as middle strikethrough
-        price        = priceInfo.finalPrice;    // discounted wholesale price → final price
-        this.logger.log(
-          `Wholesale discount applied: product=${dto.productId} ` +
-          `retail=${retailPrice} wholesale=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
-        );
-      }
-    } else {
-      const priceInfo = await this.discountsService.calculateDiscountedPrice({
-        originalPrice: variant.price,
-        productId:     dto.productId,
-        categoryId,
-        brandId,
-        customerGroup: 'retail',
-      });
-      if (priceInfo.discountAmount > 0) {
-        comparePrice = price;               // original retail price → shown as strikethrough
-        price        = priceInfo.finalPrice; // discounted retail price → final price
-        this.logger.log(
-          `Retail discount applied: product=${dto.productId} ` +
-          `original=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
-        );
-      }
+    const priceInfo = await this.discountsService.calculateDiscountedPrice({
+      originalPrice: variant.price,
+      productId:     dto.productId,
+      categoryId,
+      brandId,
+    });
+    if (priceInfo.discountAmount > 0) {
+      comparePrice = price;                // original price → shown as strikethrough
+      price        = priceInfo.finalPrice; // discounted price → final price
+      this.logger.log(
+        `Discount applied: product=${dto.productId} ` +
+        `original=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
+      );
     }
 
     if (existing) {
-      existing.quantity         = newQty;
-      existing.price            = price;
-      existing.comparePrice     = comparePrice;
-      existing.isWholesalePrice = isWholesalePrice;
-      if (retailPrice !== undefined) existing.retailPrice = retailPrice;
+      existing.quantity     = newQty;
+      existing.price        = price;
+      existing.comparePrice = comparePrice;
     } else {
       const item: CartItem = {
-        productId:        dto.productId,
-        variantId:        dto.variantId,
-        sku:              variant.sku,
-        name:             product.name,
-        slug:             product.slug,
-        thumbnail:        product.thumbnail ?? null,
+        productId:    dto.productId,
+        variantId:    dto.variantId,
+        sku:          variant.sku,
+        name:         product.name,
+        slug:         product.slug,
+        thumbnail:    product.thumbnail ?? null,
         price,
         comparePrice,
-        retailPrice,
-        quantity:         dto.quantity,
-        stock:            variant.stock,
-        attributes:       variant.attributes ?? [],
-        isWholesalePrice,
-        wholesaleMinQty:  (variant as any).wholesaleMinQty ?? null,
+        quantity:     dto.quantity,
+        stock:        variant.stock,
+        attributes:   variant.attributes ?? [],
       };
       cart.items.push(item);
     }

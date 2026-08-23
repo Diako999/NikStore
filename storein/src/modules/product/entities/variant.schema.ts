@@ -35,12 +35,6 @@ export class Variant {
   @Prop({ type: Number, min: 0, default: null })
   costPrice: number | null;
 
-  @Prop({ type: Number, min: 0, default: null })
-  wholesalePrice: number | null;
-
-  @Prop({ type: Number, min: 1, default: 10 })
-  wholesaleMinQty: number;
-
   @Prop({ type: [String], default: [] })
   images: string[];
 }

@@ -72,13 +72,6 @@
           </span>
         </template>
 
-        <!-- Buy / wholesale price -->
-        <template #cell-minWholesalePrice="{ row }">
-          <span class="font-fanum text-sm font-medium text-amber-600 dark:text-amber-400">
-            {{ row.minWholesalePrice ? formatPrice(row.minWholesalePrice) : '—' }}
-          </span>
-        </template>
-
         <!-- Discount -->
         <template #cell-discount="{ row }">
           <div class="flex items-center justify-center gap-1">
@@ -293,7 +286,6 @@ const canCreate         = computed(() => auth.hasPermission('products:create'))
 const canEdit           = computed(() => auth.hasPermission('products:edit'))
 const canDelete         = computed(() => auth.hasPermission('products:delete'))
 const canViewSellPrice  = computed(() => auth.hasPermission('products:view_sell_price'))
-const canViewBuyPrice   = computed(() => auth.hasPermission('products:view_buy_price'))
 
 // SVG shown inside the image container when the image URL fails to load
 const noImagePlaceholder = `<svg class="w-6 h-6" style="color:#CBD5E1" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M6.75 7.5h.008v.008H6.75V7.5zm10.5 0h.008v.008h-.008V7.5zM3 6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v10.5A2.25 2.25 0 0118.75 19.5H5.25A2.25 2.25 0 013 17.25V6.75z"/></svg>`
@@ -336,9 +328,6 @@ const columns = computed(() => [
   { key: 'category', label: 'دسته‌بندی', width: '110px' },
   ...(canViewSellPrice.value
     ? [{ key: 'minPrice', label: 'قیمت فروش', width: '130px', align: 'center' }]
-    : []),
-  ...(canViewBuyPrice.value
-    ? [{ key: 'minWholesalePrice', label: 'قیمت خرید', width: '130px', align: 'center' }]
     : []),
   { key: 'discount',   label: 'تخفیف',  width: '120px', align: 'center' },
   { key: 'totalStock', label: 'موجودی', width: '90px',  align: 'center', sortable: true },

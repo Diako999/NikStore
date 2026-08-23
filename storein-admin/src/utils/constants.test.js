@@ -24,7 +24,6 @@ describe('PANEL_PERMISSIONS', () => {
   const requiredKeys = [
     'dashboard',
     'products', 'categories', 'brands', 'colors', 'banners', 'orders', 'discounts',
-    'wholesale', 'wholesale-orders',
     'users', 'reviews',
     'blog', 'blog-comments', 'pages',
   ]
@@ -76,17 +75,11 @@ describe('PANEL_PERMISSIONS', () => {
 
   // ── Groups ─────────────────────────────────────────────────────────────────
 
-  const expectedGroups = ['عمومی', 'فروشگاه', 'عمده', 'مدیریت', 'محتوا']
+  const expectedGroups = ['عمومی', 'فروشگاه', 'مدیریت', 'محتوا']
 
   it('contains all expected groups', () => {
     const groups = [...new Set(PANEL_PERMISSIONS.map(p => p.group))]
     for (const g of expectedGroups) expect(groups).toContain(g)
-  })
-
-  it('wholesale permissions are in "عمده" group', () => {
-    const wp = PANEL_PERMISSIONS.filter(p => p.key === 'wholesale' || p.key === 'wholesale-orders')
-    expect(wp).toHaveLength(2)
-    wp.forEach(p => expect(p.group).toBe('عمده'))
   })
 
   it('pages permission is in "محتوا" group', () => {
@@ -108,7 +101,7 @@ describe('PANEL_PERMISSIONS', () => {
     const routerPermissions = [
       'dashboard', 'products', 'categories', 'brands', 'colors',
       'orders', 'users', 'reviews', 'discounts', 'banners',
-      'blog', 'blog-comments', 'pages', 'wholesale', 'wholesale-orders',
+      'blog', 'blog-comments', 'pages',
     ]
     const defined = new Set(PANEL_PERMISSIONS.map(p => p.key))
     for (const perm of routerPermissions) {

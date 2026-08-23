@@ -1,4 +1,4 @@
-import { IsEnum, IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsMongoId, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateOrderDto {
   @IsMongoId()
@@ -9,7 +9,4 @@ export class CreateOrderDto {
 
   @IsOptional() @IsString() @MaxLength(30)
   couponCode?: string;
-
-  @IsOptional() @IsEnum(['retail', 'wholesale'])
-  orderType?: string = 'retail';
 }

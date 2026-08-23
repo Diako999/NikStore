@@ -32,12 +32,6 @@ export default {
           secondary: '#6B7280',
           disabled:  '#C4CBD6',
         },
-        wholesale: {
-          DEFAULT: '#f59e0b',
-          dark:    '#b45309',
-          light:   '#fef3c7',
-          border:  'rgba(245,158,11,0.3)',
-        },
         card: 'var(--color-card)',
         bg:   'var(--color-bg)',
         success: '#059669',

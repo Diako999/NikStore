@@ -14,7 +14,7 @@
     v-bind="$attrs"
     @click="$emit('click', $event)"
   >
-    <BaseSpinner v-if="loading" size="sm" :color="variant === 'primary' || variant === 'danger' || variant === 'wholesale' ? 'white' : 'brand'" />
+    <BaseSpinner v-if="loading" size="sm" :color="variant === 'primary' || variant === 'danger' ? 'white' : 'brand'" />
     <slot />
   </button>
 </template>
@@ -37,7 +37,6 @@ const variantClasses = {
   outline:   'border border-brand text-brand hover:bg-brand hover:text-white',
   ghost:     'text-text-secondary hover:bg-surface-border',
   danger:    'bg-error text-white hover:bg-red-700',
-  wholesale: 'bg-amber-500 text-white hover:bg-amber-600',
 }
 
 const sizeClasses = {

@@ -80,8 +80,6 @@ export class Order {
   @Prop({ enum: OrderStatus, default: OrderStatus.PENDING, index: true })
   status: OrderStatus;
 
-  @Prop({ default: false }) isWholesale: boolean;
-  @Prop({ enum: ['retail', 'wholesale'], default: 'retail' }) orderType: string;
   @Prop() cancelReason?: string;
   @Prop() note?: string;
   @Prop() couponCode?: string;

@@ -326,28 +326,23 @@ export class NotificationService {
   }
 
   // ── Segment broadcast (discount/promo notifications) ─────────
-  // Sends to wholesale-only or all users depending on customerGroup.
+  // Sends to all active users.
   async broadcastToSegment(params: {
-    customerGroup: 'wholesale' | 'vip' | 'retail' | null;
-    type:          NotificationType;
-    title:         string;
-    body:          string;
-    data?:         Record<string, any>;
+    type:  NotificationType;
+    title: string;
+    body:  string;
+    data?: Record<string, any>;
   }): Promise<{ sent: number }> {
-    const { customerGroup, type, title, body, data } = params;
-
-    // wholesale/vip → only wholesale users; retail/null → all active users
-    const isWholesaleOnly = customerGroup === 'wholesale' || customerGroup === 'vip';
-    const roleFilter = isWholesaleOnly ? { role: 'wholesale' } : {};
+    const { type, title, body, data } = params;
 
     const UserModel = this.notifModel.db.model('User');
     const users: { _id: any }[] = await UserModel
-      .find({ isActive: true, ...roleFilter })
+      .find({ isActive: true })
       .select('_id')
       .lean();
 
     if (!users.length) {
-      this.logger.log(`Segment broadcast skipped — no eligible users (segment: ${customerGroup ?? 'all'})`);
+      this.logger.log('Segment broadcast skipped — no eligible users');
       return { sent: 0 };
     }
 
@@ -365,23 +360,18 @@ export class NotificationService {
 
     // Real-time WebSocket emit — best-effort
     try {
-      const wsPayload = {
+      this.gateway.emitBroadcast({
         type,
         title,
         body,
         data:      data ?? null,
         createdAt: new Date().toISOString(),
-      };
-      if (isWholesaleOnly) {
-        this.gateway.emitToWholesale(wsPayload);
-      } else {
-        this.gateway.emitBroadcast(wsPayload);
-      }
+      });
     } catch (err: any) {
       this.logger.warn(`Segment broadcast real-time emit failed (non-critical): ${err?.message}`);
     }
 
-    this.logger.log(`Segment broadcast complete — segment: ${customerGroup ?? 'all'}, sent: ${users.length}`);
+    this.logger.log(`Segment broadcast complete — sent: ${users.length}`);
     return { sent: users.length };
   }
 

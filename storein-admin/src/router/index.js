@@ -183,18 +183,6 @@ const routes = [
     component: () => import('@/views/notifications/NotificationsSendView.vue'),
     meta: { layout: 'admin', title: 'ارسال پیام', adminOnly: true },
   },
-  {
-    path: '/wholesale',
-    name: 'wholesale-requests',
-    component: () => import('@/views/wholesale/WholesaleRequestsView.vue'),
-    meta: { layout: 'admin', title: 'درخواست‌های عمده', permission: 'wholesale' },
-  },
-  {
-    path: '/wholesale-orders',
-    name: 'wholesale-orders',
-    component: () => import('@/views/wholesale/WholesaleOrdersView.vue'),
-    meta: { layout: 'admin', title: 'سفارشات عمده', permission: 'wholesale-orders' },
-  },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' },
 ]
 

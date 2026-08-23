@@ -4,16 +4,8 @@ import { Address, AddressSchema } from './address.schema';
 
 export enum UserRole {
   USER      = 'user',
-  WHOLESALE = 'wholesale',
   MANAGER   = 'manager',
   ADMIN     = 'admin',
-}
-
-export enum WholesaleStatus {
-  NONE     = 'none',
-  PENDING  = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
 }
 
 export type UserDocument = User & Document;
@@ -41,15 +33,6 @@ export class User {
 
   @Prop({ type: [String], default: [] })
   permissions: string[];
-
-  @Prop({ enum: Object.values(WholesaleStatus), default: WholesaleStatus.NONE })
-  wholesaleStatus: string;
-
-  @Prop({ trim: true }) wholesaleCompanyName?: string;
-  @Prop({ trim: true }) wholesaleNationalId?: string;
-  @Prop({ trim: true }) wholesaleDescription?: string;
-  @Prop() wholesaleApprovedAt?: Date;
-  @Prop({ trim: true }) wholesaleRejectedReason?: string;
 
   @Prop({ type: [AddressSchema], default: [] })
   addresses: Address[];

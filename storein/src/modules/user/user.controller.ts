@@ -6,7 +6,6 @@ import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
-import { WholesaleRequestDto } from './dto/wholesale-request.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -51,20 +50,6 @@ export class UserController {
   @Patch('me/addresses/:addressId/default')
   setDefault(@CurrentUser() user: UserDocument, @Param('addressId') addressId: string) {
     return this.userService.setDefaultAddress((user._id as any).toString(), addressId);
-  }
-
-  // ── Wholesale ─────────────────────────────────────────────────
-  @Post('me/wholesale-request')
-  requestWholesale(
-    @CurrentUser() user: UserDocument,
-    @Body() dto: WholesaleRequestDto,
-  ) {
-    return this.userService.requestWholesale((user._id as any).toString(), dto);
-  }
-
-  @Get('me/wholesale-status')
-  getWholesaleStatus(@CurrentUser() user: UserDocument) {
-    return this.userService.getWholesaleStatus((user._id as any).toString());
   }
 
   // ── Admin ─────────────────────────────────────────────────────

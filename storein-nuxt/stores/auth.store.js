@@ -17,8 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
   setTokenProvider(() => token.value)
 
   // ── Computed ──────────────────────────────────────────────────
-  const isLoggedIn  = computed(() => !!token.value)
-  const isWholesale = computed(() => user.value?.role === 'wholesale')
+  const isLoggedIn = computed(() => !!token.value)
 
   // ── Send OTP ──────────────────────────────────────────────────
   async function sendOtp(phone) {
@@ -128,7 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, token, loading, pendingPhone, initialized, initializing,
-    isLoggedIn, isWholesale,
+    isLoggedIn,
     sendOtp, verifyOtp, fetchProfile, logout, initAuth,
   }
 })

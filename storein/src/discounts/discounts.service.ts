@@ -84,7 +84,6 @@ export class DiscountsService {
       maxDiscountAmount: dto.maxDiscountAmount ?? null,
       minOrderAmount:    dto.minOrderAmount    ?? null,
       minQuantity:       dto.minQuantity       ?? null,
-      customerGroup:     dto.customerGroup     ?? null,
       maxUsageCount:     dto.maxUsageCount     ?? null,
       perUserLimit:      dto.perUserLimit      ?? 1,
       startDate:         dto.startDate ? new Date(dto.startDate) : null,
@@ -107,16 +106,14 @@ export class DiscountsService {
       title:         discount.title,
       discountType:  discount.discountType,
       value:         discount.value,
-      customerGroup: (discount.customerGroup as any) ?? null,
       isCoupon:      !!discount.code,
       code:          discount.code ?? null,
       endDate:       discount.endDate ?? null,
     };
     this.eventEmitter.emit(EVENTS.DISCOUNT_CREATED, notifEvent);
     this.logger.log('Discount notification event emitted', {
-      id:           notifEvent.discountId,
-      isCoupon:     notifEvent.isCoupon,
-      customerGroup: notifEvent.customerGroup ?? 'all',
+      id:       notifEvent.discountId,
+      isCoupon: notifEvent.isCoupon,
     });
 
     return discountObj;
@@ -142,9 +139,6 @@ export class DiscountsService {
     } else if (kind === 'time_limited') {
       filter.code      = null;
       filter.startDate = { $ne: null };
-    } else if (kind === 'wholesale') {
-      filter.code          = null;
-      filter.customerGroup = { $ne: null };
     }
 
     const skip = (page - 1) * limit;
@@ -362,17 +356,14 @@ export class DiscountsService {
 
   async calculateDiscountedPrice(params: {
     originalPrice:  number;
-    wholesalePrice?: number;
     productId:      string;
     categoryId:     string;
     brandId?:       string;
-    customerGroup?: 'wholesale' | 'vip' | 'retail';
     quantity?:      number;
   }): Promise<DiscountPriceResult> {
-    const { originalPrice, wholesalePrice, productId, categoryId, brandId, customerGroup, quantity } = params;
+    const { originalPrice, productId, categoryId, brandId, quantity } = params;
 
-    const isWholesaleCustomer = customerGroup === 'wholesale' || customerGroup === 'vip';
-    const basePrice = isWholesaleCustomer && wholesalePrice ? wholesalePrice : originalPrice;
+    const basePrice = originalPrice;
 
     const activeDiscounts = await this.getActiveDiscounts();
     const now = new Date();
@@ -393,16 +384,6 @@ export class DiscountsService {
       // Time-limited check
       if (d.startDate && d.endDate) {
         if (now < new Date(d.startDate) || now > new Date(d.endDate)) return false;
-      }
-
-      // Customer group check: null = all users; specific = matching group only
-      if (d.customerGroup) {
-        if (d.customerGroup === 'retail') {
-          if (isWholesaleCustomer) return false;
-        } else {
-          if (!isWholesaleCustomer)              return false;
-          if (d.customerGroup !== customerGroup) return false;
-        }
       }
 
       // Quantity check

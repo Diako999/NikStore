@@ -30,14 +30,13 @@ export const EVENTS = {
 } as const;
 
 export interface DiscountCreatedEvent {
-  discountId:    string;
-  title:         string;
-  discountType:  'percentage' | 'fixed';
-  value:         number;
-  customerGroup: 'wholesale' | 'vip' | 'retail' | null;
-  isCoupon:      boolean;
-  code:          string | null;
-  endDate:       Date | null;
+  discountId:   string;
+  title:        string;
+  discountType: 'percentage' | 'fixed';
+  value:        number;
+  isCoupon:     boolean;
+  code:         string | null;
+  endDate:      Date | null;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -114,7 +113,7 @@ export class NotificationListener {
 
   @OnEvent(EVENTS.DISCOUNT_CREATED)
   async handleDiscountCreated(event: DiscountCreatedEvent) {
-    const { discountId, title, discountType, value, customerGroup, isCoupon, code, endDate } = event;
+    const { discountId, title, discountType, value, isCoupon, code, endDate } = event;
 
     const valueStr = discountType === 'percentage'
       ? `${value}٪`
@@ -135,7 +134,6 @@ export class NotificationListener {
 
     try {
       await this.notifService.broadcastToSegment({
-        customerGroup,
         type:  NotificationType.PROMO,
         title: notifTitle,
         body,
@@ -145,7 +143,7 @@ export class NotificationListener {
           ...(isCoupon && code ? { code } : {}),
         },
       });
-      this.logger.log(`Discount notification broadcast complete — id: ${discountId}, segment: ${customerGroup ?? 'all'}`);
+      this.logger.log(`Discount notification broadcast complete — id: ${discountId}`);
     } catch (err: any) {
       this.logger.error(`Discount notification broadcast failed: ${err.message}`);
     }

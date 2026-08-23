@@ -32,7 +32,6 @@ function makeDiscount(overrides: any = {}) {
     discountType: 'percentage',
     value:        20,
     code:         null,
-    customerGroup: null,
     endDate:      null,
     targetType:   'all',
     targetIds:    [],
@@ -84,7 +83,7 @@ describe('DiscountsService — discount created notification', () => {
   // ── create — notification event ───────────────────────────────
 
   it('emits DISCOUNT_CREATED after creating an auto-apply discount', async () => {
-    const doc = makeDiscount({ code: null, customerGroup: null });
+    const doc = makeDiscount({ code: null });
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
@@ -97,13 +96,12 @@ describe('DiscountsService — discount created notification', () => {
       expect.objectContaining({
         isCoupon:      false,
         code:          null,
-        customerGroup: null,
       }),
     );
   });
 
   it('emits DISCOUNT_CREATED with isCoupon=true when code is set', async () => {
-    const doc = makeDiscount({ code: 'SAVE20', customerGroup: null });
+    const doc = makeDiscount({ code: 'SAVE20' });
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
@@ -118,24 +116,9 @@ describe('DiscountsService — discount created notification', () => {
     );
   });
 
-  it('emits DISCOUNT_CREATED with customerGroup=wholesale for wholesale discount', async () => {
-    const doc = makeDiscount({ code: null, customerGroup: 'wholesale' });
-    discountModel.create.mockResolvedValue(doc);
-
-    await service.create({
-      title: 'تخفیف عمده', discountType: 'fixed', value: 50000,
-      targetType: 'all', targetIds: [], customerGroup: 'wholesale',
-    } as any);
-
-    expect(eventEmitter.emit).toHaveBeenCalledWith(
-      EVENTS.DISCOUNT_CREATED,
-      expect.objectContaining({ customerGroup: 'wholesale', isCoupon: false }),
-    );
-  });
-
   it('emits DISCOUNT_CREATED with endDate when discount is time-limited', async () => {
     const endDate = new Date('2026-08-01');
-    const doc = makeDiscount({ code: null, customerGroup: null, endDate });
+    const doc = makeDiscount({ code: null, endDate });
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({

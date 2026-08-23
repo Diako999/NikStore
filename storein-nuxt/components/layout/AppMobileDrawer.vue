@@ -66,24 +66,6 @@
           </NuxtLink>
         </div>
 
-        <!-- Wholesale banner -->
-        <div class="px-3 pt-3 flex-shrink-0">
-          <NuxtLink
-            to="/wholesale"
-            @click="close"
-            class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-gradient-to-l from-amber-500 to-amber-400 text-white shadow-md active:opacity-90 transition-opacity"
-          >
-            <span class="text-xl flex-shrink-0">🏪</span>
-            <div class="flex-1 min-w-0">
-              <p class="font-bold text-sm leading-tight">فروش عمده</p>
-              <p class="text-xs text-white/80 leading-tight mt-0.5">قیمت ویژه برای خریداران عمده</p>
-            </div>
-            <svg class="w-4 h-4 flex-shrink-0 text-white/70" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </NuxtLink>
-        </div>
-
         <!-- Quick links -->
         <div class="px-3 py-3 flex-shrink-0" style="border-bottom: 1px solid var(--color-border);">
           <NuxtLink
