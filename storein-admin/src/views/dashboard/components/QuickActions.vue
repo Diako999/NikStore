@@ -51,10 +51,8 @@
 import { computed } from 'vue'
 
 const props = defineProps({
-  pendingOrders:         { type: Number, default: 0 },
-  pendingReviews:        { type: Number, default: 0 },
-  pendingWholesale:      { type: Number, default: 0 },
-  pendingWholesaleOrders: { type: Number, default: 0 },
+  pendingOrders:  { type: Number, default: 0 },
+  pendingReviews: { type: Number, default: 0 },
 })
 
 const actions = computed(() => [
@@ -78,20 +76,6 @@ const actions = computed(() => [
     to:        { name: 'reviews' },
     badge:     props.pendingReviews || null,
     highlight: false,
-  },
-  {
-    icon:      '🏪',
-    label:     'درخواست‌های عمده',
-    to:        { name: 'wholesale-requests' },
-    badge:     props.pendingWholesale || null,
-    highlight: props.pendingWholesale > 0,
-  },
-  {
-    icon:      '📦',
-    label:     'سفارشات عمده',
-    to:        { name: 'wholesale-orders' },
-    badge:     props.pendingWholesaleOrders || null,
-    highlight: props.pendingWholesaleOrders > 0,
   },
   {
     icon:      '🏷️',

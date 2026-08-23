@@ -12,7 +12,7 @@ export class Discount {
   description?: string;
 
   // ── deprecated: نگه داشته‌شده برای backward compat با داده‌های قدیمی ──
-  @Prop({ type: String, default: null, enum: ['time_limited', 'wholesale', null] })
+  @Prop({ type: String, default: null, enum: ['time_limited', null] })
   kind?: string | null;
 
   @Prop({ required: true, enum: ['percentage', 'fixed'] })
@@ -61,9 +61,6 @@ export class Discount {
 
   @Prop({ type: Number, default: null })
   minQuantity: number | null;
-
-  @Prop({ type: String, default: null, enum: ['wholesale', 'vip', 'retail', null] })
-  customerGroup: 'wholesale' | 'vip' | 'retail' | null;
 
   @Prop({ type: Number, default: null })
   maxUsageCount: number | null;

@@ -81,17 +81,13 @@ export class NotificationsGateway
         this.logger.log(`Admin WS connected: ${client.id}`);
       } else {
         // Regular users join a per-user room (targeted) AND the broadcast room (all-users).
-        // Wholesale users also join the `wholesale` room for segment-targeted promos.
         const room = `user:${payload.sub}`;
         client.join(room);
         client.join('broadcast');
-        if (user.role === 'wholesale') {
-          client.join('wholesale');
-        }
         client.data.userId  = payload.sub;
         client.data.role    = user.role;
         client.data.isAdmin = false;
-        this.logger.log(`User WS connected: ${client.id} → room ${room}, broadcast${user.role === 'wholesale' ? ', wholesale' : ''}`);
+        this.logger.log(`User WS connected: ${client.id} → room ${room}, broadcast`);
       }
     } catch {
       client.disconnect();
@@ -137,27 +133,6 @@ export class NotificationsGateway
     this.logger.debug(`Emitted notification to user:${userId} — ${payload.title}`);
   }
 
-  emitNewWholesaleOrder(payload: {
-    orderId:      string;
-    orderNumber:  string;
-    total:        number;
-    customerName: string;
-    createdAt:    string;
-  }) {
-    this.server.to('admins').emit('new_wholesale_order', payload);
-    this.logger.log(`Emitted new_wholesale_order: ${payload.orderNumber}`);
-  }
-
-  emitNewWholesaleRequest(payload: {
-    userId:      string;
-    userName:    string;
-    companyName: string;
-    createdAt:   string;
-  }) {
-    this.server.to('admins').emit('new_wholesale_request', payload);
-    this.logger.log(`Emitted new_wholesale_request from: ${payload.userName}`);
-  }
-
   // Emits a single real-time event to ALL connected regular users (broadcast room).
   // Called after adminBroadcast insertMany so clients see the toast without polling.
   emitBroadcast(payload: {
@@ -175,22 +150,5 @@ export class NotificationsGateway
     };
     this.server.to('broadcast').emit('notification', event);
     this.logger.log(`emitBroadcast → broadcast room: "${payload.title}"`);
-  }
-
-  // Emits a real-time promo event to wholesale users only (wholesale room).
-  emitToWholesale(payload: {
-    type:      string;
-    title:     string;
-    body:      string;
-    data:      Record<string, any> | null;
-    createdAt: string;
-  }) {
-    const event = {
-      _id:    `wholesale:${Date.now()}`,
-      isRead: false,
-      ...payload,
-    };
-    this.server.to('wholesale').emit('notification', event);
-    this.logger.log(`emitToWholesale → wholesale room: "${payload.title}"`);
   }
 }

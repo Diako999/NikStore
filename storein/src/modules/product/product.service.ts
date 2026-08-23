@@ -76,23 +76,19 @@ export class ProductService {
     maxPrice: number;
     totalStock: number;
     maxComparePrice: number;
-    minWholesalePrice: number | null;
   } {
     const active = variants.filter((v) => v.isActive !== false);
-    if (!active.length) return { minPrice: 0, maxPrice: 0, totalStock: 0, maxComparePrice: 0, minWholesalePrice: null };
+    if (!active.length) return { minPrice: 0, maxPrice: 0, totalStock: 0, maxComparePrice: 0 };
 
     const prices = active.map((v) => v.price);
     const totalStock = active.reduce((s, v) => s + (v.stock ?? 0), 0);
     const comparePrices = active.filter((v) => v.comparePrice > 0).map((v) => v.comparePrice);
     const maxComparePrice = comparePrices.length ? Math.max(...comparePrices) : 0;
-    const wholesalePrices = active.filter((v) => v.wholesalePrice > 0).map((v) => v.wholesalePrice);
-    const minWholesalePrice = wholesalePrices.length ? Math.min(...wholesalePrices) : null;
     return {
       minPrice: Math.min(...prices),
       maxPrice: Math.max(...prices),
       totalStock,
       maxComparePrice,
-      minWholesalePrice,
     };
   }
 
@@ -107,7 +103,7 @@ export class ProductService {
       category, brand, minPrice, maxPrice, inStock,
       sort, page = 1, limit = 20,
       gender, frameShape, frameMaterial,
-      hasWholesalePrice, hasDiscount,
+      hasDiscount,
     } = query as any;
 
     const filter: Record<string, any> = {
@@ -120,11 +116,6 @@ export class ProductService {
     if (minPrice !== undefined) filter.minPrice = { $gte: minPrice };
     if (maxPrice !== undefined) filter.maxPrice = { ...filter.maxPrice, $lte: maxPrice };
     if (inStock) filter.totalStock = { $gt: 0 };
-    if (hasWholesalePrice) {
-      filter['variants'] = {
-        $elemMatch: { wholesalePrice: { $gt: 0 }, isActive: { $ne: false } },
-      };
-    }
 
     // Gender filter — resolve via category.gender field (includes descendants)
     if (gender) {
@@ -220,7 +211,7 @@ export class ProductService {
     const [products, total] = await Promise.all([
       this.productModel
         .find(filter)
-        .select('name slug images thumbnail minPrice maxPrice maxComparePrice minWholesalePrice totalStock avgRating reviewCount viewCount soldCount category brand tags specs createdAt variants')
+        .select('name slug images thumbnail minPrice maxPrice maxComparePrice totalStock avgRating reviewCount viewCount soldCount category brand tags specs createdAt variants')
         .sort(sortObj)
         .skip(skip)
         .limit(limit)
@@ -248,21 +239,12 @@ export class ProductService {
       return true;
     };
 
-    // Public: no customerGroup restriction OR retail-only (both shown to retail visitors)
-    const publicDiscounts = activeDiscounts.filter(
-      (d) => (!d.customerGroup || d.customerGroup === 'retail') && isTimeValid(d),
-    );
-    // Wholesale: restricted to wholesale/vip customers
-    const wholesaleDiscounts = activeDiscounts.filter(
-      (d) => (d.customerGroup === 'wholesale' || d.customerGroup === 'vip') && isTimeValid(d),
-    );
+    const publicDiscounts = activeDiscounts.filter(isTimeValid);
 
-    if (!publicDiscounts.length && !wholesaleDiscounts.length) {
+    if (!publicDiscounts.length) {
       products.forEach((p) => {
-        p.discountPercentage          = 0;
-        p.finalPrice                  = p.minPrice;
-        p.wholesaleDiscountPercentage = 0;
-        p.wholesaleFinalPrice         = p.minWholesalePrice ?? p.minPrice;
+        p.discountPercentage = 0;
+        p.finalPrice         = p.minPrice;
       });
       return;
     }
@@ -311,8 +293,7 @@ export class ProductService {
       return { forAll, byProduct, byCategory, byBrand };
     };
 
-    const publicMaps    = buildMaps(publicDiscounts);
-    const wholesaleMaps = buildMaps(wholesaleDiscounts);
+    const publicMaps = buildMaps(publicDiscounts);
 
     const bestDiscount = (maps: ReturnType<typeof buildMaps>, productId: string, categoryId: string, brandId: string, basePrice: number) => {
       const applicable = [
@@ -348,26 +329,16 @@ export class ProductService {
       const retail = bestDiscount(publicMaps, productId, categoryId, brandId, product.minPrice ?? 0);
       product.discountPercentage = retail.pct;
       product.finalPrice         = retail.finalPrice;
-
-      // Wholesale base: use minWholesalePrice if set, fall back to minPrice
-      const wholesaleBase = product.minWholesalePrice ?? product.minPrice ?? 0;
-      const wholesale = bestDiscount(wholesaleMaps, productId, categoryId, brandId, wholesaleBase);
-      product.wholesaleDiscountPercentage = wholesale.pct;
-      product.wholesaleFinalPrice         = wholesale.finalPrice;
     }
   }
 
-  async findBrandsForFilter(category?: string, hasWholesalePrice = false): Promise<BrandDocument[]> {
+  async findBrandsForFilter(category?: string): Promise<BrandDocument[]> {
     const filter: Record<string, any> = { status: ProductStatus.ACTIVE };
 
     if (category) {
       const catIds = await this.resolveCategoryIds(category);
       if (!catIds?.length) return [];
       filter.category = { $in: catIds };
-    }
-
-    if (hasWholesalePrice) {
-      filter['variants'] = { $elemMatch: { wholesalePrice: { $gt: 0 }, isActive: { $ne: false } } };
     }
 
     const brandIds = await this.productModel.distinct('brand', filter);
@@ -408,38 +379,26 @@ export class ProductService {
       colorMap = Object.fromEntries(colors.map((c) => [c.name, c.hex]));
     }
 
-    // Attach time-discount pricing — compute both retail and wholesale in parallel
+    // Attach time-discount pricing
     const categoryId = (product.category as any)?._id?.toString() ?? (product.category as any)?.toString() ?? '';
     const brandId    = (product.brand as any)?.toString() ?? '';
     const pid        = (product._id as any).toString();
 
-    const [priceInfo, wholesalePriceInfo] = await Promise.all([
-      this.discountsService.calculateDiscountedPrice({
-        originalPrice: product.minPrice,
-        productId: pid,
-        categoryId,
-        brandId,
-      }),
-      this.discountsService.calculateDiscountedPrice({
-        originalPrice:  product.minPrice,
-        wholesalePrice: (product as any).minWholesalePrice ?? undefined,
-        productId:      pid,
-        categoryId,
-        brandId,
-        customerGroup:  'wholesale',
-      }),
-    ]);
+    const priceInfo = await this.discountsService.calculateDiscountedPrice({
+      originalPrice: product.minPrice,
+      productId: pid,
+      categoryId,
+      brandId,
+    });
 
     return {
       ...product,
       colorMap,
-      finalPrice:                   priceInfo.finalPrice,
-      discountAmount:               priceInfo.discountAmount,
-      discountPercentage:           priceInfo.discountPercentage,
-      activeDiscountId:             priceInfo.activeDiscount?.id ?? null,
-      activeDiscount:               priceInfo.activeDiscount,
-      wholesaleDiscountPercentage:  wholesalePriceInfo.discountPercentage,
-      wholesaleDiscountAmount:      wholesalePriceInfo.discountAmount,
+      finalPrice:         priceInfo.finalPrice,
+      discountAmount:     priceInfo.discountAmount,
+      discountPercentage: priceInfo.discountPercentage,
+      activeDiscountId:   priceInfo.activeDiscount?.id ?? null,
+      activeDiscount:     priceInfo.activeDiscount,
     };
   }
 

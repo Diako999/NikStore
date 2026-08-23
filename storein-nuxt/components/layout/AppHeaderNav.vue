@@ -10,11 +10,9 @@
         :data-testid="`quick-${link.name}`"
         :class="[
           'flex items-center gap-1.5 px-3.5 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-all duration-200',
-          link.name === 'wholesale'
-            ? 'bg-amber-500 text-white shadow-sm hover:bg-amber-600 hover:shadow-md'
-            : isLinkActive(link)
-              ? 'bg-brand text-white shadow-sm'
-              : 'text-text-secondary hover:text-brand hover:bg-brand/10',
+          isLinkActive(link)
+            ? 'bg-brand text-white shadow-sm'
+            : 'text-text-secondary hover:text-brand hover:bg-brand/10',
         ]"
       >
         {{ link.label }}
@@ -107,15 +105,13 @@ const hoveredId = ref(null)
 let closeTimer  = null
 
 const quickLinks = [
-  { name: 'home',      label: 'صفحه اصلی',  to: '/' },
-  { name: 'blog',      label: 'بلاگ',        to: '/blog' },
-  { name: 'wholesale', label: 'فروش عمده',   to: '/wholesale' },
+  { name: 'home', label: 'صفحه اصلی', to: '/' },
+  { name: 'blog', label: 'بلاگ',      to: '/blog' },
 ]
 
 function isLinkActive(link) {
-  if (link.name === 'home')      return route.path === '/'
-  if (link.name === 'blog')      return route.name === 'blog' || route.name === 'blog-detail'
-  if (link.name === 'wholesale') return route.path === '/wholesale'
+  if (link.name === 'home') return route.path === '/'
+  if (link.name === 'blog') return route.name === 'blog' || route.name === 'blog-detail'
   if (link.to?.params?.slug) return route.params?.slug === link.to.params.slug
   return false
 }

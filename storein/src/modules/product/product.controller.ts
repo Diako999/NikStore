@@ -25,11 +25,8 @@ export class ProductController {
 
   @Public()
   @Get('brands')
-  findBrandsForFilter(
-    @Query('category') category?: string,
-    @Query('hasWholesalePrice') hasWholesalePrice?: string,
-  ) {
-    return this.productService.findBrandsForFilter(category, hasWholesalePrice === 'true');
+  findBrandsForFilter(@Query('category') category?: string) {
+    return this.productService.findBrandsForFilter(category);
   }
 
   @Public()

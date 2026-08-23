@@ -368,7 +368,7 @@ const form = reactive({
   categoryId:  '',
   brandId:     '',
   images:      [],
-  variants:    [{ sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {}, wholesalePrice: null, wholesaleMinQty: 10 }],
+  variants:    [{ sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {} }],
   tags:        [],
   status:      'active',
   discountPct: 0,
@@ -551,8 +551,6 @@ function buildDto(statusOverride) {
       comparePrice:    Number(v.comparePrice) > 0 ? Number(v.comparePrice) : 0,
       costPrice:       Number(v.costPrice) > 0 ? Number(v.costPrice) : null,
       stock:           Number(v.stock),
-      wholesalePrice:  v.wholesalePrice > 0 ? Number(v.wholesalePrice) : null,
-      wholesaleMinQty: Number(v.wholesaleMinQty) > 0 ? Number(v.wholesaleMinQty) : 10,
       images:          Array.isArray(v.images) ? v.images.filter(Boolean) : [],
       attributes:   Object.entries(v.attributes || {})
         .filter(([k, val]) => k && val)
@@ -646,14 +644,12 @@ function fillForm(p) {
         comparePrice:    v.comparePrice    ?? 0,
         costPrice:       v.costPrice       ?? null,
         stock:           v.stock           ?? 0,
-        wholesalePrice:  v.wholesalePrice  ?? null,
-        wholesaleMinQty: v.wholesaleMinQty ?? 10,
         images:          v.images          ?? [],
         attributes:   Array.isArray(v.attributes)
           ? Object.fromEntries(v.attributes.map(a => [a.key, a.value]))
           : (v.attributes ?? {}),
       }))
-    : [{ sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {}, wholesalePrice: null, wholesaleMinQty: 10 }]
+    : [{ sku: '', price: 0, comparePrice: 0, costPrice: null, stock: 0, attributes: {} }]
 
   // nextTick runs after all queued watchers — reset flags then
   nextTick(() => {

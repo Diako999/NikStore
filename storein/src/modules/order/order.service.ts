@@ -44,10 +44,7 @@ export class OrderService {
     if (!cart.items.length)
       throw new BadRequestException('سبد خرید خالی است');
 
-    const isWholesaleOrder = dto.orderType === 'wholesale';
-    const itemsToOrder = isWholesaleOrder
-      ? cart.items.filter(i => (i as any).isWholesalePrice)
-      : cart.items.filter(i => !(i as any).isWholesalePrice);
+    const itemsToOrder = cart.items;
 
     if (!itemsToOrder.length)
       throw new BadRequestException('هیچ آیتم مناسبی برای این نوع سفارش یافت نشد');
@@ -114,12 +111,8 @@ export class OrderService {
 
     const total = Math.max(0, subtotal - discount);
 
-    const isWholesaleUser = (user as any).role === 'wholesale';
-
     const order = await this.orderModel.create({
       userId:      new Types.ObjectId(userId),
-      isWholesale: isWholesaleUser,
-      orderType:   dto.orderType ?? 'retail',
       orderNumber: this.genOrderNumber(),
       items: itemsToOrder.map((i) => ({
         productId:    new Types.ObjectId(i.productId),
@@ -187,9 +180,6 @@ export class OrderService {
     };
 
     this.gateway.emitNewOrder(orderPayload);
-    if (isWholesaleUser) {
-      this.gateway.emitNewWholesaleOrder(orderPayload);
-    }
 
     return order.toObject();
   }

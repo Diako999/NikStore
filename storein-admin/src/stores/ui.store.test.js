@@ -91,29 +91,6 @@ describe('useUiStore', () => {
     })
   })
 
-  describe('wholesale counter', () => {
-    it('setPendingWholesaleCount updates the count', async () => {
-      const store = await getStore()
-      expect(store.pendingWholesaleCount).toBe(0)
-      store.setPendingWholesaleCount(7)
-      expect(store.pendingWholesaleCount).toBe(7)
-    })
-
-    it('incrementPendingWholesale increases by 1', async () => {
-      const store = await getStore()
-      store.setPendingWholesaleCount(3)
-      store.incrementPendingWholesale()
-      expect(store.pendingWholesaleCount).toBe(4)
-    })
-
-    it('setPendingWholesaleCount resets to 0', async () => {
-      const store = await getStore()
-      store.setPendingWholesaleCount(10)
-      store.setPendingWholesaleCount(0)
-      expect(store.pendingWholesaleCount).toBe(0)
-    })
-  })
-
   describe('dark mode', () => {
     it('toggleDark flips isDark and persists to localStorage', async () => {
       localStorage.setItem('theme', 'light')

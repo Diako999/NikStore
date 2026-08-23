@@ -5,7 +5,7 @@
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-xl font-bold text-text-primary">تخفیف‌ها</h1>
-        <p class="text-xs text-text-disabled mt-1">مدیریت تخفیف‌های زمان‌دار و عمده‌فروشی</p>
+        <p class="text-xs text-text-disabled mt-1">مدیریت تخفیف‌های زمان‌دار و کدهای تخفیف</p>
       </div>
       <RouterLink to="/discounts/create"
         class="add-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all">
@@ -62,11 +62,7 @@
 
             <!-- Kind badge -->
             <td class="td">
-              <span v-if="resolveKind(d) === 'wholesale'"
-                    class="kind-badge kind-badge--wholesale">🔵 عمده‌فروشی</span>
-              <span v-else-if="resolveKind(d) === 'retail'"
-                    class="kind-badge kind-badge--retail">🟣 تک‌فروشی</span>
-              <span v-else-if="resolveKind(d) === 'timed'"
+              <span v-if="resolveKind(d) === 'timed'"
                     class="kind-badge kind-badge--timed">🔴 زمان‌دار</span>
               <span v-else
                     class="kind-badge kind-badge--all">🟢 همه</span>
@@ -198,7 +194,6 @@ const deleteTarget = ref(null)
 const tabs = [
   { value: '',             label: 'همه' },
   { value: 'time_limited', label: '🔴 زمان‌دار' },
-  { value: 'wholesale',    label: '🔵 عمده‌فروشی' },
   { value: 'coupon',       label: '🏷️ کوپن' },
 ]
 
@@ -261,12 +256,9 @@ async function doDelete() {
   }
 }
 
-// Determines badge type from new fields (customerGroup/startDate) with
-// backward-compat fallback to the deprecated `kind` field.
+// Determines badge type from startDate with backward-compat fallback to the
+// deprecated `kind` field.
 function resolveKind(d) {
-  if (d.customerGroup === 'wholesale' || d.customerGroup === 'vip') return 'wholesale'
-  if (d.customerGroup === 'retail') return 'retail'
-  if (d.kind === 'wholesale') return 'wholesale'
   if (d.kind === 'time_limited' || d.startDate) return 'timed'
   return 'all'
 }
@@ -274,7 +266,7 @@ function resolveKind(d) {
 function statusClass(d) {
   if (!d.isActive) return 'status-badge--off'
   const now = Date.now()
-  if (d.code || d.customerGroup) return 'status-badge--active'
+  if (d.code) return 'status-badge--active'
   if (!d.startDate || !d.endDate) return 'status-badge--active'
   const start = new Date(d.startDate).getTime()
   const end   = new Date(d.endDate).getTime()
@@ -286,7 +278,7 @@ function statusClass(d) {
 function statusLabel(d) {
   if (!d.isActive) return '⚫ غیرفعال'
   const now = Date.now()
-  if (d.code || d.customerGroup) return '🟢 فعال'
+  if (d.code) return '🟢 فعال'
   if (!d.startDate || !d.endDate) return '🟢 فعال'
   const start = new Date(d.startDate).getTime()
   const end   = new Date(d.endDate).getTime()
@@ -317,10 +309,8 @@ onMounted(load)
 .table-row:hover { background: rgba(27,79,138,0.03); }
 
 .kind-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
-.kind-badge--timed     { background: rgba(239,68,68,0.1);    color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
-.kind-badge--wholesale { background: rgba(59,130,246,0.1);   color: #3b82f6; border: 1px solid rgba(59,130,246,0.2); }
-.kind-badge--retail    { background: rgba(139,92,246,0.1);   color: #7c3aed; border: 1px solid rgba(139,92,246,0.2); }
-.kind-badge--all       { background: rgba(16,185,129,0.1);   color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
+.kind-badge--timed { background: rgba(239,68,68,0.1);  color: #ef4444; border: 1px solid rgba(239,68,68,0.2); }
+.kind-badge--all   { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.2); }
 
 .status-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; }
 .status-badge--active    { background: rgba(16,185,129,0.1);  color: #10b981; border: 1px solid rgba(16,185,129,0.2); }

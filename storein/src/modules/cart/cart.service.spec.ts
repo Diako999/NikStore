@@ -4,7 +4,6 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { CartService } from './cart.service';
 import { Product } from '../product/entities/product.schema';
-import { User } from '../user/entities/user.schema';
 import { DiscountsService } from '../../discounts/discounts.service';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import type { Cart } from './cart.interface';
@@ -13,27 +12,23 @@ const userId = 'user_001';
 const prodId = new Types.ObjectId().toString();
 const varId  = new Types.ObjectId().toString();
 
-const RETAIL_PRICE    = 5_000_000;
-const WHOLESALE_PRICE = 4_500_000;
-const DISCOUNTED_PRICE = 4_050_000;   // 10% off wholesale
+const RETAIL_PRICE = 5_000_000;
 
 const mockVariant = (overrides = {}) => ({
-  _id:              { toString: () => varId },
-  sku:              'SKU-1',
-  price:            RETAIL_PRICE,
-  comparePrice:     0,
-  wholesalePrice:   null,
-  wholesaleMinQty:  null,
-  stock:            20,
-  isActive:         true,
-  attributes:       [{ key: 'رنگ', value: 'مشکی' }],
+  _id:          { toString: () => varId },
+  sku:          'SKU-1',
+  price:        RETAIL_PRICE,
+  comparePrice: 0,
+  stock:        20,
+  isActive:     true,
+  attributes:   [{ key: 'رنگ', value: 'مشکی' }],
   ...overrides,
 });
 
 const mockProduct = (variantOverrides = {}) => ({
   _id:       { toString: () => prodId },
-  name:      'عینک آفتابی',
-  slug:      'eyeglass-001',
+  name:      'پیراهن مردانه',
+  slug:      'shirt-001',
   thumbnail: null,
   category:  new Types.ObjectId(),
   brand:     new Types.ObjectId(),
@@ -44,19 +39,17 @@ const cartWithItem = (): Cart => ({
   userId,
   updatedAt: '',
   items: [{
-    productId:        prodId,
-    variantId:        varId,
-    sku:              'SKU-1',
-    name:             'عینک آفتابی',
-    slug:             'eyeglass-001',
-    thumbnail:        null,
-    price:            RETAIL_PRICE,
-    comparePrice:     6_000_000,
-    quantity:         2,
-    stock:            20,
-    attributes:       [],
-    isWholesalePrice: false,
-    wholesaleMinQty:  null,
+    productId:    prodId,
+    variantId:    varId,
+    sku:          'SKU-1',
+    name:         'پیراهن مردانه',
+    slug:         'shirt-001',
+    thumbnail:    null,
+    price:        RETAIL_PRICE,
+    comparePrice: 6_000_000,
+    quantity:     2,
+    stock:        20,
+    attributes:   [],
   }],
 });
 
@@ -81,21 +74,12 @@ describe('CartService', () => {
   let service: CartService;
   let redis: jest.Mocked<any>;
   let productModel: any;
-  let userModel: any;
   let discountsService: jest.Mocked<Pick<DiscountsService, 'calculateDiscountedPrice'>>;
 
   const mockProductFind = (overrides = {}) => {
     productModel.findById.mockReturnValue({
       select: jest.fn().mockReturnValue({
         lean: jest.fn().mockResolvedValue(mockProduct(overrides)),
-      }),
-    });
-  };
-
-  const mockUserFind = (role = 'customer') => {
-    userModel.findById.mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        lean: jest.fn().mockResolvedValue({ role }),
       }),
     });
   };
@@ -110,9 +94,6 @@ describe('CartService', () => {
       findById: jest.fn(),
       find:     jest.fn(),
     };
-    userModel = {
-      findById: jest.fn(),
-    };
     discountsService = {
       calculateDiscountedPrice: jest.fn().mockResolvedValue(noDiscount()),
     } as any;
@@ -121,7 +102,6 @@ describe('CartService', () => {
       providers: [
         CartService,
         { provide: getModelToken(Product.name),  useValue: productModel },
-        { provide: getModelToken(User.name),     useValue: userModel },
         { provide: REDIS_CLIENT,                 useValue: redis },
         { provide: DiscountsService,             useValue: discountsService },
       ],
@@ -172,12 +152,11 @@ describe('CartService', () => {
     });
   });
 
-  // ─── addItem — retail ────────────────────────────────────────────
+  // ─── addItem ──────────────────────────────────────────────────────
 
-  describe('addItem — retail user', () => {
+  describe('addItem', () => {
     beforeEach(() => {
       mockProductFind();
-      mockUserFind('customer');
     });
 
     it('adds new item to empty cart', async () => {
@@ -185,7 +164,6 @@ describe('CartService', () => {
       expect(res.items).toHaveLength(1);
       expect(res.items[0].quantity).toBe(2);
       expect(res.items[0].price).toBe(RETAIL_PRICE);
-      expect(res.items[0].isWholesalePrice).toBe(false);
       expect(redis.setex).toHaveBeenCalled();
     });
 
@@ -210,87 +188,68 @@ describe('CartService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('calls calculateDiscountedPrice with customerGroup retail for retail users', async () => {
+    it('calls calculateDiscountedPrice with the variant price', async () => {
       await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 1 });
       expect(discountsService.calculateDiscountedPrice).toHaveBeenCalledWith(
         expect.objectContaining({
-          customerGroup: 'retail',
           originalPrice: RETAIL_PRICE,
+          productId:     prodId,
         }),
       );
     });
   });
 
-  // ─── addItem — wholesale discount ───────────────────────────────
+  // ─── addItem — system discount ───────────────────────────────────
 
-  describe('addItem — wholesale user with system discount', () => {
+  describe('addItem — with system discount', () => {
     beforeEach(() => {
-      mockProductFind({
-        wholesalePrice:  WHOLESALE_PRICE,
-        wholesaleMinQty: 10,
-        stock:           50,
-      });
-      mockUserFind('wholesale');
+      mockProductFind();
     });
 
-    it('applies system discount: price becomes discounted wholesale, comparePrice becomes original wholesale, retailPrice is stored', async () => {
+    it('applies system discount: price becomes discounted, comparePrice becomes original price', async () => {
       discountsService.calculateDiscountedPrice.mockResolvedValue(
-        withDiscount(10, WHOLESALE_PRICE),
+        withDiscount(10, RETAIL_PRICE),
       );
 
       const res = await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 10 });
       const item = res.items[0];
+      const expectedPrice = RETAIL_PRICE - Math.floor((RETAIL_PRICE * 10) / 100);
 
-      expect(item.isWholesalePrice).toBe(true);
-      expect(item.price).toBe(DISCOUNTED_PRICE);             // 4,050,000
-      expect(item.comparePrice).toBe(WHOLESALE_PRICE);       // 4,500,000 → strikethrough (middle)
-      expect(item.retailPrice).toBe(RETAIL_PRICE);           // 5,000,000 → strikethrough (top)
+      expect(item.price).toBe(expectedPrice);
+      expect(item.comparePrice).toBe(RETAIL_PRICE); // original price → strikethrough
     });
 
     it('savings equals discount amount × quantity', async () => {
       discountsService.calculateDiscountedPrice.mockResolvedValue(
-        withDiscount(10, WHOLESALE_PRICE),
+        withDiscount(10, RETAIL_PRICE),
       );
 
       const res = await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 10 });
-      const item = res.items[0];
-      const expectedSavingsPerItem = WHOLESALE_PRICE - DISCOUNTED_PRICE;  // 450,000
+      const discountedPrice = RETAIL_PRICE - Math.floor((RETAIL_PRICE * 10) / 100);
+      const expectedSavingsPerItem = RETAIL_PRICE - discountedPrice;
 
-      expect(res.savings).toBe(expectedSavingsPerItem * 10);  // 4,500,000
+      expect(res.savings).toBe(expectedSavingsPerItem * 10);
     });
 
-    it('does NOT set retailPrice when discount amount is 0', async () => {
+    it('leaves price/comparePrice unchanged when discount amount is 0', async () => {
       discountsService.calculateDiscountedPrice.mockResolvedValue(noDiscount());
 
       const res = await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 10 });
       const item = res.items[0];
 
-      expect(item.price).toBe(WHOLESALE_PRICE);    // unchanged wholesale
-      expect(item.comparePrice).toBe(RETAIL_PRICE); // comparePrice = retail (from resolvePrice)
-      expect(item.retailPrice).toBeUndefined();
+      expect(item.price).toBe(RETAIL_PRICE);
+      expect(item.comparePrice).toBe(0); // variant.comparePrice (falsy passed through as-is)
     });
 
-    it('passes correct params to calculateDiscountedPrice', async () => {
-      await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 10 });
-
-      expect(discountsService.calculateDiscountedPrice).toHaveBeenCalledWith(
-        expect.objectContaining({
-          originalPrice:  RETAIL_PRICE,
-          wholesalePrice: WHOLESALE_PRICE,
-          productId:      prodId,
-          customerGroup:  'wholesale',
-        }),
-      );
-    });
-
-    it('total price reflects discounted wholesale price', async () => {
+    it('total price reflects discounted price', async () => {
       discountsService.calculateDiscountedPrice.mockResolvedValue(
-        withDiscount(10, WHOLESALE_PRICE),
+        withDiscount(10, RETAIL_PRICE),
       );
 
       const res = await service.addItem(userId, { productId: prodId, variantId: varId, quantity: 10 });
+      const discountedPrice = RETAIL_PRICE - Math.floor((RETAIL_PRICE * 10) / 100);
 
-      expect(res.subtotal).toBe(DISCOUNTED_PRICE * 10);  // 40,500,000
+      expect(res.subtotal).toBe(discountedPrice * 10);
     });
   });
 

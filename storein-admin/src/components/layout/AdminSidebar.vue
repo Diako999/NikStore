@@ -212,7 +212,6 @@ const ICONS = {
   theme:         ['M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01'],
   password:      ['M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z'],
   notifications: ['M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'],
-  wholesale:     ['M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4'],
 }
 function iconPaths(name) { return ICONS[name] ?? ['M12 4v16m-8-8h16'] }
 
@@ -248,8 +247,6 @@ const navGroups = computed(() => {
       label: 'مدیریت',
       items: [
         { name: 'users',              perm: 'users',   icon: 'users',     label: 'کاربران' },
-        { name: 'wholesale-requests', perm: 'users',   icon: 'wholesale', label: 'درخواست‌های عمده' },
-        { name: 'wholesale-orders',   perm: 'orders',  icon: 'wholesale', label: 'سفارشات عمده' },
         { name: 'reviews',            perm: 'reviews', icon: 'reviews',   label: 'نظرات' },
         ...(auth.isAdmin ? [
           { name: 'popups',             perm: null, icon: 'popups',        label: 'پاپ‌آپ سایت' },

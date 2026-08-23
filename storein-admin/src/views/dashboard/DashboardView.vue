@@ -37,8 +37,6 @@
     <QuickActions
       :pending-orders="ui.pendingOrdersCount"
       :pending-reviews="ui.pendingReviewsCount"
-      :pending-wholesale="ui.pendingWholesaleCount"
-      :pending-wholesale-orders="ui.pendingWholesaleOrderCount"
     />
 
     <!-- ③ Stat cards -->
@@ -97,16 +95,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore }       from '@/stores/auth.store'
 import { useUiStore }         from '@/stores/ui.store'
 import { dashboardService }   from '@/services/dashboard.service'
 import { reviewService }      from '@/services/review.service'
-import { wholesaleService }   from '@/services/wholesale.service'
 import { formatPrice, formatNumber } from '@/utils/formatters'
-import { logger }             from '@/utils/logger'
-
-const CTX = 'DashboardView'
 
 import StatCard          from './components/StatCard.vue'
 import RevenueChart      from './components/RevenueChart.vue'
@@ -174,30 +168,12 @@ async function loadPendingReviews() {
   } catch { /* non-critical */ }
 }
 
-async function loadPendingWholesale() {
-  const count = await wholesaleService.getPendingCount()
-  const prev  = ui.pendingWholesaleCount
-  ui.setPendingWholesaleCount(count)
-  if (count > prev) {
-    logger.info('Wholesale pending count increased', { prev, count }, CTX)
-  }
-}
-
-async function loadPendingWholesaleOrders() {
-  try {
-    const count = await wholesaleService.getWholesaleOrdersCount()
-    ui.setPendingWholesaleOrderCount(count)
-  } catch { /* non-critical */ }
-}
-
 async function loadAll() {
   loading.value = true
   try {
     await Promise.allSettled([
       loadStats(),
       loadPendingReviews(),
-      loadPendingWholesale(),
-      loadPendingWholesaleOrders(),
     ])
   } catch {
     ui.addToast('خطا در بارگذاری داشبورد', 'error')
@@ -206,20 +182,7 @@ async function loadAll() {
   }
 }
 
-// Poll wholesale counts every 30 s for real-time badge update
-let _wholesaleTimer = null
-
 onMounted(() => {
   loadAll()
-  _wholesaleTimer = setInterval(() => {
-    loadPendingWholesale()
-    loadPendingWholesaleOrders()
-  }, 30_000)
-  logger.debug('Wholesale polling started (30s)', {}, CTX)
-})
-
-onUnmounted(() => {
-  clearInterval(_wholesaleTimer)
-  logger.debug('Wholesale polling stopped', {}, CTX)
 })
 </script>

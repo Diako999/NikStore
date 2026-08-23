@@ -38,12 +38,6 @@ export class CreateVariantDto {
   @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
   costPrice?: number | null;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
-  wholesalePrice?: number | null;
-
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
-  wholesaleMinQty?: number;
-
   @IsOptional() @IsArray() @IsString({ each: true })
   images?: string[];
 }

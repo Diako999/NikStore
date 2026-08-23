@@ -119,49 +119,6 @@
         </div>
       </div>
 
-      <!-- ── Section: مخاطب تخفیف ── -->
-      <div class="modal-section">
-        <div class="section-head">
-          <span class="section-icon">👥</span>
-          <span class="section-label">مخاطب تخفیف</span>
-        </div>
-        <div class="seg-grid">
-          <label class="seg-card" :class="{ 'seg-card--on': form.customerGroup === '' }">
-            <input type="radio" v-model="form.customerGroup" value="" class="sr-only"/>
-            <div class="seg-icon seg-icon--green">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 00-3-3.87"/>
-                <path d="M16 3.13a4 4 0 010 7.75"/>
-              </svg>
-            </div>
-            <span class="seg-title">همه مشتریان</span>
-          </label>
-          <label class="seg-card" :class="{ 'seg-card--on': form.customerGroup === 'wholesale' }">
-            <input type="radio" v-model="form.customerGroup" value="wholesale" class="sr-only"/>
-            <div class="seg-icon seg-icon--blue">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-            </div>
-            <span class="seg-title">فقط عمده‌فروشی</span>
-          </label>
-          <label class="seg-card" :class="{ 'seg-card--on': form.customerGroup === 'retail' }">
-            <input type="radio" v-model="form.customerGroup" value="retail" class="sr-only"/>
-            <div class="seg-icon seg-icon--purple">
-              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 01-8 0"/>
-              </svg>
-            </div>
-            <span class="seg-title">فقط تک‌فروشی</span>
-          </label>
-        </div>
-      </div>
-
       <!-- ── Section: بازه زمانی ── -->
       <div class="modal-section">
         <div class="section-head">
@@ -223,8 +180,8 @@
                    placeholder="نامحدود" class="field-input" />
           </div>
         </div>
-        <div v-if="form.customerGroup === 'wholesale'" class="form-group">
-          <label class="field-label">حداقل تعداد سفارش (عمده)</label>
+        <div class="form-group">
+          <label class="field-label">حداقل تعداد سفارش</label>
           <input v-model.number="form.minQuantity" type="number" min="1" dir="ltr"
                  placeholder="بدون محدودیت" class="field-input" />
         </div>
@@ -287,7 +244,6 @@ const form = reactive({
   maxDiscountAmount: null, minOrderAmount: null,
   minQuantity: null, maxUsageCount: null,
   startDate: '', endDate: '',
-  customerGroup: '',
   isActive: true,
 })
 const errors = reactive({ code: '', value: '', endDate: '' })
@@ -348,14 +304,12 @@ watch(() => props.modelValue, (open) => {
     form.maxUsageCount     = d.maxUsageCount     ?? null
     form.startDate         = d.startDate ? d.startDate.slice(0, 10) : ''
     form.endDate           = d.endDate   ? d.endDate.slice(0, 10)   : ''
-    form.customerGroup     = d.customerGroup     ?? ''
     form.isActive          = d.isActive  ?? true
   } else {
     form.code = form.description = form.startDate = form.endDate = ''
     form.discountType = 'percentage'
     form.value = null
     form.maxDiscountAmount = form.minOrderAmount = form.minQuantity = form.maxUsageCount = null
-    form.customerGroup = ''
     form.isActive = true
   }
 })
@@ -402,12 +356,11 @@ async function submit() {
       value:             Number(form.value),
       maxDiscountAmount: form.maxDiscountAmount ? Number(form.maxDiscountAmount) : undefined,
       minOrderAmount:    form.minOrderAmount    ? Number(form.minOrderAmount)    : undefined,
-      minQuantity:       form.customerGroup === 'wholesale' ? (form.minQuantity ? Number(form.minQuantity) : undefined) : undefined,
+      minQuantity:       form.minQuantity       ? Number(form.minQuantity)       : undefined,
       maxUsageCount:     form.maxUsageCount     ? Number(form.maxUsageCount)     : undefined,
       targetType:        'all',
       startDate:         form.startDate || undefined,
       endDate:           form.endDate   || undefined,
-      customerGroup:     form.customerGroup || undefined,
       isActive:          form.isActive,
     }
     let result
@@ -639,29 +592,4 @@ html.dark .sw-off { background: #475569; }
 /* ── Footer ── */
 .modal-footer { display: flex; gap: 0.75rem; }
 .footer-btn   { flex: 1; }
-
-/* ── Customer segment cards ── */
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
-.seg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding-bottom: 0.5rem; }
-.seg-card {
-  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
-  padding: 0.65rem 0.4rem; border-radius: 10px; cursor: pointer;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-card); transition: all 0.15s;
-  text-align: center;
-}
-.seg-card:hover { border-color: rgba(27,79,138,0.35); }
-.seg-card--on { border-color: rgba(27,79,138,0.5); background: rgba(27,79,138,0.06); }
-html.dark .seg-card--on { background: rgba(27,79,138,0.12); }
-.seg-icon {
-  width: 34px; height: 34px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.seg-icon--green  { background: rgba(22,163,74,0.12);  color: #16a34a; }
-.seg-icon--blue   { background: rgba(37,99,235,0.12);  color: #2563eb; }
-.seg-icon--purple { background: rgba(139,92,246,0.12); color: #7c3aed; }
-html.dark .seg-icon--green  { background: rgba(22,163,74,0.2); }
-html.dark .seg-icon--blue   { background: rgba(37,99,235,0.2); }
-html.dark .seg-icon--purple { background: rgba(139,92,246,0.2); }
-.seg-title { font-size: 0.72rem; font-weight: 700; color: var(--color-text-primary); line-height: 1.3; }
 </style>
