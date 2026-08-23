@@ -146,8 +146,6 @@ await useAsyncData(
         status:   'active',
         sort:     productStore.filters.sortBy,
         ...(productStore.filters.genders?.length   ? { gender:        productStore.filters.genders.join(',')    } : {}),
-        ...(productStore.filters.frameShapes?.length ? { frameShape:  productStore.filters.frameShapes.join(',') } : {}),
-        ...(productStore.filters.frameMaterials?.length ? { frameMaterial: productStore.filters.frameMaterials.join(',') } : {}),
         ...(productStore.filters.minPrice          ? { minPrice:      productStore.filters.minPrice             } : {}),
         ...(productStore.filters.maxPrice          ? { maxPrice:      productStore.filters.maxPrice             } : {}),
         ...(productStore.filters.inStock           ? { inStock:       true                                      } : {}),

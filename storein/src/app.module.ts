@@ -33,7 +33,6 @@ import { BannerModule }   from './modules/banner/banner.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { BlogModule }     from './modules/blog/blog.module';
 import { PageModule }           from './modules/page/page.module';
-import { FrameAttributeModule } from './modules/frame-attribute/frame-attribute.module';
 import { PopupModule }          from './modules/popup/popup.module';
 
 import { HealthModule }         from './modules/health/health.module';
@@ -109,7 +108,6 @@ import { HttpLoggerMiddleware }  from './common/middleware/http-logger.middlewar
     SettingsModule,
     BlogModule,
     PageModule,
-    FrameAttributeModule,
     PopupModule,
 
     HealthModule,

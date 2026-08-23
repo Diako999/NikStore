@@ -10,7 +10,6 @@ import { Product, ProductDocument, ProductStatus } from './entities/product.sche
 import { Category, CategoryDocument } from '../category/entities/category.schema';
 import { Color, ColorDocument } from '../color/entities/color.schema';
 import { Brand, BrandDocument } from '../brand/entities/brand.schema';
-import { FrameAttribute, FrameAttributeDocument } from '../frame-attribute/entities/frame-attribute.schema';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateVariantDto } from './dto/create-variant.dto';
@@ -27,7 +26,6 @@ export class ProductService {
     @InjectModel(Category.name)  private categoryModel:  Model<CategoryDocument>,
     @InjectModel(Color.name)     private colorModel:     Model<ColorDocument>,
     @InjectModel(Brand.name)           private brandModel:           Model<BrandDocument>,
-    @InjectModel(FrameAttribute.name)  private frameAttributeModel:  Model<FrameAttributeDocument>,
     private readonly logger: AppLoggerService,
     private readonly discountsService: DiscountsService,
     private readonly uploadService: UploadService,
@@ -102,7 +100,7 @@ export class ProductService {
     const {
       category, brand, minPrice, maxPrice, inStock,
       sort, page = 1, limit = 20,
-      gender, frameShape, frameMaterial,
+      gender,
       hasDiscount,
     } = query as any;
 
@@ -135,41 +133,6 @@ export class ProductService {
         filter._id = { $exists: false }; // no matching categories → empty result
       }
     }
-
-    // Frame attribute filters — match English value (new products) or Persian label (legacy products).
-    // Labels are looked up dynamically from FrameAttribute collection so new shapes are always covered.
-    const tagConditions: any[] = [];
-    if (frameShape || frameMaterial) {
-      const shapeValues    = frameShape    ? frameShape.split(',').map((s: string) => s.trim()).filter(Boolean)    : [];
-      const materialValues = frameMaterial ? frameMaterial.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
-
-      const allValues = [...shapeValues, ...materialValues];
-      const attrDocs = allValues.length
-        ? await this.frameAttributeModel.find({ value: { $in: allValues } }).select('value label').lean()
-        : [];
-      const labelOf = (v: string) => attrDocs.find(a => a.value === v)?.label;
-
-      this.logger.debug('Frame filter lookup', {
-        shapeValues, materialValues,
-        labels: attrDocs.map(a => `${a.value}→${a.label}`),
-      });
-
-      if (shapeValues.length) {
-        const allShapes = [...new Set([...shapeValues, ...shapeValues.map(labelOf).filter(Boolean)])];
-        tagConditions.push({ $or: [
-          { tags: { $in: allShapes } },
-          { variants: { $elemMatch: { attributes: { $elemMatch: { key: 'شکل فریم', value: { $in: allShapes } } } } } },
-        ]});
-      }
-      if (materialValues.length) {
-        const allMaterials = [...new Set([...materialValues, ...materialValues.map(labelOf).filter(Boolean)])];
-        tagConditions.push({ $or: [
-          { tags: { $in: allMaterials } },
-          { variants: { $elemMatch: { attributes: { $elemMatch: { key: 'جنس فریم', value: { $in: allMaterials } } } } } },
-        ]});
-      }
-    }
-    if (tagConditions.length) filter.$and = [...(filter.$and ?? []), ...tagConditions];
 
     // When sorting by discount, only return products that actually have a discount
     if (sort === 'discount') {

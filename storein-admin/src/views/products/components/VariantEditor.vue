@@ -207,96 +207,6 @@
                 </div>
               </template>
 
-              <!-- ── شکل فریم ── -->
-              <template v-else-if="key === 'شکل فریم'">
-                <div class="flex-1 relative" data-attr-picker>
-                  <button type="button" @click.stop="toggleDropdown(idx, key)"
-                    class="field-input w-full flex items-center gap-2 text-sm text-right">
-                    <span v-if="val" class="text-base flex-shrink-0">
-                      {{ shapeIcon(FRAME_SHAPES.find(s => s.value === val || s.label === val)?.value ?? val) }}
-                    </span>
-                    <span :class="['flex-1 text-right truncate', val ? '' : 'text-text-disabled']">
-                      {{ FRAME_SHAPES.find(s => s.value === val || s.label === val)?.label || val || 'انتخاب شکل فریم...' }}
-                    </span>
-                    <svg class="w-4 h-4 text-text-disabled flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-
-                  <div v-if="openDropdown === `${idx}-${key}`"
-                    class="absolute top-full mt-1 right-0 left-0 z-50 bg-card border border-border rounded-xl shadow-lg overflow-y-auto py-1"
-                    @click.stop>
-                    <button v-if="val" type="button" @click="selectValue(idx, key, '')"
-                      class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-error hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-right">
-                      ✕ حذف انتخاب
-                    </button>
-                    <button v-for="shape in FRAME_SHAPES" :key="shape.value"
-                      type="button"
-                      @click="selectValue(idx, key, shape.value)"
-                      :class="[
-                        'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-right',
-                        val === shape.value || val === shape.label
-                          ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-300 font-medium'
-                          : 'text-text-primary hover:bg-slate-100 dark:hover:bg-white/5',
-                      ]">
-                      <span class="text-base w-6 text-center flex-shrink-0">
-                        {{ shape.icon || shapeIcon(shape.value) }}
-                      </span>
-                      <span class="flex-1">{{ shape.label }}</span>
-                      <span v-if="val === shape.value || val === shape.label" class="text-primary dark:text-blue-300 text-xs">✓</span>
-                    </button>
-                    <p v-if="!FRAME_SHAPES.length" class="text-xs text-text-disabled px-3 py-2 text-center">
-                      ابتدا از منوی ویژگی‌های اختصاصی شکل فریم اضافه کنید
-                    </p>
-                  </div>
-                </div>
-              </template>
-
-              <!-- ── جنس فریم ── -->
-              <template v-else-if="key === 'جنس فریم'">
-                <div class="flex-1 relative" data-attr-picker>
-                  <button type="button" @click.stop="toggleDropdown(idx, key)"
-                    class="field-input w-full flex items-center gap-2 text-sm text-right">
-                    <span v-if="val" class="text-base flex-shrink-0">
-                      {{ materialIcon(FRAME_MATERIALS.find(m => m.value === val || m.label === val)?.value ?? val) }}
-                    </span>
-                    <span :class="['flex-1 text-right truncate', val ? '' : 'text-text-disabled']">
-                      {{ FRAME_MATERIALS.find(m => m.value === val || m.label === val)?.label || val || 'انتخاب جنس فریم...' }}
-                    </span>
-                    <svg class="w-4 h-4 text-text-disabled flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                  </button>
-
-                  <div v-if="openDropdown === `${idx}-${key}`"
-                    class="absolute top-full mt-1 right-0 left-0 z-50 bg-card border border-border rounded-xl shadow-lg overflow-y-auto py-1"
-                    @click.stop>
-                    <button v-if="val" type="button" @click="selectValue(idx, key, '')"
-                      class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-error hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-right">
-                      ✕ حذف انتخاب
-                    </button>
-                    <button v-for="mat in FRAME_MATERIALS" :key="mat.value"
-                      type="button"
-                      @click="selectValue(idx, key, mat.value)"
-                      :class="[
-                        'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors text-right',
-                        val === mat.value || val === mat.label
-                          ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-blue-300 font-medium'
-                          : 'text-text-primary hover:bg-slate-100 dark:hover:bg-white/5',
-                      ]">
-                      <span class="text-base w-6 text-center flex-shrink-0">
-                        {{ mat.icon || materialIcon(mat.value) }}
-                      </span>
-                      <span class="flex-1">{{ mat.label }}</span>
-                      <span v-if="val === mat.value || val === mat.label" class="text-primary dark:text-blue-300 text-xs">✓</span>
-                    </button>
-                    <p v-if="!FRAME_MATERIALS.length" class="text-xs text-text-disabled px-3 py-2 text-center">
-                      ابتدا از منوی ویژگی‌های اختصاصی جنس فریم اضافه کنید
-                    </p>
-                  </div>
-                </div>
-              </template>
-
               <!-- ── متن آزاد ── -->
               <template v-else>
                 <input
@@ -354,29 +264,13 @@ import { colorService } from '@/services/color.service'
 import PriceInput from '@/components/ui/PriceInput.vue'
 
 const props = defineProps({
-  modelValue:     { type: Array,  default: () => [] },
-  errors:         { type: Object, default: () => ({}) },
-  frameShapes:    { type: Array,  default: () => [] },
-  frameMaterials: { type: Array,  default: () => [] },
-  productImages:  { type: Array,  default: () => [] },
+  modelValue:    { type: Array,  default: () => [] },
+  errors:        { type: Object, default: () => ({}) },
+  productImages: { type: Array,  default: () => [] },
 })
 const emit = defineEmits(['update:modelValue'])
 
-const presetAttrs = ['رنگ', 'شکل فریم', 'جنس فریم', 'اندازه']
-
-const FRAME_SHAPES    = computed(() => props.frameShapes)
-const FRAME_MATERIALS = computed(() => props.frameMaterials)
-
-// ── Fallback icon maps (when item has no icon field) ───────
-const SHAPE_ICONS = {
-  round: '⭕', square: '🔲', oval: '🥚', rectangular: '▬',
-  aviator: '✈️', 'cat-eye': '😼', octagonal: '🔷', rimless: '💎',
-}
-const MATERIAL_ICONS = {
-  steel: '🔩', titanium: '🪖', acetate: '🎭', tr90: '🧬', carbon: '🖤',
-}
-function shapeIcon(val)    { return SHAPE_ICONS[val]    ?? '🔲' }
-function materialIcon(val) { return MATERIAL_ICONS[val] ?? '⚙️' }
+const presetAttrs = ['رنگ', 'اندازه']
 
 // ── Colors ────────────────────────────────────────────────
 const colors       = ref([])

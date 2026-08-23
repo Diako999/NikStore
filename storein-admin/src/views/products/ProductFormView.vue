@@ -99,8 +99,6 @@
           <VariantEditor
             v-model="form.variants"
             :errors="variantErrors"
-            :frame-shapes="FRAME_SHAPE_OPTS"
-            :frame-materials="FRAME_MATERIAL_OPTS"
             :product-images="productImageUrls"
           />
           <p v-if="errors.variants" class="text-error text-xs mt-2">{{ errors.variants }}</p>
@@ -315,7 +313,6 @@ import { categoryService } from '@/services/category.service'
 import { brandService }    from '@/services/brand.service'
 import { useUiStore }      from '@/stores/ui.store'
 import { formatNumber, formatPrice } from '@/utils/formatters'
-import { frameAttributeService } from '@/services/frame-attribute.service'
 import { translationService }   from '@/services/translation.service'
 import { logger } from '@/utils/logger'
 import { persianToSlug, slugFrom, sanitizeSlugInput, SLUG_RE } from '@/utils/slugUtils'
@@ -357,8 +354,6 @@ const savingDraft     = ref(false)
 const savingPublish   = ref(false)
 const categories      = ref([])
 const brands          = ref([])
-const FRAME_SHAPE_OPTS    = ref([])
-const FRAME_MATERIAL_OPTS = ref([])
 const originalProduct = ref(null)
 
 const form = reactive({
@@ -662,20 +657,14 @@ function fillForm(p) {
 // ── Lifecycle ─────────────────────────────────────
 onMounted(async () => {
   try {
-    const [catRes, brandRes, shapeRes, matRes] = await Promise.allSettled([
+    const [catRes, brandRes] = await Promise.allSettled([
       categoryService.getAll({ limit: 200 }),
       brandService.getAll(),
-      frameAttributeService.getActive('frameShape'),
-      frameAttributeService.getActive('frameMaterial'),
     ])
     if (catRes.status === 'fulfilled')
       categories.value = Array.isArray(catRes.value.data) ? catRes.value.data : (catRes.value.data?.items ?? [])
     if (brandRes.status === 'fulfilled')
       brands.value = Array.isArray(brandRes.value.data) ? brandRes.value.data : []
-    if (shapeRes.status === 'fulfilled')
-      FRAME_SHAPE_OPTS.value = Array.isArray(shapeRes.value.data) ? shapeRes.value.data : []
-    if (matRes.status === 'fulfilled')
-      FRAME_MATERIAL_OPTS.value = Array.isArray(matRes.value.data) ? matRes.value.data : []
   } catch { /* non-critical */ }
 
   if (isEdit.value) {

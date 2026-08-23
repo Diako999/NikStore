@@ -6,7 +6,6 @@ import { Product, ProductSchema } from './entities/product.schema';
 import { Category, CategorySchema } from '../category/entities/category.schema';
 import { Color, ColorSchema } from '../color/entities/color.schema';
 import { Brand, BrandSchema } from '../brand/entities/brand.schema';
-import { FrameAttribute, FrameAttributeSchema } from '../frame-attribute/entities/frame-attribute.schema';
 import { DiscountsModule } from '../../discounts/discounts.module';
 import { UploadModule }   from '../upload/upload.module';
 
@@ -17,7 +16,6 @@ import { UploadModule }   from '../upload/upload.module';
       { name: Category.name,       schema: CategorySchema       },
       { name: Color.name,          schema: ColorSchema          },
       { name: Brand.name,          schema: BrandSchema          },
-      { name: FrameAttribute.name, schema: FrameAttributeSchema },
     ]),
     DiscountsModule,
     UploadModule,

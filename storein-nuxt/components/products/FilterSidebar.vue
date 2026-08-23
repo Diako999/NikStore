@@ -144,78 +144,7 @@
         </div>
       </div>
 
-      <!-- ④ Frame Shape -->
-      <div class="border-b border-surface-border">
-        <button
-          class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
-                 transition-colors duration-150"
-          :aria-expanded="open.frameShape"
-          aria-controls="filter-panel-shape"
-          @click="open.frameShape = !open.frameShape"
-        >
-          شکل فریم
-          <svg :class="['w-4 h-4 transition-transform duration-200', open.frameShape ? 'rotate-180' : '']"
-               fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-          </svg>
-        </button>
-        <div id="filter-panel-shape" v-show="open.frameShape" class="px-4 pb-3">
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              v-for="shape in FRAME_SHAPES"
-              :key="shape.value"
-              @click="toggleArray('frameShapes', shape.value)"
-              :class="[
-                'px-2 py-1.5 rounded-lg border text-xs font-medium transition-all duration-150',
-                filters.frameShapes.includes(shape.value)
-                  ? 'border-brand bg-brand/10 text-brand'
-                  : 'border-surface-border text-text-secondary hover:border-brand/50',
-              ]"
-            >
-              {{ shape.label }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ⑤ Frame Material -->
-      <div class="border-b border-surface-border">
-        <button
-          class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
-                 transition-colors duration-150"
-          :aria-expanded="open.frameMaterial"
-          aria-controls="filter-panel-material"
-          @click="open.frameMaterial = !open.frameMaterial"
-        >
-          جنس فریم
-          <svg :class="['w-4 h-4 transition-transform duration-200', open.frameMaterial ? 'rotate-180' : '']"
-               fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-          </svg>
-        </button>
-        <div id="filter-panel-material" v-show="open.frameMaterial" class="px-4 pb-3 space-y-2">
-          <label
-            v-for="mat in FRAME_MATERIALS"
-            :key="mat.value"
-            class="flex items-center gap-2 cursor-pointer group"
-          >
-            <input
-              type="checkbox"
-              :value="mat.value"
-              :checked="filters.frameMaterials.includes(mat.value)"
-              @change="toggleArray('frameMaterials', mat.value)"
-              class="w-4 h-4 accent-brand rounded"
-            />
-            <span class="text-sm text-text-primary group-hover:text-brand transition-colors">
-              {{ mat.label }}
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <!-- ⑥ Price Range -->
+      <!-- ④ Price Range -->
       <div class="border-b border-surface-border">
         <button
           class="w-full flex items-center justify-between px-4 py-3
@@ -270,7 +199,7 @@
         </div>
       </div>
 
-      <!-- ⑦ In Stock only -->
+      <!-- ⑤ In Stock only -->
       <div class="px-4 py-3">
         <label class="flex items-center gap-2 cursor-pointer">
           <input
@@ -288,9 +217,8 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useCategoryStore } from '~/stores/category.store'
-import { useFrameAttributeStore } from '~/stores/frame-attribute.store'
 import { GENDER_OPTIONS } from '~/utils/constants'
 import { formatNumber } from '~/utils/formatters'
 
@@ -300,21 +228,13 @@ const props = defineProps({
 })
 const emit = defineEmits(['change'])
 
-const categoryStore        = useCategoryStore()
-const frameAttributeStore  = useFrameAttributeStore()
-
-const FRAME_SHAPES    = computed(() => frameAttributeStore.frameShapes)
-const FRAME_MATERIALS = computed(() => frameAttributeStore.frameMaterials)
-
-onMounted(() => frameAttributeStore.fetch())
+const categoryStore = useCategoryStore()
 
 const open = reactive({
-  category:      true,
-  brand:         true,
-  gender:        true,
-  frameShape:    false,
-  frameMaterial: false,
-  price:         true,
+  category: true,
+  brand:    true,
+  gender:   true,
+  price:    true,
 })
 
 const priceError = ref('')
@@ -328,8 +248,6 @@ const activeCount = computed(() => {
   if (props.filters.category)               count++
   if (props.filters.brand)                  count++
   if (props.filters.genders?.length)        count++
-  if (props.filters.frameShapes?.length)    count++
-  if (props.filters.frameMaterials?.length) count++
   if (props.filters.minPrice)               count++
   if (props.filters.maxPrice)               count++
   if (props.filters.inStock)                count++
@@ -369,14 +287,12 @@ function onPriceInput(type, event) {
 }
 
 function clearAll() {
-  props.filters.category       = null
-  props.filters.brand          = null
-  props.filters.genders        = []
-  props.filters.frameShapes    = []
-  props.filters.frameMaterials = []
-  props.filters.minPrice       = null
-  props.filters.maxPrice       = null
-  props.filters.inStock        = false
+  props.filters.category = null
+  props.filters.brand    = null
+  props.filters.genders  = []
+  props.filters.minPrice = null
+  props.filters.maxPrice = null
+  props.filters.inStock  = false
   emit('change')
 }
 </script>

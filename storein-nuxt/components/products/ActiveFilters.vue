@@ -42,7 +42,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useFrameAttributeStore } from '~/stores/frame-attribute.store'
 import { GENDER_OPTIONS, EYEWEAR_CATEGORIES } from '~/utils/constants'
 import { formatNumber } from '~/utils/formatters'
 
@@ -50,8 +49,6 @@ const props = defineProps({
   filters: { type: Object, required: true },
 })
 defineEmits(['remove', 'clear-all'])
-
-const frameAttributeStore = useFrameAttributeStore()
 
 const activeChips = computed(() => {
   const chips = []
@@ -67,18 +64,6 @@ const activeChips = computed(() => {
   for (const v of (f.genders || [])) {
     const opt = GENDER_OPTIONS.find(o => o.value === v)
     chips.push({ key: 'genders', value: v, label: opt?.label || v })
-  }
-
-  // Frame shapes
-  for (const v of (f.frameShapes || [])) {
-    const opt = frameAttributeStore.frameShapes.find(o => o.value === v)
-    chips.push({ key: 'frameShapes', value: v, label: opt?.label || v })
-  }
-
-  // Frame materials
-  for (const v of (f.frameMaterials || [])) {
-    const opt = frameAttributeStore.frameMaterials.find(o => o.value === v)
-    chips.push({ key: 'frameMaterials', value: v, label: opt?.label || v })
   }
 
   // Price range

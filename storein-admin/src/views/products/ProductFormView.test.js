@@ -11,9 +11,6 @@ vi.mock('@/services/category.service', () => ({
 vi.mock('@/services/brand.service', () => ({
   brandService: { getAll: vi.fn().mockResolvedValue({ data: [] }) },
 }))
-vi.mock('@/services/frame-attribute.service', () => ({
-  frameAttributeService: { getActive: vi.fn().mockResolvedValue({ data: [] }) },
-}))
 vi.mock('@/services/translation.service', () => ({
   translationService: { toEnglish: vi.fn().mockResolvedValue('prescription glasses') },
 }))
@@ -51,7 +48,7 @@ vi.mock('./components/ImageUploader.vue', () => ({
   default: { name: 'ImageUploader', props: ['modelValue', 'maxImages'], emits: ['update:modelValue'], template: '<div data-stub="ImageUploader" />' },
 }))
 vi.mock('./components/VariantEditor.vue', () => ({
-  default: { name: 'VariantEditor', props: ['modelValue', 'errors', 'frameShapes', 'frameMaterials'], emits: ['update:modelValue'], template: '<div data-stub="VariantEditor" />' },
+  default: { name: 'VariantEditor', props: ['modelValue', 'errors'], emits: ['update:modelValue'], template: '<div data-stub="VariantEditor" />' },
 }))
 vi.mock('./components/TagInput.vue', () => ({
   default: { name: 'TagInput', props: ['modelValue'], emits: ['update:modelValue'], template: '<div data-stub="TagInput" />' },
