@@ -28,7 +28,7 @@ bash deploy/deploy.sh --first-run
 ```bash
 apt install certbot python3-certbot-nginx
 cp deploy/nginx-domain.conf /etc/nginx/sites-available/storein
-sed -i 's/storein.ir/YOUR_DOMAIN/g' /etc/nginx/sites-available/storein
+sed -i 's/nikstore.ir/YOUR_DOMAIN/g' /etc/nginx/sites-available/storein
 nginx -t && systemctl reload nginx
 certbot --nginx -d YOUR_DOMAIN -d www.YOUR_DOMAIN
 ```
@@ -36,7 +36,7 @@ certbot --nginx -d YOUR_DOMAIN -d www.YOUR_DOMAIN
 ## دستورات مفید
 ```bash
 pm2 list                    # وضعیت سرویس‌ها
-pm2 logs storein-backend    # لاگ backend
+pm2 logs nik-backend        # لاگ backend
 pm2 restart all             # ریستارت همه
 bash deploy/deploy.sh       # بروزرسانی
 bash deploy/backup.sh       # بکاپ دستی
