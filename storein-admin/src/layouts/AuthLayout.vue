@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: #060C18;
+  background: #0D0D0D;
   position: relative;
   overflow: hidden;
 }
@@ -28,7 +28,7 @@
   right: -5%;
   width: 650px;
   height: 650px;
-  background: radial-gradient(circle, rgba(27,79,138,0.28) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(198,255,52,0.16) 0%, transparent 70%);
   filter: blur(60px);
 }
 .auth-glow-2 {
@@ -36,7 +36,7 @@
   left: -5%;
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(27,79,138,0.18) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(198,255,52,0.10) 0%, transparent 70%);
   filter: blur(70px);
 }
 .auth-grid {

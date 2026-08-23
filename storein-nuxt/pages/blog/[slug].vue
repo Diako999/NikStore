@@ -117,7 +117,7 @@
                       @click="submitComment"
                       :disabled="commentSubmitting || commentText.trim().length < 2"
                       class="px-5 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95 disabled:opacity-50"
-                      style="background:var(--color-primary);"
+                      style="background:rgb(var(--color-brand-rgb));"
                     >
                       {{ commentSubmitting ? 'در حال ارسال...' : 'ارسال دیدگاه' }}
                     </button>
@@ -163,7 +163,7 @@
                 <div class="flex items-start gap-3">
                   <!-- Avatar -->
                   <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
-                       style="background:var(--color-primary); color:#fff; opacity:0.85;">
+                       style="background:rgb(var(--color-brand-rgb)); color:#fff; opacity:0.85;">
                     {{ commentAuthorInitial(c.author) }}
                   </div>
                   <div class="flex-1 min-w-0">
@@ -355,9 +355,9 @@ function commentAuthorInitial(author) {
 .blog-content p  { margin-bottom: 1rem; color: var(--color-text-primary); }
 .blog-content ul, .blog-content ol { padding-right: 1.5rem; margin-bottom: 1rem; }
 .blog-content li { margin-bottom: 0.5rem; }
-.blog-content a  { color: var(--color-primary, #1B4F8A); text-decoration: underline; }
+.blog-content a  { color: rgb(var(--color-brand-rgb)); text-decoration: underline; }
 .blog-content img { max-width: 100%; height: auto; border-radius: 0.75rem; margin: 1.5rem 0; }
-.blog-content blockquote { border-right: 4px solid var(--color-primary, #1B4F8A); padding-right: 1rem; color: var(--color-text-secondary); font-style: italic; margin: 1.5rem 0; }
+.blog-content blockquote { border-right: 4px solid rgb(var(--color-brand-rgb)); padding-right: 1rem; color: var(--color-text-secondary); font-style: italic; margin: 1.5rem 0; }
 .blog-content code { background: var(--color-bg); border: 1px solid var(--color-border); padding: 0.15em 0.45em; border-radius: 4px; font-size: 0.85em; }
 .blog-content pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1rem 0; }
 .blog-content hr { border-color: var(--color-border); margin: 2rem 0; }

@@ -34,14 +34,14 @@
 
   /* Buttons */
   .btn-brand {
-    @apply bg-brand text-white font-medium px-6 py-3 rounded-xl
+    @apply bg-brand text-[#171717] font-medium px-6 py-3 rounded-xl
            hover:bg-brand-dark transition-colors duration-200
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-outline {
     @apply border border-brand text-brand font-medium px-6 py-3 rounded-xl
-           hover:bg-brand hover:text-white transition-colors duration-200
+           hover:bg-brand hover:text-[#171717] transition-colors duration-200
            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2;
   }
   .btn-ghost {
@@ -91,6 +91,18 @@
 
 /* ── bg-surface — Tailwind hardcodes #F4F6F9, override to respect admin pageBg ── */
 .bg-surface { background-color: var(--color-body-bg, #F4F6F9); }
+
+/* ── Brand is Lime (bright) — text-white on bg-brand is unreadable, force dark text.
+   Compound selector beats the single-class Tailwind utilities on specificity, so this
+   catches every existing `bg-brand ... text-white` pairing sitewide without touching
+   each component. ── */
+.bg-brand.text-white,
+.hover\:bg-brand:hover.hover\:text-white:hover,
+.hover\:bg-brand:hover.text-white,
+.bg-brand.hover\:text-white:hover,
+.focus\:bg-brand:focus.focus\:text-white:focus {
+  color: #171717;
+}
 
 /* ── Dark mode: body + Tailwind static color overrides ───── */
 html.dark body {

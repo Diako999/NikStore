@@ -148,7 +148,7 @@ onUnmounted(() => clearInterval(timerInterval))
 .flash {
   border-radius: 20px;
   overflow: hidden;
-  background: linear-gradient(135deg, #0A2A52 0%, #0F3D73 45%, #1B4F8A 100%);
+  background: linear-gradient(135deg, #171717 0%, #232323 45%, #3A4212 100%);
   position: relative;
 }
 

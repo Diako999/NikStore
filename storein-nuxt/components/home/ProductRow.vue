@@ -67,7 +67,7 @@
               @toggle-wish="wishlistStore.toggle(product._id)"
             />
           </div>
-          <BaseEmpty v-if="products.length === 0" title="محصولی یافت نشد" icon="👓" class="min-w-full" />
+          <BaseEmpty v-if="products.length === 0" title="محصولی یافت نشد" icon="🛍️" class="min-w-full" />
         </template>
       </div>
 
