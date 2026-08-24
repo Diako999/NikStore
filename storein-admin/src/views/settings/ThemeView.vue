@@ -4,7 +4,7 @@
     <!-- Header -->
     <div>
       <h1 class="page-title">تم سایت</h1>
-      <p class="text-text-secondary text-sm mt-0.5">رنگ اصلی، حالت نمایش و رنگ‌بندی بخش‌های مختلف</p>
+      <p class="text-text-secondary text-sm mt-0.5">رنگ اصلی و رنگ‌بندی بخش‌های مختلف سایت</p>
     </div>
 
     <div v-if="loading" class="space-y-4">
@@ -57,64 +57,11 @@
             <div class="flex items-center gap-3">
               <input type="color" v-model="theme.primaryColor"
                 class="w-12 h-10 rounded-lg border border-border cursor-pointer bg-transparent p-0.5" />
-              <AdminInput v-model="theme.primaryColor" dir="ltr" placeholder="#3B82F6" class="flex-1"
-                hint="فرمت hex — مثال: #3B82F6" />
+              <AdminInput v-model="theme.primaryColor" dir="ltr" placeholder="#1A3620" class="flex-1"
+                hint="فرمت hex — مثال: #1A3620" />
             </div>
           </div>
         </Transition>
-
-        <!-- Default mode -->
-        <div class="space-y-3 pt-2 border-t border-border">
-          <p class="text-xs font-bold text-text-disabled uppercase tracking-wider pt-2">حالت پیش‌فرض سایت</p>
-          <p class="text-text-secondary text-sm">
-            بازدیدکنندگانی که تنظیم خاصی ندارند با این حالت وارد سایت می‌شوند.
-          </p>
-          <div class="grid grid-cols-3 gap-3">
-            <button
-              v-for="mode in displayModes"
-              :key="mode.key"
-              type="button"
-              @click="theme.defaultMode = mode.key"
-              :class="[
-                'relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all',
-                theme.defaultMode === mode.key
-                  ? 'border-primary shadow-md scale-105'
-                  : 'border-border hover:border-primary/40',
-              ]"
-            >
-              <div :class="[
-                'w-full h-16 rounded-lg border border-black/10 overflow-hidden relative',
-                mode.key === 'dark' ? 'bg-slate-900' : mode.key === 'light' ? 'bg-white' : 'bg-gradient-to-bl from-white to-slate-900',
-              ]">
-                <div :class="['h-4 w-full flex items-center px-2 gap-1',
-                  mode.key === 'dark' ? 'bg-slate-800' : mode.key === 'light' ? 'bg-slate-100' : 'bg-slate-400/50']">
-                  <div class="w-2 h-2 rounded-full" :style="`background:${activeColor}`"></div>
-                  <div :class="['h-1.5 rounded-full flex-1', mode.key === 'dark' ? 'bg-slate-700' : 'bg-slate-200']"></div>
-                </div>
-                <div class="p-2 space-y-1">
-                  <div :class="['h-1.5 rounded-full w-3/4', mode.key === 'dark' ? 'bg-slate-700' : 'bg-slate-200']"></div>
-                  <div :class="['h-1.5 rounded-full w-1/2', mode.key === 'dark' ? 'bg-slate-700' : 'bg-slate-200']"></div>
-                  <div class="h-4 rounded-md w-1/3 mt-1" :style="`background:${activeColor}; opacity:0.85`"></div>
-                </div>
-                <div v-if="mode.key === 'system'" class="absolute inset-0 flex">
-                  <div class="w-1/2 h-full bg-white/30"></div>
-                  <div class="w-1/2 h-full bg-slate-900/30"></div>
-                </div>
-              </div>
-              <div class="text-center">
-                <p class="text-sm font-semibold text-text-primary">{{ mode.label }}</p>
-                <p class="text-[11px] text-text-disabled mt-0.5">{{ mode.desc }}</p>
-              </div>
-              <div v-if="theme.defaultMode === mode.key"
-                   class="absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center"
-                   :style="`background:${activeColor}`">
-                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- ── پیش‌نمایش ── -->
@@ -148,41 +95,12 @@
 
       <!-- ── رنگ‌بندی بخش‌ها ── -->
       <div class="admin-card space-y-6">
-        <!-- Header + mode toggle -->
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <h3 class="section-title">رنگ‌بندی بخش‌های مختلف سایت</h3>
-            <p class="text-text-secondary text-sm mt-1">
-              رنگ‌ها را جداگانه برای حالت روشن و تیره تنظیم کنید.
-            </p>
-          </div>
-          <!-- Light / Dark tab toggle -->
-          <div class="flex items-center gap-1 bg-surface border border-border p-1 rounded-xl flex-shrink-0">
-            <button
-              type="button"
-              @click="colorMode = 'light'"
-              :class="[
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
-                colorMode === 'light'
-                  ? 'bg-card shadow text-text-primary'
-                  : 'text-text-secondary hover:text-text-primary',
-              ]"
-            >
-              <span>☀️</span> روشن
-            </button>
-            <button
-              type="button"
-              @click="colorMode = 'dark'"
-              :class="[
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
-                colorMode === 'dark'
-                  ? 'bg-slate-700 shadow text-white'
-                  : 'text-text-secondary hover:text-text-primary',
-              ]"
-            >
-              <span>🌙</span> تیره
-            </button>
-          </div>
+        <!-- Header -->
+        <div>
+          <h3 class="section-title">رنگ‌بندی بخش‌های مختلف سایت</h3>
+          <p class="text-text-secondary text-sm mt-1">
+            رنگ پس‌زمینه و متن بخش‌های مختلف سایت را تنظیم کنید.
+          </p>
         </div>
 
         <!-- Navbar -->
@@ -195,7 +113,7 @@
                 <p class="text-xs text-text-secondary">پس‌زمینه نوار بالای سایت اصلی</p>
               </div>
             </div>
-            <button v-if="cur.navbarBg || cur.navbarBorder"
+            <button v-if="theme.navbarBg || theme.navbarBorder"
               @click="resetSection('navbarBg', 'navbarBorder')"
               class="text-xs text-text-secondary hover:text-error px-2 py-1 rounded-lg hover:bg-error/10 transition-colors"
             >↺ پیش‌فرض</button>
@@ -204,43 +122,39 @@
             <div>
               <label class="field-label text-xs">رنگ پس‌زمینه</label>
               <div class="flex items-center gap-2 mt-1">
-                <input type="color" :value="cur.navbarBg || (colorMode === 'dark' ? '#1E293B' : '#FFFFFF')"
-                  @input="e => setCur('navbarBg', e.target.value)"
+                <input type="color" :value="theme.navbarBg || '#FFFFFF'"
+                  @input="e => theme.navbarBg = e.target.value"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-                <input :value="cur.navbarBg" @input="e => setCur('navbarBg', e.target.value)" dir="ltr"
+                <input v-model="theme.navbarBg" dir="ltr"
                   class="field-input flex-1 font-mono text-sm"
-                  :placeholder="colorMode === 'dark' ? '#232323 (خالی = پیش‌فرض)' : '#CDFC8A (خالی = پیش‌فرض)'" />
+                  placeholder="#FFFFFF (خالی = پیش‌فرض)" />
               </div>
             </div>
             <div>
               <label class="field-label text-xs">رنگ خط جداکننده</label>
               <div class="flex items-center gap-2 mt-1">
-                <input type="color" :value="cur.navbarBorder || (colorMode === 'dark' ? '#334155' : '#DDE3EC')"
-                  @input="e => setCur('navbarBorder', e.target.value)"
+                <input type="color" :value="theme.navbarBorder || '#E5E7E0'"
+                  @input="e => theme.navbarBorder = e.target.value"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-                <input :value="cur.navbarBorder" @input="e => setCur('navbarBorder', e.target.value)" dir="ltr"
+                <input v-model="theme.navbarBorder" dir="ltr"
                   class="field-input flex-1 font-mono text-sm"
-                  :placeholder="colorMode === 'dark' ? '#3A3A3A (خالی = پیش‌فرض)' : '#B9E58F (خالی = پیش‌فرض)'" />
+                  placeholder="#E5E7E0 (خالی = پیش‌فرض)" />
               </div>
             </div>
           </div>
           <!-- Preview -->
-          <div class="rounded-xl overflow-hidden border border-border"
-               :class="colorMode === 'dark' ? 'bg-slate-900' : 'bg-white'">
+          <div class="rounded-xl overflow-hidden border border-border bg-white">
             <div class="h-10 flex items-center px-4 gap-3"
                  :style="{
-                   backgroundColor: cur.navbarBg || (colorMode === 'dark' ? '#1E293B' : '#FFFFFF'),
-                   borderBottom: `1px solid ${cur.navbarBorder || (colorMode === 'dark' ? '#334155' : '#DDE3EC')}`
+                   backgroundColor: theme.navbarBg || '#FFFFFF',
+                   borderBottom: `1px solid ${theme.navbarBorder || '#E5E7E0'}`
                  }">
               <span class="font-bold text-sm" :style="{ color: navbarTextColorCur }">نیک</span>
-              <div class="flex-1 h-5 rounded"
-                   :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E5E7EB' }"></div>
+              <div class="flex-1 h-5 rounded" style="background-color:#E5E7EB"></div>
               <div class="w-5 h-5 rounded-full" :style="{ backgroundColor: activeColor }"></div>
             </div>
-            <div class="h-6 flex items-center px-4 gap-2"
-                 :style="{ backgroundColor: colorMode === 'dark' ? '#0F172A' : '#F8FAFC' }">
-              <span v-for="i in 4" :key="i" class="h-1.5 w-12 rounded-full"
-                    :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E2E8F0' }"></span>
+            <div class="h-6 flex items-center px-4 gap-2" style="background-color:#F8FAFC">
+              <span v-for="i in 4" :key="i" class="h-1.5 w-12 rounded-full" style="background-color:#E2E8F0"></span>
             </div>
           </div>
         </div>
@@ -255,7 +169,7 @@
                 <p class="text-xs text-text-secondary">پس‌زمینه و رنگ متن بخش پایین سایت</p>
               </div>
             </div>
-            <button v-if="cur.footerBg || cur.footerText"
+            <button v-if="theme.footerBg || theme.footerText"
               @click="resetSection('footerBg', 'footerText')"
               class="text-xs text-text-secondary hover:text-error px-2 py-1 rounded-lg hover:bg-error/10 transition-colors"
             >↺ پیش‌فرض</button>
@@ -264,35 +178,35 @@
             <div>
               <label class="field-label text-xs">رنگ پس‌زمینه</label>
               <div class="flex items-center gap-2 mt-1">
-                <input type="color" :value="cur.footerBg || '#111827'"
-                  @input="e => setCur('footerBg', e.target.value)"
+                <input type="color" :value="theme.footerBg || '#14291A'"
+                  @input="e => theme.footerBg = e.target.value"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-                <input :value="cur.footerBg" @input="e => setCur('footerBg', e.target.value)" dir="ltr"
-                  class="field-input flex-1 font-mono text-sm" placeholder="#171717 (خالی = پیش‌فرض)" />
+                <input v-model="theme.footerBg" dir="ltr"
+                  class="field-input flex-1 font-mono text-sm" placeholder="#14291A (خالی = پیش‌فرض)" />
               </div>
             </div>
             <div>
               <label class="field-label text-xs">رنگ متن</label>
               <div class="flex items-center gap-2 mt-1">
-                <input type="color" :value="cur.footerText || '#D1D5DB'"
-                  @input="e => setCur('footerText', e.target.value)"
+                <input type="color" :value="theme.footerText || '#FFFFFF'"
+                  @input="e => theme.footerText = e.target.value"
                   class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-                <input :value="cur.footerText" @input="e => setCur('footerText', e.target.value)" dir="ltr"
-                  class="field-input flex-1 font-mono text-sm" placeholder="#F5F5F5 (خالی = پیش‌فرض)" />
+                <input v-model="theme.footerText" dir="ltr"
+                  class="field-input flex-1 font-mono text-sm" placeholder="#FFFFFF (خالی = پیش‌فرض)" />
               </div>
             </div>
           </div>
           <div class="rounded-xl overflow-hidden border border-border">
             <div class="h-16 px-4 py-3 flex items-start gap-4"
-                 :style="{ backgroundColor: cur.footerBg || '#111827' }">
+                 :style="{ backgroundColor: theme.footerBg || '#14291A' }">
               <div>
-                <p class="font-bold text-sm" :style="{ color: cur.footerText || '#D1D5DB' }">نیک</p>
-                <p class="text-xs mt-0.5" :style="{ color: cur.footerText || '#9CA3AF', opacity: 0.7 }">فروشگاه تخصصی عینک</p>
+                <p class="font-bold text-sm" :style="{ color: theme.footerText || '#FFFFFF' }">نیک</p>
+                <p class="text-xs mt-0.5" :style="{ color: theme.footerText || '#FFFFFF', opacity: 0.7 }">فروشگاه تخصصی عینک</p>
               </div>
               <div class="flex-1"></div>
               <div class="text-right">
-                <p class="text-xs font-semibold" :style="{ color: cur.footerText || '#D1D5DB' }">دسته‌بندی‌ها</p>
-                <p class="text-xs mt-1" :style="{ color: cur.footerText || '#9CA3AF', opacity: 0.7 }">عینک آفتابی</p>
+                <p class="text-xs font-semibold" :style="{ color: theme.footerText || '#FFFFFF' }">دسته‌بندی‌ها</p>
+                <p class="text-xs mt-1" :style="{ color: theme.footerText || '#FFFFFF', opacity: 0.7 }">عینک آفتابی</p>
               </div>
             </div>
           </div>
@@ -308,38 +222,34 @@
                 <p class="text-xs text-text-secondary">رنگ بک‌گراند اصلی تمام صفحات سایت</p>
               </div>
             </div>
-            <button v-if="cur.pageBg" @click="resetSection('pageBg')"
+            <button v-if="theme.pageBg" @click="resetSection('pageBg')"
               class="text-xs text-text-secondary hover:text-error px-2 py-1 rounded-lg hover:bg-error/10 transition-colors"
             >↺ پیش‌فرض</button>
           </div>
           <div class="flex items-center gap-2">
-            <input type="color" :value="cur.pageBg || (colorMode === 'dark' ? '#0F172A' : '#F4F6F9')"
-              @input="e => setCur('pageBg', e.target.value)"
+            <input type="color" :value="theme.pageBg || '#EEF1EA'"
+              @input="e => theme.pageBg = e.target.value"
               class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-            <input :value="cur.pageBg" @input="e => setCur('pageBg', e.target.value)" dir="ltr"
+            <input v-model="theme.pageBg" dir="ltr"
               class="field-input flex-1 font-mono text-sm"
-              :placeholder="colorMode === 'dark' ? '#171717 (خالی = پیش‌فرض)' : '#EAFCD1 (خالی = پیش‌فرض)'" />
+              placeholder="#EEF1EA (خالی = پیش‌فرض)" />
           </div>
           <!-- Preview -->
           <div class="rounded-xl border border-border overflow-hidden">
             <div class="p-4 flex items-center gap-3"
-                 :style="{ backgroundColor: cur.pageBg || (colorMode === 'dark' ? '#0F172A' : '#F4F6F9') }">
-              <div class="flex-1 rounded-xl overflow-hidden shadow-sm"
-                   :style="{ background: colorMode === 'dark' ? '#1E293B' : '#FFFFFF', maxWidth: '110px' }">
-                <div class="h-14" :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#F3F4F6' }"></div>
+                 :style="{ backgroundColor: theme.pageBg || '#EEF1EA' }">
+              <div class="flex-1 rounded-xl overflow-hidden shadow-sm" style="background:#FFFFFF; max-width:110px">
+                <div class="h-14" style="background-color:#F3F4F6"></div>
                 <div class="p-2 space-y-1">
-                  <div class="h-1.5 rounded-full w-3/4"
-                       :style="{ backgroundColor: colorMode === 'dark' ? '#475569' : '#E5E7EB' }"></div>
+                  <div class="h-1.5 rounded-full w-3/4" style="background-color:#E5E7EB"></div>
                   <div class="h-3 rounded w-1/2 text-white text-[8px] flex items-center justify-center font-bold"
                        :style="{ backgroundColor: activeColor }">خرید</div>
                 </div>
               </div>
-              <div class="flex-1 rounded-xl overflow-hidden shadow-sm"
-                   :style="{ background: colorMode === 'dark' ? '#1E293B' : '#FFFFFF', maxWidth: '110px' }">
-                <div class="h-14" :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#F3F4F6' }"></div>
+              <div class="flex-1 rounded-xl overflow-hidden shadow-sm" style="background:#FFFFFF; max-width:110px">
+                <div class="h-14" style="background-color:#F3F4F6"></div>
                 <div class="p-2 space-y-1">
-                  <div class="h-1.5 rounded-full w-2/3"
-                       :style="{ backgroundColor: colorMode === 'dark' ? '#475569' : '#E5E7EB' }"></div>
+                  <div class="h-1.5 rounded-full w-2/3" style="background-color:#E5E7EB"></div>
                   <div class="h-3 rounded w-1/2 text-white text-[8px] flex items-center justify-center font-bold"
                        :style="{ backgroundColor: activeColor }">خرید</div>
                 </div>
@@ -362,32 +272,28 @@
                 <p class="text-xs text-text-secondary">رنگ منوی کناری پنل مدیریت</p>
               </div>
             </div>
-            <button v-if="cur.sidebarBg" @click="resetSection('sidebarBg')"
+            <button v-if="theme.sidebarBg" @click="resetSection('sidebarBg')"
               class="text-xs text-text-secondary hover:text-error px-2 py-1 rounded-lg hover:bg-error/10 transition-colors"
             >↺ پیش‌فرض</button>
           </div>
           <div class="flex items-center gap-2">
-            <input type="color" :value="cur.sidebarBg || (colorMode === 'dark' ? '#020617' : '#0F172A')"
-              @input="e => setCur('sidebarBg', e.target.value)"
+            <input type="color" :value="theme.sidebarBg || '#171717'"
+              @input="e => theme.sidebarBg = e.target.value"
               class="w-10 h-10 rounded-lg cursor-pointer border border-border bg-transparent p-0.5 flex-shrink-0" />
-            <input :value="cur.sidebarBg" @input="e => setCur('sidebarBg', e.target.value)" dir="ltr"
+            <input v-model="theme.sidebarBg" dir="ltr"
               class="field-input flex-1 font-mono text-sm"
-              :placeholder="colorMode === 'dark' ? '#121212 (خالی = پیش‌فرض)' : '#171717 (خالی = پیش‌فرض)'" />
+              placeholder="#171717 (خالی = پیش‌فرض)" />
           </div>
           <div class="flex rounded-xl overflow-hidden border border-border h-24">
             <div class="w-16 flex flex-col gap-1.5 p-2"
-                 :style="{ backgroundColor: cur.sidebarBg || (colorMode === 'dark' ? '#020617' : '#0F172A') }">
+                 :style="{ backgroundColor: theme.sidebarBg || '#171717' }">
               <div v-for="i in 4" :key="i" class="h-1.5 rounded-full bg-white/20"></div>
               <div class="h-1.5 rounded-full mt-auto" :style="{ backgroundColor: activeColor, opacity: 0.8 }"></div>
             </div>
-            <div class="flex-1 p-3 space-y-2"
-                 :style="{ backgroundColor: colorMode === 'dark' ? '#1E293B' : '#F8FAFC' }">
-              <div class="h-2.5 rounded-full w-3/4"
-                   :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E2E8F0' }"></div>
-              <div class="h-2 rounded-full w-1/2"
-                   :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E2E8F0' }"></div>
-              <div class="h-2 rounded-full w-2/3"
-                   :style="{ backgroundColor: colorMode === 'dark' ? '#334155' : '#E2E8F0' }"></div>
+            <div class="flex-1 p-3 space-y-2" style="background-color:#F8FAFC">
+              <div class="h-2.5 rounded-full w-3/4" style="background-color:#E2E8F0"></div>
+              <div class="h-2 rounded-full w-1/2" style="background-color:#E2E8F0"></div>
+              <div class="h-2 rounded-full w-2/3" style="background-color:#E2E8F0"></div>
             </div>
           </div>
         </div>
@@ -423,7 +329,6 @@ const { applyTheme } = useAdminTheme()
 const loading       = ref(true)
 const saving        = ref(false)
 const savedSnapshot = ref('')
-const colorMode     = ref('light') // 'light' | 'dark'
 
 const dirty = computed(() => JSON.stringify(theme) !== savedSnapshot.value)
 
@@ -432,48 +337,23 @@ function snapshot() {
 }
 
 const theme = reactive({
-  preset:           'blue',
-  primaryColor:     '#3B82F6',
+  preset:           'forest-green',
+  primaryColor:     '#1A3620',
   defaultMode:      'light',
-  // Light
   navbarBg:         '',
   navbarBorder:     '',
   footerBg:         '',
   footerText:       '',
   sidebarBg:        '',
   pageBg:           '',
-  // Dark
-  navbarBgDark:     '',
-  navbarBorderDark: '',
-  footerBgDark:     '',
-  footerTextDark:   '',
-  sidebarBgDark:    '',
-  pageBgDark:       '',
 })
 
 // ── Helpers ───────────────────────────────────────────────────────
 
-// Get the value for the currently active mode (light/dark)
-const cur = computed(() => ({
-  navbarBg:     colorMode.value === 'dark' ? theme.navbarBgDark     : theme.navbarBg,
-  navbarBorder: colorMode.value === 'dark' ? theme.navbarBorderDark : theme.navbarBorder,
-  footerBg:     colorMode.value === 'dark' ? theme.footerBgDark     : theme.footerBg,
-  footerText:   colorMode.value === 'dark' ? theme.footerTextDark   : theme.footerText,
-  sidebarBg:    colorMode.value === 'dark' ? theme.sidebarBgDark    : theme.sidebarBg,
-  pageBg:       colorMode.value === 'dark' ? theme.pageBgDark       : theme.pageBg,
-}))
-
-// Set a value for the currently active mode
-function setCur(field, value) {
-  const key = colorMode.value === 'dark' ? field + 'Dark' : field
-  theme[key] = value
-}
-
-// Reset one or more fields (both light + dark) to empty
+// Reset one or more fields to empty
 function resetSection(...fields) {
   for (const f of fields) {
-    theme[f]           = ''
-    theme[f + 'Dark']  = ''
+    theme[f] = ''
   }
 }
 
@@ -488,26 +368,20 @@ function isLight(hex, defaultLight = true) {
 }
 
 const isLightBgCur = computed(() => {
-  const hex = cur.value.pageBg
-  return hex ? isLight(hex) : colorMode.value === 'light'
+  const hex = theme.pageBg
+  return hex ? isLight(hex) : true
 })
 
 const navbarTextColorCur = computed(() => {
-  const hex = cur.value.navbarBg
-  if (!hex) return colorMode.value === 'dark' ? '#f9fafb' : '#1f2937'
+  const hex = theme.navbarBg
+  if (!hex) return '#1f2937'
   return isLight(hex) ? '#1f2937' : '#f9fafb'
 })
 
 // ── Presets ───────────────────────────────────────────────────────
 
-const displayModes = [
-  { key: 'light',  label: 'روشن',   desc: 'همیشه حالت روشن' },
-  { key: 'dark',   label: 'تیره',   desc: 'همیشه حالت تیره' },
-  { key: 'system', label: 'خودکار', desc: 'بر اساس تنظیمات دستگاه' },
-]
-
 const colorPresets = [
-  { key: 'blue',    label: 'آبی',       color: '#3B82F6' },
+  { key: 'forest-green', label: 'سبز جنگلی',  color: '#1A3620' },
   { key: 'indigo',  label: 'نیلی',      color: '#6366F1' },
   { key: 'violet',  label: 'بنفش',      color: '#8B5CF6' },
   { key: 'rose',    label: 'صورتی',     color: '#F43F5E' },
@@ -528,7 +402,7 @@ function selectPreset(preset) {
 const activeColor = computed(() =>
   theme.preset === 'custom'
     ? theme.primaryColor
-    : (colorPresets.find(p => p.key === theme.preset)?.color ?? '#3B82F6')
+    : (colorPresets.find(p => p.key === theme.preset)?.color ?? '#1A3620')
 )
 
 // ── Lifecycle ─────────────────────────────────────────────────────
@@ -538,8 +412,8 @@ onMounted(async () => {
     const { data } = await settingsService.get()
     const t = data.theme ?? {}
     Object.assign(theme, {
-      preset:           t.preset           ?? 'blue',
-      primaryColor:     t.primaryColor     ?? '#3B82F6',
+      preset:           t.preset           ?? 'forest-green',
+      primaryColor:     t.primaryColor     ?? '#1A3620',
       defaultMode:      t.defaultMode      ?? 'light',
       navbarBg:         t.navbarBg         ?? '',
       navbarBorder:     t.navbarBorder     ?? '',
@@ -547,12 +421,6 @@ onMounted(async () => {
       footerText:       t.footerText       ?? '',
       sidebarBg:        t.sidebarBg        ?? '',
       pageBg:           t.pageBg           ?? '',
-      navbarBgDark:     t.navbarBgDark     ?? '',
-      navbarBorderDark: t.navbarBorderDark ?? '',
-      footerBgDark:     t.footerBgDark     ?? '',
-      footerTextDark:   t.footerTextDark   ?? '',
-      sidebarBgDark:    t.sidebarBgDark    ?? '',
-      pageBgDark:       t.pageBgDark       ?? '',
     })
     snapshot()
   } catch {
