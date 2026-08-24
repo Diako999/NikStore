@@ -46,48 +46,72 @@
         </span>
       </div>
 
-      <!-- ③ Variant color swatches -->
-      <div v-if="colorVariants.length > 0" class="pb-4 border-b border-surface-border">
+      <!-- ③ Size selector — pill row -->
+      <div v-if="sizeOptions.length > 0" class="pb-4 border-b border-surface-border">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-sm font-medium text-text-primary">سایز:</span>
+          <span class="text-sm text-brand font-medium">{{ selectedSize }}</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            v-for="size in sizeOptions"
+            :key="size.value"
+            type="button"
+            @click="selectSize(size.value)"
+            :disabled="size.disabled"
+            :aria-pressed="selectedSize === size.value"
+            :class="[
+              'min-w-[44px] h-11 px-3 rounded-xl text-sm font-bold border-2 transition-all duration-150',
+              selectedSize === size.value
+                ? 'bg-brand border-brand text-[#171717]'
+                : 'border-surface-border text-text-secondary hover:border-brand/50',
+              size.disabled ? 'opacity-35 cursor-not-allowed line-through' : '',
+            ]"
+          >
+            {{ size.value }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ④ Color selector — circle swatches -->
+      <div v-if="colorOptions.length > 0" class="pb-4 border-b border-surface-border">
         <div class="flex items-center gap-2 mb-3">
           <span class="text-sm font-medium text-text-primary">رنگ:</span>
-          <span class="text-sm text-brand font-medium">
-            {{ getAttr(selectedVariant, 'رنگ') }}
-          </span>
+          <span class="text-sm text-brand font-medium">{{ selectedColor }}</span>
         </div>
         <div class="flex flex-wrap gap-3">
           <button
-            v-for="variant in colorVariants"
-            :key="variant._id"
-            @click="selectVariant(variant)"
-            :disabled="variant.stock === 0"
-            :aria-label="`رنگ ${getAttr(variant, 'رنگ')}${variant.stock === 0 ? ' — ناموجود' : ''}`"
-            :aria-pressed="selectedVariant?._id === variant._id"
+            v-for="color in colorOptions"
+            :key="color.value"
+            type="button"
+            @click="selectColor(color.value)"
+            :disabled="color.disabled"
+            :aria-label="`رنگ ${color.value}${color.disabled ? ' — ناموجود' : ''}`"
+            :aria-pressed="selectedColor === color.value"
             :class="[
               'flex flex-col items-center gap-1 transition-all duration-150',
-              variant.stock === 0 ? 'opacity-40 cursor-not-allowed' : '',
+              color.disabled ? 'opacity-40 cursor-not-allowed' : '',
             ]"
           >
             <span
               :class="[
                 'w-9 h-9 rounded-full border-2 flex items-center justify-center relative transition-all',
-                selectedVariant?._id === variant._id
+                selectedColor === color.value
                   ? 'border-brand scale-110 shadow-md'
                   : 'border-transparent hover:border-gray-300',
               ]"
             >
               <span
                 class="w-7 h-7 rounded-full border border-black/10 block"
-                :style="{ backgroundColor: getColorHex(getAttr(variant, 'رنگ')) }"
+                :style="{ backgroundColor: getColorHex(color.value) }"
               />
-              <span v-if="variant.stock === 0" class="absolute inset-0 flex items-center justify-center">
+              <span v-if="color.disabled" class="absolute inset-0 flex items-center justify-center">
                 <svg class="w-3.5 h-3.5 text-error" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                   <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </span>
             </span>
-            <span class="text-xs text-text-secondary leading-none">
-              {{ getAttr(variant, 'رنگ') }}
-            </span>
+            <span class="text-xs text-text-secondary leading-none">{{ color.value }}</span>
           </button>
         </div>
       </div>
@@ -145,22 +169,33 @@
       <!-- ⑥ Action buttons -->
       <div ref="cartButtonRef" class="flex flex-col gap-3">
 
-        <BaseButton
-          variant="primary"
-          size="lg"
-          block
-          :loading="addingToCart"
-          :disabled="!isInStock"
-          @click="handleAddToCart"
-        >
-          <template v-if="isInStock">
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <div class="flex gap-3">
+          <button
+            type="button"
+            :disabled="!isInStock"
+            :class="[
+              'flex-1 py-3.5 rounded-xl border-2 border-brand text-brand font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2',
+              !isInStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand/10',
+            ]"
+            @click="handleAddToCart"
+          >
+            <svg v-if="!addingToCart" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
-            افزودن به سبد خرید
-          </template>
-          <template v-else>ناموجود</template>
-        </BaseButton>
+            {{ isInStock ? 'افزودن به سبد' : 'ناموجود' }}
+          </button>
+
+          <BaseButton
+            variant="primary"
+            size="lg"
+            class="flex-1"
+            :loading="addingToCart"
+            :disabled="!isInStock"
+            @click="handleBuyNow"
+          >
+            {{ isInStock ? 'خرید سریع' : 'ناموجود' }}
+          </BaseButton>
+        </div>
 
         <div class="flex gap-3">
           <button
@@ -230,6 +265,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useRouter }        from 'vue-router'
 import { useCartStore }     from '~/stores/cart.store'
 import { useWishlistStore } from '~/stores/wishlist.store'
 import { useUiStore }       from '~/stores/ui.store'
@@ -245,27 +281,71 @@ const props = defineProps({
 })
 const emit = defineEmits(['add-to-cart', 'variant-change'])
 
-const cartStore     = useCartStore()
-const wishlistStore = useWishlistStore()
-const ui            = useUiStore()
+const router         = useRouter()
+const cartStore      = useCartStore()
+const wishlistStore  = useWishlistStore()
+const ui             = useUiStore()
 
 const addingToCart  = ref(false)
 const cartButtonRef = ref(null)
 const shareCopied   = ref(false)
 
-// ── Variants ──────────────────────────────────────────────────────
-const colorVariants  = computed(() => props.product?.variants ?? [])
-const selectedVariant = ref(null)
+// ── Variants: two independent axes (size, color) resolved to one variant ──
+const allVariants = computed(() => (props.product?.variants ?? []).filter(v => v.isActive !== false))
+
+const selectedSize  = ref('')
+const selectedColor = ref('')
 
 watch(() => props.product, (p) => {
-  if (p?.variants?.length) selectedVariant.value = p.variants[0]
+  const variants = (p?.variants ?? []).filter(v => v.isActive !== false)
+  const inStockFirst = variants.find(v => v.stock > 0) ?? variants[0]
+  selectedSize.value  = getAttr(inStockFirst, 'سایز')
+  selectedColor.value = getAttr(inStockFirst, 'رنگ')
 }, { immediate: true })
 
-function selectVariant(variant) {
-  if (variant.stock === 0) return
-  selectedVariant.value = variant
-  emit('variant-change', variant)
-}
+// Unique sizes across all variants, each flagged disabled if no stock exists
+// for that size at all (independent of the currently selected color).
+const sizeOptions = computed(() => {
+  const seen = new Map()
+  for (const v of allVariants.value) {
+    const size = getAttr(v, 'سایز')
+    if (!size) continue
+    const hasStock = v.stock > 0
+    if (!seen.has(size)) seen.set(size, hasStock)
+    else if (hasStock) seen.set(size, true)
+  }
+  return [...seen.entries()].map(([value, inStock]) => ({ value, disabled: !inStock }))
+})
+
+const colorOptions = computed(() => {
+  const seen = new Map()
+  for (const v of allVariants.value) {
+    const color = getAttr(v, 'رنگ')
+    if (!color) continue
+    const hasStock = v.stock > 0
+    if (!seen.has(color)) seen.set(color, hasStock)
+    else if (hasStock) seen.set(color, true)
+  }
+  return [...seen.entries()].map(([value, inStock]) => ({ value, disabled: !inStock }))
+})
+
+// The variant matching both selected axes; falls back to any variant matching
+// just the size or just the color if the exact combo has no stock.
+const selectedVariant = computed(() => {
+  const exact = allVariants.value.find(v =>
+    getAttr(v, 'سایز') === selectedSize.value && getAttr(v, 'رنگ') === selectedColor.value,
+  )
+  if (exact) return exact
+  return allVariants.value.find(v => getAttr(v, 'سایز') === selectedSize.value)
+    ?? allVariants.value.find(v => getAttr(v, 'رنگ') === selectedColor.value)
+    ?? allVariants.value[0]
+    ?? null
+})
+
+watch(selectedVariant, (v) => { if (v) emit('variant-change', v) })
+
+function selectSize(size)   { selectedSize.value  = size }
+function selectColor(color) { selectedColor.value = color }
 
 // ── Price / discount ──────────────────────────────────────────────
 const discountPercent = computed(() => {
@@ -341,6 +421,20 @@ async function handleAddToCart() {
     await cartStore.addItem(props.product._id, selectedVariant.value?._id, 1)
     ui.addToast('محصول به سبد خرید افزوده شد ✓', 'success')
     emit('add-to-cart', selectedVariant.value?._id)
+  } catch {
+    ui.addToast('خطا در افزودن به سبد. دوباره تلاش کنید', 'error')
+  } finally {
+    addingToCart.value = false
+  }
+}
+
+async function handleBuyNow() {
+  if (!isInStock.value || addingToCart.value) return
+  addingToCart.value = true
+  try {
+    await cartStore.addItem(props.product._id, selectedVariant.value?._id, 1)
+    emit('add-to-cart', selectedVariant.value?._id)
+    router.push('/checkout')
   } catch {
     ui.addToast('خطا در افزودن به سبد. دوباره تلاش کنید', 'error')
   } finally {

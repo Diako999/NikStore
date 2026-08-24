@@ -16,6 +16,11 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
           port:      configService.get<number>('redis.port'),
           password:  configService.get<string>('redis.password') || undefined,
           lazyConnect: true,
+          // Fail fast instead of hanging a request for tens of seconds when
+          // Redis is briefly unreachable — callers that rely on Redis for
+          // caching (not primary storage) fall back to the DB on error.
+          maxRetriesPerRequest: 2,
+          retryStrategy: (times) => Math.min(times * 200, 1000),
         });
 
         client.on('connect', () => console.log('✅ Redis connected'));

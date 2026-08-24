@@ -230,8 +230,12 @@ export class DiscountsService {
   // ── Active discounts (auto-apply, no code) ────────────────────
 
   async getActiveDiscounts(): Promise<DiscountDocument[]> {
-    const cached = await this.redis.get(CACHE_KEY);
-    if (cached) return JSON.parse(cached);
+    try {
+      const cached = await this.redis.get(CACHE_KEY);
+      if (cached) return JSON.parse(cached);
+    } catch (err) {
+      this.logger.warn(`Redis unavailable for active-discounts cache, falling back to DB: ${err.message}`);
+    }
     return this.refreshCache();
   }
 
@@ -260,7 +264,11 @@ export class DiscountsService {
       .select('-__v')
       .lean<DiscountDocument[]>();
 
-    await this.redis.set(CACHE_KEY, JSON.stringify(active), 'EX', CACHE_TTL);
+    try {
+      await this.redis.set(CACHE_KEY, JSON.stringify(active), 'EX', CACHE_TTL);
+    } catch (err) {
+      this.logger.warn(`Redis unavailable, skipping active-discounts cache write: ${err.message}`);
+    }
     this.logger.log(`Cache refreshed: ${active.length} active auto-apply discounts`);
     return active;
   }
