@@ -7,7 +7,7 @@
         <div class="login-brand-icon">
           <img src="/favicon.svg" alt="لوگو نیک" class="w-11 h-11" draggable="false" />
         </div>
-        <h1 class="text-[22px] font-bold text-white mt-4 tracking-tight">{{ settingsStore.siteName }}</h1>
+        <h1 class="text-[22px] font-bold text-[#1C1C1C] mt-4 tracking-tight">{{ settingsStore.siteName }}</h1>
         <p class="text-slate-500 text-sm mt-0.5">پنل مدیریت</p>
       </div>
 
@@ -24,11 +24,11 @@
       <!-- Error banner -->
       <Transition name="slide-down">
         <div v-if="errorMsg" class="login-error mb-5">
-          <svg class="w-4 h-4 flex-shrink-0 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          <span class="text-red-300 text-sm">{{ errorMsg }}</span>
+          <span class="text-red-600 text-sm">{{ errorMsg }}</span>
         </div>
       </Transition>
 
@@ -134,9 +134,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
           </svg>
-          <span class="text-slate-400 text-sm leading-6">
+          <span class="text-slate-600 text-sm leading-6">
             کد ۶ رقمی ارسال‌شده به
-            <span class="font-bold text-white dir-ltr inline-block">{{ maskedPhone }}</span>
+            <span class="font-bold text-[#1C1C1C] dir-ltr inline-block">{{ maskedPhone }}</span>
             را وارد کنید
           </span>
         </div>
@@ -160,11 +160,11 @@
         <div class="text-center text-sm">
           <span v-if="countdown > 0" class="text-slate-500">
             ارسال مجدد تا
-            <span class="font-medium tabular-nums text-slate-400">{{ formattedCountdown }}</span>
+            <span class="font-medium tabular-nums text-slate-600">{{ formattedCountdown }}</span>
           </span>
           <button
             v-else
-            class="text-primary-light hover:text-white font-medium transition-colors"
+            class="text-primary-light hover:text-[#1A3620] font-medium transition-colors"
             @click="handleSendOtp"
           >
             ارسال مجدد کد
@@ -180,13 +180,13 @@
         </button>
 
         <button
-          class="w-full text-center text-slate-500 text-sm hover:text-slate-300 transition-colors py-1"
+          class="w-full text-center text-slate-500 text-sm hover:text-slate-700 transition-colors py-1"
           @click="otpStep = 'phone'; otpCode = ''; otpError = ''"
         >
           تغییر شماره موبایل
         </button>
 
-        <div v-if="isDev" class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center text-xs text-amber-400">
+        <div v-if="isDev" class="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center text-xs text-amber-700">
           کد OTP را در لاگ‌های Railway بخوانید (MOCK SMS)
         </div>
       </div>
@@ -329,37 +329,37 @@ onUnmounted(() => clearInterval(timer))
 
 /* Card */
 .login-card {
-  background: rgba(23, 23, 23, 0.86);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 24px;
   padding: 36px 32px;
   box-shadow:
-    0 28px 60px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    0 20px 50px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
 }
 
 /* Brand icon */
 .login-brand-icon {
   width: 76px;
   height: 76px;
-  background: linear-gradient(145deg, rgba(198, 255, 52, 0.28), rgba(162, 209, 42, 0.16));
-  border: 1px solid rgba(198, 255, 52, 0.4);
+  background: linear-gradient(145deg, rgba(26, 54, 32, 0.12), rgba(26, 54, 32, 0.06));
+  border: 1px solid rgba(26, 54, 32, 0.25);
   border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 36px rgba(198, 255, 52, 0.22),
-    0 8px 20px rgba(0, 0, 0, 0.35);
+    0 0 36px rgba(26, 54, 32, 0.15),
+    0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Tabs */
 .login-tab-bar {
   display: flex;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   padding: 4px;
   gap: 4px;
@@ -376,11 +376,11 @@ onUnmounted(() => clearInterval(timer))
   cursor: pointer;
   transition: all 0.2s;
 }
-.login-tab:hover:not(.login-tab--active) { color: #94A3B8; }
+.login-tab:hover:not(.login-tab--active) { color: #334155; }
 .login-tab--active {
-  background: #C6FF34;
-  color: #171717;
-  box-shadow: 0 2px 10px rgba(198, 255, 52, 0.4);
+  background: #1A3620;
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(26, 54, 32, 0.35);
 }
 
 /* Error */
@@ -396,20 +396,20 @@ onUnmounted(() => clearInterval(timer))
 
 /* Field */
 .login-field { display: flex; flex-direction: column; gap: 6px; }
-.login-label { font-size: 13px; font-weight: 500; color: #94A3B8; }
+.login-label { font-size: 13px; font-weight: 500; color: #6B7280; }
 
 .login-input-wrap {
   position: relative;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s;
 }
 .login-input-wrap:focus-within {
-  border-color: rgba(198, 255, 52, 0.7);
-  background: rgba(198, 255, 52, 0.06);
-  box-shadow: 0 0 0 3px rgba(198, 255, 52, 0.15);
+  border-color: rgba(26, 54, 32, 0.5);
+  background: rgba(26, 54, 32, 0.04);
+  box-shadow: 0 0 0 3px rgba(26, 54, 32, 0.12);
 }
 .login-input-wrap--error {
   border-color: rgba(239, 68, 68, 0.45) !important;
@@ -420,13 +420,13 @@ onUnmounted(() => clearInterval(timer))
   width: 100%;
   padding: 12px 16px;
   background: transparent;
-  color: #f1f5f9;
+  color: #1C1C1C;
   font-size: 14px;
   outline: none;
   font-family: inherit;
 }
-.login-input::placeholder { color: #374151; }
-.login-field-error { font-size: 12px; color: #F87171; margin-top: 2px; }
+.login-input::placeholder { color: #A8AFA9; }
+.login-field-error { font-size: 12px; color: #DC2626; margin-top: 2px; }
 
 /* Eye button */
 .login-eye-btn {
@@ -434,7 +434,7 @@ onUnmounted(() => clearInterval(timer))
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #475569;
+  color: #6B7280;
   background: none;
   border: none;
   cursor: pointer;
@@ -442,14 +442,14 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   transition: color 0.15s;
 }
-.login-eye-btn:hover { color: #94A3B8; }
+.login-eye-btn:hover { color: #1C1C1C; }
 
 /* Submit button */
 .login-btn {
   width: 100%;
   padding: 13px;
-  background: #C6FF34;
-  color: #171717;
+  background: #1A3620;
+  color: #FFFFFF;
   font-size: 15px;
   font-weight: 600;
   border-radius: 12px;
@@ -460,12 +460,12 @@ onUnmounted(() => clearInterval(timer))
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 18px rgba(198, 255, 52, 0.3);
+  box-shadow: 0 4px 18px rgba(26, 54, 32, 0.25);
   font-family: inherit;
 }
 .login-btn:hover:not(:disabled) {
-  background: #A2D12A;
-  box-shadow: 0 6px 26px rgba(198, 255, 52, 0.4);
+  background: #122918;
+  box-shadow: 0 6px 26px rgba(26, 54, 32, 0.35);
   transform: translateY(-1px);
 }
 .login-btn:active:not(:disabled) { transform: scale(0.98); box-shadow: none; }
@@ -476,8 +476,8 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   padding: 10px 14px;
   text-align: center;
