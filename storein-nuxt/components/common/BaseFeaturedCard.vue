@@ -169,52 +169,41 @@
         </div>
       </div>
 
-      <!-- ③ Add-to-cart row -->
-      <div class="flex items-center gap-2.5">
-        <!-- "+" circle (first in RTL flex = physical right) -->
-        <button
-          @click.stop="isInCart ? goToCart() : handleAddToCart()"
-          :disabled="product.totalStock === 0"
-          class="w-11 h-11 flex-shrink-0 rounded-full border-2 flex items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
-          style="border-color: rgba(168,85,247,0.5);"
-        >
-          <svg v-if="isInCart" class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M4.5 12.75l6 6 9-13.5"/>
-          </svg>
-          <span v-else class="text-purple-400 font-bold leading-none select-none" style="font-size: 1.4rem;">+</span>
-        </button>
+      <!-- ③ Actions row -->
+      <!-- In cart: single full-width status button -->
+      <button
+        v-if="isInCart"
+        @click.stop="goToCart"
+        class="w-full h-11 rounded-full flex items-center justify-center gap-2 text-white font-bold active:scale-[0.98] transition-transform"
+        style="background: #16a34a; font-size: 0.875rem;"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M4.5 12.75l6 6 9-13.5"/>
+        </svg>
+        در سبد خرید
+      </button>
 
-        <!-- Main gradient pill (second in RTL flex = physical left) -->
+      <!-- Not in cart: dual Add-to-Cart / Buy-Now actions -->
+      <div v-else class="flex items-center gap-2.5">
         <button
-          @click.stop="isInCart ? goToCart() : handleAddToCart()"
+          type="button"
+          @click.stop="handleAddToCart"
           :disabled="product.totalStock === 0 || addingToCart"
-          class="flex-1 h-11 rounded-full flex items-center px-2 gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
-          :style="isInCart
-            ? 'background: linear-gradient(135deg, #22c55e, #16a34a);'
-            : (product.totalStock === 0
-                ? 'background: #6b7280;'
-                : 'background: linear-gradient(135deg, #a855f7, #ec4899);')"
+          class="flex-1 h-11 rounded-full border-2 border-brand text-brand font-bold disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform hover:bg-brand/10"
+          style="font-size: 0.8125rem;"
         >
-          <!-- Label (first in button RTL flex = physical right) -->
-          <span class="flex-1 text-center text-white font-bold" style="font-size: 0.875rem;">
-            {{ addingToCart ? '...' : (product.totalStock === 0 ? 'ناموجود' : (isInCart ? 'در سبد خرید' : 'افزودن به سبد خرید')) }}
-          </span>
-
-          <!-- Bag icon circle (last in button RTL flex = physical left) -->
-          <div
-            class="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center"
-            style="background: rgba(0,0,0,0.22);"
-          >
-            <svg v-if="isInCart" class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M4.5 12.75l6 6 9-13.5"/>
-            </svg>
-            <svg v-else class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/>
-            </svg>
-          </div>
+          {{ product.totalStock === 0 ? 'ناموجود' : 'افزودن به سبد' }}
+        </button>
+        <button
+          type="button"
+          @click.stop="handleBuyNow"
+          :disabled="product.totalStock === 0 || addingToCart"
+          class="flex-1 h-11 rounded-full bg-brand hover:bg-brand-dark text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
+          style="font-size: 0.8125rem;"
+        >
+          {{ addingToCart ? '...' : (product.totalStock === 0 ? 'ناموجود' : 'خرید سریع') }}
         </button>
       </div>
-
 
     </div>
   </article>
@@ -275,6 +264,19 @@ async function handleAddToCart() {
   try {
     await cartStore.addItem(props.product._id, currentVariant.value._id, 1)
     ui.addToast('محصول به سبد خرید افزوده شد ✓', 'success')
+  } catch {
+    ui.addToast('خطا در افزودن به سبد', 'error')
+  } finally {
+    addingToCart.value = false
+  }
+}
+
+async function handleBuyNow() {
+  if (!currentVariant.value || addingToCart.value) return
+  addingToCart.value = true
+  try {
+    await cartStore.addItem(props.product._id, currentVariant.value._id, 1)
+    router.push('/checkout')
   } catch {
     ui.addToast('خطا در افزودن به سبد', 'error')
   } finally {
@@ -345,6 +347,6 @@ const features = computed(() => {
 
 // ── Navigation ────────────────────────────────────────────────────
 function handleClick() {
-  router.push()
+  if (props.product.slug) router.push(`/product/${props.product.slug}`)
 }
 </script>

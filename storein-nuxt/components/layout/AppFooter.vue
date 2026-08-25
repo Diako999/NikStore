@@ -269,20 +269,20 @@ if (!store.siteName) {
 .footer-top-glow {
   background: linear-gradient(90deg,
     transparent 0%,
-    rgba(198,255,52,0.6) 30%,
-    rgba(214,255,107,0.6) 70%,
+    rgba(61,92,68,0.6) 30%,
+    rgba(26,54,32,0.6) 70%,
     transparent 100%
   );
 }
 
 .footer-radial-glow {
-  background: radial-gradient(ellipse at top, rgba(198,255,52,0.10) 0%, transparent 70%);
+  background: radial-gradient(ellipse at top, rgba(61,92,68,0.10) 0%, transparent 70%);
 }
 
 /* ── Brand dot ─────────────────────────────────── */
 .brand-dot {
-  background: linear-gradient(135deg, #C6FF34, #A2D12A);
-  box-shadow: 0 0 8px rgba(198,255,52,0.5);
+  background: linear-gradient(135deg, #3D5C44, #1A3620);
+  box-shadow: 0 0 8px rgba(26,54,32,0.5);
 }
 
 /* ── Muted text ────────────────────────────────── */
@@ -306,7 +306,7 @@ if (!store.siteName) {
   width: 3px;
   height: 14px;
   border-radius: 9999px;
-  background: linear-gradient(180deg, #D6FF6B, #C6FF34);
+  background: linear-gradient(180deg, #3D5C44, #1A3620);
   flex-shrink: 0;
 }
 
@@ -327,7 +327,7 @@ if (!store.siteName) {
 .footer-link-arrow {
   opacity: 0;
   transition: opacity 0.18s ease;
-  color: #C6FF34;
+  color: #3D5C44;
   flex-shrink: 0;
 }
 .footer-link:hover .footer-link-arrow {
@@ -349,10 +349,10 @@ if (!store.siteName) {
   text-decoration: none;
 }
 .social-icon:hover {
-  color: #171717;
-  background: rgba(198,255,52,0.85);
-  border-color: rgba(198,255,52,0.9);
-  box-shadow: 0 0 14px rgba(198,255,52,0.35);
+  color: #FFFFFF;
+  background: rgba(26,54,32,0.85);
+  border-color: rgba(26,54,32,0.9);
+  box-shadow: 0 0 14px rgba(26,54,32,0.35);
   transform: translateY(-2px);
 }
 
@@ -370,9 +370,9 @@ if (!store.siteName) {
   transition: background 0.18s;
 }
 .contact-item--link:hover .contact-icon {
-  background: rgba(198,255,52,0.22);
-  border-color: rgba(198,255,52,0.4);
-  color: #C6FF34;
+  background: rgba(61,92,68,0.35);
+  border-color: rgba(61,92,68,0.55);
+  color: #FFFFFF;
 }
 .contact-item--link:hover span.footer-muted {
   color: #F5F5F5;
@@ -385,9 +385,9 @@ if (!store.siteName) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(198,255,52,0.12);
-  color: #C6FF34;
-  border: 1px solid rgba(198,255,52,0.2);
+  background: rgba(61,92,68,0.18);
+  color: #3D5C44;
+  border: 1px solid rgba(61,92,68,0.3);
 }
 
 /* ── Trust strip ───────────────────────────────── */
@@ -408,8 +408,8 @@ if (!store.siteName) {
   transition: border-color 0.2s, background 0.2s;
 }
 .trust-badge:hover {
-  border-color: rgba(198,255,52,0.3);
-  background: rgba(198,255,52,0.08);
+  border-color: rgba(61,92,68,0.4);
+  background: rgba(61,92,68,0.12);
 }
 
 .trust-badge-icon {
@@ -420,8 +420,8 @@ if (!store.siteName) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: rgba(198,255,52,0.18);
-  color: #C6FF34;
+  background: rgba(61,92,68,0.22);
+  color: #3D5C44;
 }
 
 /* ── Copyright ─────────────────────────────────── */

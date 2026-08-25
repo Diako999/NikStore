@@ -46,6 +46,7 @@
             :wishlist="true"
             @toggle-wish="handleRemove(product)"
             @add-to-cart="handleAddToCart(product)"
+            @buy-now="handleAddToCart(product)"
           />
           <!-- Removing overlay -->
           <Transition name="fade">

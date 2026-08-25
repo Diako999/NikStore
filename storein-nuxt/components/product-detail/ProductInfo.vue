@@ -63,7 +63,7 @@
             :class="[
               'min-w-[44px] h-11 px-3 rounded-xl text-sm font-bold border-2 transition-all duration-150',
               selectedSize === size.value
-                ? 'bg-brand border-brand text-[#171717]'
+                ? 'bg-brand border-brand text-white'
                 : 'border-surface-border text-text-secondary hover:border-brand/50',
               size.disabled ? 'opacity-35 cursor-not-allowed line-through' : '',
             ]"
@@ -166,80 +166,80 @@
         </template>
       </div>
 
-      <!-- ⑥ Action buttons -->
-      <div ref="cartButtonRef" class="flex flex-col gap-3">
+      <!-- ⑥ Action buttons — sticky on mobile, inline on desktop -->
+      <div
+        class="sticky bottom-0 z-20 -mx-4 px-4 py-3 bg-card border-t border-surface-border md:static md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent md:border-0 flex gap-3"
+        style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));"
+      >
+        <button
+          type="button"
+          :disabled="!isInStock"
+          :class="[
+            'flex-1 py-3.5 rounded-xl border-2 border-brand text-brand font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2',
+            !isInStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand/10',
+          ]"
+          @click="handleAddToCart"
+        >
+          <svg v-if="!addingToCart" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+          {{ isInStock ? 'افزودن به سبد' : 'ناموجود' }}
+        </button>
 
-        <div class="flex gap-3">
-          <button
-            type="button"
-            :disabled="!isInStock"
-            :class="[
-              'flex-1 py-3.5 rounded-xl border-2 border-brand text-brand font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2',
-              !isInStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand/10',
-            ]"
-            @click="handleAddToCart"
-          >
-            <svg v-if="!addingToCart" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-            </svg>
-            {{ isInStock ? 'افزودن به سبد' : 'ناموجود' }}
-          </button>
+        <BaseButton
+          variant="primary"
+          size="lg"
+          class="flex-1"
+          :loading="addingToCart"
+          :disabled="!isInStock"
+          @click="handleBuyNow"
+        >
+          {{ isInStock ? 'خرید سریع' : 'ناموجود' }}
+        </BaseButton>
+      </div>
 
-          <BaseButton
-            variant="primary"
-            size="lg"
-            class="flex-1"
-            :loading="addingToCart"
-            :disabled="!isInStock"
-            @click="handleBuyNow"
+      <div class="flex gap-3">
+        <button
+          @click="handleWishlist"
+          :aria-label="isWishlisted ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
+          :aria-pressed="isWishlisted"
+          :class="[
+            'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
+            isWishlisted
+              ? 'border-red-200 bg-red-50 text-red-500'
+              : 'border-surface-border text-text-secondary hover:border-brand/50',
+          ]"
+        >
+          <svg
+            class="w-5 h-5 flex-shrink-0"
+            :fill="isWishlisted ? 'currentColor' : 'none'"
+            :stroke="isWishlisted ? 'none' : 'currentColor'"
+            stroke-width="2"
+            viewBox="0 0 24 24"
           >
-            {{ isInStock ? 'خرید سریع' : 'ناموجود' }}
-          </BaseButton>
-        </div>
+            <path stroke-linecap="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+          </svg>
+          <span class="hidden sm:inline">{{ isWishlisted ? 'حذف از علاقه‌مندی‌ها' : 'علاقه‌مندی‌ها' }}</span>
+        </button>
 
-        <div class="flex gap-3">
-          <button
-            @click="handleWishlist"
-            :aria-label="isWishlisted ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
-            :aria-pressed="isWishlisted"
-            :class="[
-              'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
-              isWishlisted
-                ? 'border-red-200 bg-red-50 text-red-500'
-                : 'border-surface-border text-text-secondary hover:border-brand/50',
-            ]"
-          >
-            <svg
-              class="w-5 h-5 flex-shrink-0"
-              :fill="isWishlisted ? 'currentColor' : 'none'"
-              :stroke="isWishlisted ? 'none' : 'currentColor'"
-              stroke-width="2"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-            </svg>
-            <span class="hidden sm:inline">{{ isWishlisted ? 'حذف از علاقه‌مندی‌ها' : 'علاقه‌مندی‌ها' }}</span>
-          </button>
-
-          <button
-            @click="handleShare"
-            :aria-label="shareCopied ? 'لینک کپی شد' : 'اشتراک‌گذاری محصول'"
-            :class="[
-              'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
-              shareCopied
-                ? 'border-success/40 bg-success/5 text-success'
-                : 'border-surface-border text-text-secondary hover:border-brand/50',
-            ]"
-          >
-            <svg v-if="!shareCopied" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-            </svg>
-            <svg v-else class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span class="hidden sm:inline">{{ shareCopied ? 'کپی شد!' : 'اشتراک‌گذاری' }}</span>
-          </button>
-        </div>
+        <button
+          @click="handleShare"
+          :aria-label="shareCopied ? 'لینک کپی شد' : 'اشتراک‌گذاری محصول'"
+          :class="[
+            'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
+            shareCopied
+              ? 'border-success/40 bg-success/5 text-success'
+              : 'border-surface-border text-text-secondary hover:border-brand/50',
+          ]"
+        >
+          <svg v-if="!shareCopied" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          <svg v-else class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="hidden sm:inline">{{ shareCopied ? 'کپی شد!' : 'اشتراک‌گذاری' }}</span>
+        </button>
       </div>
 
       <!-- ⑦ Guarantees -->
@@ -287,7 +287,6 @@ const wishlistStore  = useWishlistStore()
 const ui             = useUiStore()
 
 const addingToCart  = ref(false)
-const cartButtonRef = ref(null)
 const shareCopied   = ref(false)
 
 // ── Variants: two independent axes (size, color) resolved to one variant ──
@@ -476,6 +475,4 @@ const guarantees = [
   { icon: '↩️', label: 'ضمانت ۷ روزه', svgPath: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
   { icon: '✅', label: 'اصالت کالا',  svgPath: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
 ]
-
-defineExpose({ cartButtonRef })
 </script>

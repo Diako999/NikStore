@@ -55,7 +55,6 @@
 </template>
 
 <script setup>
-import { useIntersectionObserver } from '@vueuse/core'
 import { reviewService }   from '~/services/review.service'
 import { formatPrice }     from '~/utils/formatters'
 import ProductGallery      from '~/components/product-detail/ProductGallery.vue'
@@ -68,9 +67,7 @@ definePageMeta({ layout: 'default' })
 
 const route         = useRoute()
 const config        = useRuntimeConfig()
-const cartStore     = useCartStore()
 const wishlistStore = useWishlistStore()
-const ui            = useUiStore()
 const settingsStore = useSettingsStore()
 
 const slug = computed(() => route.params.slug)
@@ -143,17 +140,10 @@ useHead({
 
 // ── Client state ─────────────────────────────────────────────────
 const selectedVariant = ref(product.value?.variants?.[0] || null)
-const addingToCart    = ref(false)
 const galleryRef      = ref(null)
 const infoRef         = ref(null)
-const showStickyBar   = ref(false)
 const reviewStats     = ref(null)
 const reviewsLoading  = ref(false)
-
-
-const isInStock = computed(() =>
-  selectedVariant.value ? selectedVariant.value.stock > 0 : (product.value?.totalStock ?? 0) > 0
-)
 
 // Images shown in gallery: variant-specific if assigned, else all product images
 const displayImages = computed(() => {
@@ -165,33 +155,11 @@ const displayImages = computed(() => {
 // Re-init variant on SPA slug navigation
 watch(slug, () => { selectedVariant.value = product.value?.variants?.[0] || null })
 
-let stopObserver = null
-function setupStickyObserver() {
-  const el = infoRef.value?.cartButtonRef
-  if (!el) return
-  const { stop } = useIntersectionObserver(el, ([entry]) => {
-    showStickyBar.value = !entry.isIntersecting
-  })
-  stopObserver = stop
-}
-
 function onVariantChange(variant) { selectedVariant.value = variant }
 function onAddToCart() {}
 
-async function quickAddToCart() {
-  if (!isInStock.value || addingToCart.value) return
-  addingToCart.value = true
-  try {
-    await cartStore.addItem(product.value._id, selectedVariant.value?._id, 1)
-    ui.addToast('محصول به سبد خرید افزوده شد ✓', 'success')
-  } catch { ui.addToast('خطا در افزودن به سبد', 'error') }
-  finally { addingToCart.value = false }
-}
-
 onMounted(async () => {
   wishlistStore.fetchWishlist()
-  await nextTick()
-  requestAnimationFrame(setupStickyObserver)
 
   if (product.value?._id) {
     try {
@@ -201,8 +169,6 @@ onMounted(async () => {
     } catch { /* non-critical */ } finally { reviewsLoading.value = false }
   }
 })
-
-onUnmounted(() => { stopObserver?.() })
 </script>
 
 <style scoped>

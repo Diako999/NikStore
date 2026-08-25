@@ -1,64 +1,39 @@
 <template>
   <section v-if="items.length" class="cat-bar">
-    <div class="cat-bar__scroll">
+    <div class="cat-bar__grid">
       <NuxtLink
         v-for="item in items"
         :key="item.slug"
         :to="`/category/${item.slug}`"
-        class="cat-item"
+        class="cat-tile"
       >
-        <div class="cat-item__ico" :style="{ backgroundColor: iconMeta(item.slug).bg }">
-          <img v-if="item.image" :src="item.image" :alt="item.name" class="cat-item__img" />
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <div class="cat-tile__ico">
+          <img v-if="item.image" :src="item.image" :alt="item.name" class="cat-tile__img" />
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="#1A3620"
                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-               class="cat-item__svg" :style="{ color: iconMeta(item.slug).fg }">
-            <template v-if="iconMeta(item.slug).icon === 'sunglasses'">
-              <rect x="2" y="9" width="8" height="6" rx="3"/>
-              <rect x="14" y="9" width="8" height="6" rx="3"/>
-              <path d="M10 12h4"/>
-              <path d="M2 11.5 Q0 11.5 0 13"/>
-              <path d="M22 11.5 Q24 11.5 24 13"/>
+               class="cat-tile__svg">
+            <template v-if="iconFor(item.slug) === 'women'">
+              <!-- Dress / blouse silhouette -->
+              <path d="M9.5 3.5 12 6l2.5-2.5"/>
+              <path d="M9.5 3.5 7 6.5 8.5 8l-2 3L5 20h14l-1.5-8.5-2-3 1.5-1.5-2.5-3"/>
+              <path d="M9.5 8.5h5"/>
             </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'glasses'">
-              <circle cx="7" cy="12" r="4"/>
-              <circle cx="17" cy="12" r="4"/>
-              <path d="M11 12h2"/>
-              <path d="M3 10 Q1 9 0 10"/>
-              <path d="M21 10 Q23 9 24 10"/>
+            <template v-else-if="iconFor(item.slug) === 'men'">
+              <!-- Shirt silhouette -->
+              <path d="M8.5 4 5 6.5 6.5 10l2-1v11h7V9l2 1L19 6.5 15.5 4l-1.5 1.5a3 3 0 0 1-4 0z"/>
             </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'lens'">
-              <circle cx="12" cy="12" r="8"/>
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 4v1M12 19v1M4 12h1M19 12h1"/>
-            </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'case'">
-              <rect x="2" y="8" width="20" height="12" rx="4"/>
-              <path d="M8 8V6a4 4 0 0 1 8 0v2"/>
-              <path d="M7 14h10"/>
-            </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'man'">
-              <circle cx="12" cy="6" r="3"/>
-              <path d="M8 21v-4a4 4 0 0 1 8 0v4"/>
-              <path d="M9 21v-2M15 21v-2"/>
-            </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'woman'">
-              <circle cx="12" cy="6" r="3"/>
-              <path d="M8 21l2-7h4l2 7"/>
-              <path d="M10 14v-3a2 2 0 0 1 4 0v3"/>
-            </template>
-            <template v-else-if="iconMeta(item.slug).icon === 'kid'">
-              <circle cx="12" cy="7" r="3"/>
-              <path d="M9 21l1.5-5h3L15 21"/>
-              <path d="M6 13l2.5 1.5M18 13l-2.5 1.5"/>
+            <template v-else-if="iconFor(item.slug) === 'kids'">
+              <!-- Onesie / kids garment -->
+              <path d="M9 3 7 5.5 8 8l-1.5 1v3l1.5-.5V20a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-8.5l1.5.5v-3L16 8l1-2.5L15 3l-1.5 2a2 2 0 0 1-3 0z"/>
+              <circle cx="12" cy="12.5" r="1.1"/>
             </template>
             <template v-else>
-              <rect x="2" y="9" width="8" height="6" rx="3"/>
-              <rect x="14" y="9" width="8" height="6" rx="3"/>
-              <path d="M10 12h4"/>
+              <rect x="4" y="4" width="16" height="16" rx="4"/>
             </template>
           </svg>
         </div>
-        <span class="cat-item__lbl">{{ item.name }}</span>
+        <span class="cat-tile__lbl">{{ item.name }}</span>
+        <span class="cat-tile__sub">{{ subtitleFor(item.slug) }}</span>
       </NuxtLink>
     </div>
   </section>
@@ -68,19 +43,18 @@
 import { ref, onMounted } from 'vue'
 import { categoryService } from '~/services/category.service'
 
-const ICON_MAP = {
-  sunglasses:   { bg: '#FEF3C7', fg: '#92400E', icon: 'sunglasses' },
-  prescription: { bg: '#DBEAFE', fg: '#1E40AF', icon: 'glasses'    },
-  'contact-lens':{ bg: '#D1FAE5', fg: '#065F46', icon: 'lens'      },
-  accessories:  { bg: '#FCE7F3', fg: '#9D174D', icon: 'case'       },
-  men:          { bg: '#EFF6FF', fg: '#1D4ED8', icon: 'man'        },
-  women:        { bg: '#F5F3FF', fg: '#6D28D9', icon: 'woman'      },
-  kids:         { bg: '#FFF7ED', fg: '#C2410C', icon: 'kid'        },
+const ICON_SLUG_MAP = { women: 'women', men: 'men', kids: 'kids' }
+const SUBTITLE_MAP  = {
+  women: 'مد و پوشاک زنانه',
+  men:   'استایل مردانه',
+  kids:  'راحت و شاد برای کودکان',
 }
-const DEFAULT_META = { bg: '#F3F4F6', fg: '#6B7280', icon: 'glasses' }
 
-function iconMeta(slug) {
-  return ICON_MAP[slug] ?? DEFAULT_META
+function iconFor(slug) {
+  return ICON_SLUG_MAP[slug] ?? 'default'
+}
+function subtitleFor(slug) {
+  return SUBTITLE_MAP[slug] ?? 'مشاهده محصولات'
 }
 
 const items = ref([])
@@ -98,57 +72,65 @@ onMounted(async () => {
   padding: 1.25rem 0 0.5rem;
 }
 
-.cat-bar__scroll {
-  display: flex;
-  gap: 0.625rem;
-  overflow-x: auto;
-  padding: 0.5rem 0.25rem 0.75rem;
-  scrollbar-width: none;
+.cat-bar__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
 }
-.cat-bar__scroll::-webkit-scrollbar { display: none; }
 
-.cat-item {
+.cat-tile {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  min-width: 72px;
-  flex-shrink: 0;
+  padding: 1.1rem 0.5rem;
+  border-radius: 18px;
+  background: #EEF1EA;
   text-decoration: none;
-  cursor: pointer;
+  text-align: center;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
 }
 
-.cat-item__ico {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
+.cat-tile:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(26,54,32,0.14);
+}
+
+.cat-tile__ico {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: #ffffff;
+  flex-shrink: 0;
 }
 
-.cat-item:hover .cat-item__ico {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.14);
+.cat-tile__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 14px;
 }
 
-.cat-item__svg {
-  width: 26px;
-  height: 26px;
+.cat-tile__svg {
+  width: 24px;
+  height: 24px;
 }
 
-.cat-item__lbl {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-align: center;
+.cat-tile__lbl {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1A3620;
   white-space: nowrap;
-  letter-spacing: 0.01em;
-  transition: color 0.2s ease;
 }
-.cat-item:hover .cat-item__lbl {
-  color: rgb(var(--color-brand-rgb));
+
+.cat-tile__sub {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
 }
 </style>
