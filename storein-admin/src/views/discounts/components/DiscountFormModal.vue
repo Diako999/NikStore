@@ -579,7 +579,6 @@ async function submit() {
 }
 .sw-on  { background: #16a34a; }
 .sw-off { background: #d1d5db; }
-html.dark .sw-off { background: #475569; }
 
 .sw-thumb {
   position: absolute; top: 2px; left: 2px;

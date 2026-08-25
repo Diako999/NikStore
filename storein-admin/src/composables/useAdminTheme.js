@@ -2,14 +2,12 @@ import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import http from '@/services/http.service'
 
-const sidebarBg     = ref('')
-const sidebarBgDark = ref('')
+const sidebarBg = ref('')
 let fetched = false
 
 function apply(theme) {
   if (!theme) return
-  sidebarBg.value     = theme.sidebarBg     ?? ''
-  sidebarBgDark.value = theme.sidebarBgDark ?? ''
+  sidebarBg.value = theme.sidebarBg ?? ''
 }
 
 async function init() {
@@ -28,5 +26,5 @@ function applyTheme(theme) {
 }
 
 export function useAdminTheme() {
-  return { sidebarBg, sidebarBgDark, init, applyTheme }
+  return { sidebarBg, init, applyTheme }
 }

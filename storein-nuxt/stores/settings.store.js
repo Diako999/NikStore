@@ -28,7 +28,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const footerTagline   = computed(() => settings.value?.footerTagline   ?? '')
   const footerCopyright = computed(() => settings.value?.footerCopyright ?? `تمامی حقوق برای ${settings.value?.siteName ?? ''} محفوظ است`)
   const footerLinks     = computed(() => settings.value?.footerLinks     ?? [])
-  const theme           = computed(() => settings.value?.theme ?? { preset: 'lime', primaryColor: '#C6FF34', defaultMode: 'light' })
+  const theme           = computed(() => settings.value?.theme ?? { preset: 'forest-green', primaryColor: '#1A3620', defaultMode: 'light' })
   const trustItems      = computed(() => settings.value?.trustItems?.length
     ? settings.value.trustItems
     : [

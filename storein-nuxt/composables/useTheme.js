@@ -1,11 +1,3 @@
-import { ref, watch } from 'vue'
-
-// ── Singleton dark state (shared across all useTheme() calls) ─────
-const isDark = ref(false)
-
-// Last applied theme — needed to re-pick light/dark values on mode toggle
-let _lastTheme = null
-
 // ── Color helpers ─────────────────────────────────────────────────
 function hexToRgb(hex) {
   const clean = hex.replace('#', '')
@@ -46,68 +38,30 @@ function applyPrimaryColor(hex) {
   root.setProperty('--color-brand-light-rgb', rgbStr(lighten(base)))
 }
 
-// ── Apply dark/light class ────────────────────────────────────────
-function applyDarkClass(dark) {
-  document.documentElement.classList.toggle('dark', dark)
-}
-
-// ── Apply section colors based on current mode ───────────────────
-function applyColors(theme, dark) {
+// ── Apply section colors ──────────────────────────────────────────
+function applyColors(theme) {
   const root = document.documentElement.style
 
-  function apply(cssVar, lightVal, darkVal) {
-    const val = dark ? darkVal : lightVal
+  function apply(cssVar, val) {
     if (val) root.setProperty(cssVar, val)
     else     root.removeProperty(cssVar)
   }
 
-  apply('--color-header-bg',     theme.navbarBg,     theme.navbarBgDark)
-  apply('--color-header-border', theme.navbarBorder, theme.navbarBorderDark)
-  apply('--color-footer-bg',     theme.footerBg,     theme.footerBgDark)
-  apply('--color-footer-text',   theme.footerText,   theme.footerTextDark)
-  apply('--color-body-bg',       theme.pageBg,       theme.pageBgDark)
+  apply('--color-header-bg',     theme.navbarBg)
+  apply('--color-header-border', theme.navbarBorder)
+  apply('--color-footer-bg',     theme.footerBg)
+  apply('--color-footer-text',   theme.footerText)
+  apply('--color-body-bg',       theme.pageBg)
 }
 
 export function useTheme() {
 
-  // Called once on app boot — applies localStorage user preference
-  function init() {
-    const saved = localStorage.getItem('theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    isDark.value = saved === 'dark' || (!saved && prefersDark)
-    applyDarkClass(isDark.value)
-  }
-
   // Called after settings are fetched from API
   function applyFromSettings(theme) {
     if (!theme) return
-    _lastTheme = theme
-
-    // Resolve the correct dark state FIRST (before applying colors)
-    const saved = localStorage.getItem('theme')
-    if (!saved && theme.defaultMode) {
-      if (theme.defaultMode === 'dark') {
-        isDark.value = true
-      } else if (theme.defaultMode === 'light') {
-        isDark.value = false
-      } else if (theme.defaultMode === 'system') {
-        isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
-      }
-      applyDarkClass(isDark.value)
-    }
-
     if (theme.primaryColor) applyPrimaryColor(theme.primaryColor)
-    applyColors(theme, isDark.value)
+    applyColors(theme)
   }
 
-  // User manually toggles — re-applies section colors for the new mode
-  function toggle() {
-    isDark.value = !isDark.value
-    localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-    if (_lastTheme) applyColors(_lastTheme, isDark.value)
-  }
-
-  watch(isDark, applyDarkClass)
-
-  return { isDark, init, toggle, applyFromSettings }
+  return { applyFromSettings }
 }

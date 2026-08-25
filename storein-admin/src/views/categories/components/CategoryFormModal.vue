@@ -67,7 +67,7 @@
             @click="form.gender = form.gender === opt.value ? '' : opt.value"
             class="py-2 rounded-lg border text-xs font-medium transition-colors"
             :class="form.gender === opt.value
-              ? 'border-primary bg-primary text-[#171717]'
+              ? 'border-primary bg-primary text-white'
               : 'border-border text-text-secondary hover:border-primary/50'"
           >{{ opt.label }}</button>
         </div>

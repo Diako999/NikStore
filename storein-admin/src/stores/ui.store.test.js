@@ -4,8 +4,6 @@ import { setActivePinia, createPinia } from 'pinia'
 describe('useUiStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
-    document.documentElement.classList.remove('dark')
     vi.useFakeTimers()
   })
 
@@ -88,17 +86,6 @@ describe('useUiStore', () => {
       store.addNotification({ id: 1, title: 'x' })
       store.clearNotifications()
       expect(store.notifications).toHaveLength(0)
-    })
-  })
-
-  describe('dark mode', () => {
-    it('toggleDark flips isDark and persists to localStorage', async () => {
-      localStorage.setItem('theme', 'light')
-      const store = await getStore()
-      const before = store.isDark
-      store.toggleDark()
-      expect(store.isDark).toBe(!before)
-      expect(localStorage.getItem('theme')).toBe(store.isDark ? 'dark' : 'light')
     })
   })
 })

@@ -13,7 +13,7 @@
 
         <!-- Main badge -->
         <div v-if="idx === 0"
-             class="absolute top-1 right-1 bg-primary text-[#171717] text-[10px] px-1.5 py-0.5 rounded-full font-medium">
+             class="absolute top-1 right-1 bg-primary text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
           اصلی
         </div>
 

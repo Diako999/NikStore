@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{vue,js}'],
-  darkMode: 'class',
   theme: {
     extend: {
       fontFamily: {
@@ -10,26 +9,26 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: '#C6FF34',
-          dark:    '#A2D12A',
-          light:   '#D6FF6B',
-          50:      '#F7FFE8',
+          DEFAULT: '#1A3620',
+          dark:    '#122918',
+          light:   '#3D5C44',
+          50:      '#EEF1EA',
         },
         sidebar: {
           bg:         '#171717',
           hover:      '#232323',
-          active:     '#C6FF34',
+          active:     '#3D5C44',
           text:       '#A3A3A3',
-          activeText: '#171717',
+          activeText: '#EEF1EA',
           border:     '#232323',
         },
-        surface: '#F1F5F9',
+        surface: '#EEF1EA',
         card:    '#FFFFFF',
-        border:  '#E2E8F0',
+        border:  '#E5E7E0',
         text: {
-          primary:   '#0F172A',
-          secondary: '#64748B',
-          disabled:  '#CBD5E1',
+          primary:   '#1C1C1C',
+          secondary: '#6B7280',
+          disabled:  '#A8AFA9',
         },
         success: '#10B981',
         warning: '#F59E0B',

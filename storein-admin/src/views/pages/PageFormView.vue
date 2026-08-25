@@ -217,7 +217,7 @@ const ToolBtn = defineComponent({
       class: [
         'w-8 h-8 rounded flex items-center justify-center text-sm transition-colors',
         props.active
-          ? 'bg-primary text-[#171717]'
+          ? 'bg-primary text-white'
           : 'text-text-secondary hover:bg-surface',
         props.disabled ? 'opacity-40 cursor-not-allowed' : '',
       ].join(' '),

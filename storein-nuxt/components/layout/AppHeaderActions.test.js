@@ -20,10 +20,6 @@ vi.mock('@vueuse/core', () => ({
   onClickOutside: vi.fn(),
 }))
 
-vi.mock('~/composables/useTheme', () => ({
-  useTheme: () => ({ isDark: false, toggle: vi.fn(), init: vi.fn() }),
-}))
-
 vi.mock('~/stores/auth.store', () => ({
   useAuthStore: vi.fn(),
 }))

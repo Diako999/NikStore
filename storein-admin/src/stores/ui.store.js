@@ -34,29 +34,6 @@ export const useUiStore = defineStore('ui', () => {
     notifications.value = []
   }
 
-  // ── Dark mode ─────────────────────────────────────────────────
-  const isDark = ref(false)
-
-  function _applyTheme() {
-    document.documentElement.classList.toggle('dark', isDark.value)
-  }
-
-  function initTheme() {
-    const stored = localStorage.getItem('theme')
-    isDark.value = stored
-      ? stored === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches
-    _applyTheme()
-  }
-
-  function toggleDark() {
-    isDark.value = !isDark.value
-    localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
-    _applyTheme()
-  }
-
-  initTheme()
-
   // ── Toast ─────────────────────────────────────────────────────
   function addToast(message, type = 'info', duration = 3500) {
     const id = Date.now() + Math.random()
@@ -76,7 +53,6 @@ export const useUiStore = defineStore('ui', () => {
     toasts, sidebarCollapsed, sidebarMobileOpen,
     addToast, removeToast,
     toggleSidebar, openMobileSidebar, closeMobileSidebar,
-    isDark, toggleDark,
     notifications, unreadCount,
     addNotification, markRead, markAllRead, clearNotifications,
     pendingOrdersCount, pendingReviewsCount,
