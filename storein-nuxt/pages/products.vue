@@ -70,7 +70,7 @@ const mobileFilterOpen = ref(false)
 
 useSeoMeta({
   title:       'همه محصولات',
-  description: 'خرید انواع عینک طبی، آفتابی و لنز با بهترین قیمت',
+  description: 'خرید انواع پوشاک زنانه، مردانه و بچگانه با بهترین قیمت',
   ogType:      'website',
   ogUrl:       `${config.public.siteUrl}/products`,
 })
@@ -85,7 +85,7 @@ useHead({
       innerHTML: JSON.stringify({
         '@context':      'https://schema.org',
         '@type':         'ItemList',
-        name:            'فهرست محصولات عینک',
+        name:            'فهرست محصولات پوشاک',
         numberOfItems:   productStore.total,
         itemListElement: items.slice(0, 20).map((p, i) => ({
           '@type':  'ListItem',

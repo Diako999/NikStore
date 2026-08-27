@@ -5,7 +5,7 @@
       <CategoryBar />
       <FlashSale class="home__section" />
       <ProductRow
-        title="جدیدترین عینک‌ها"
+        title="جدیدترین محصولات"
         link="/products?sort=newest"
         :products="newArrivals"
         :loading="loadingNew"

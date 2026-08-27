@@ -4,7 +4,7 @@
     <div class="bg-gradient-to-l from-brand to-brand-dark py-12 text-white">
       <div class="container mx-auto px-4 text-center">
         <h1 class="text-3xl font-black mb-2">بلاگ {{ settingsStore.siteName }}</h1>
-        <p class="text-white/80 text-sm">مقالات، نکات و راهنماهای خرید عینک</p>
+        <p class="text-white/80 text-sm">مقالات، نکات و راهنماهای خرید پوشاک</p>
       </div>
     </div>
 
@@ -97,7 +97,7 @@ const store  = useBlogStore()
 
 useSeoMeta({
   title:       'وبلاگ | آخرین مقالات',
-  description: 'مقالات آموزشی در زمینه عینک، سلامت چشم، مد و استایل',
+  description: 'مقالات آموزشی در زمینه مد، استایل و پوشاک',
   ogType:      'website',
   ogUrl:       `${config.public.siteUrl}/blog`,
 })
@@ -113,7 +113,7 @@ useHead({
         '@context':  'https://schema.org',
         '@type':     'Blog',
         name:        `وبلاگ ${settingsStore.siteName}`,
-        description: 'مقالات آموزشی در زمینه عینک، سلامت چشم، مد و استایل',
+        description: 'مقالات آموزشی در زمینه مد، استایل و پوشاک',
         url:         `${config.public.siteUrl}/blog`,
         blogPost:    posts.slice(0, 10).map(p => ({
           '@type':       'BlogPosting',

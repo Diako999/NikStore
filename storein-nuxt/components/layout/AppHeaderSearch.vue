@@ -23,7 +23,7 @@
         type="text"
         dir="rtl"
         autocomplete="off"
-        placeholder="جستجو در عینک، فریم، لنز ..."
+        placeholder="جستجو در پوشاک، برند، دسته‌بندی ..."
         class="flex-1 min-w-0 py-2.5 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none"
         @focus="onFocus"
         @keydown="onInputKeydown"

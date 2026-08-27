@@ -79,7 +79,7 @@ const currentCategory = computed(() => {
 
 useSeoMeta({
   title:       () => currentCategory.value?.name || 'دسته‌بندی',
-  description: () => currentCategory.value?.description || 'خرید انواع عینک طبی، آفتابی و لنز',
+  description: () => currentCategory.value?.description || 'خرید انواع پوشاک زنانه، مردانه و بچگانه',
   ogType:      'website',
   ogUrl:       () => `${config.public.siteUrl}/category/${categorySlug.value}`,
 })
