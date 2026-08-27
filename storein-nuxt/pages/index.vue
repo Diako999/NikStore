@@ -1,7 +1,7 @@
 <template>
   <div class="home">
-    <HeroBanner />
     <div class="container-main">
+      <HeroProduct />
       <CategoryBar />
       <FlashSale class="home__section" />
       <ProductRow
@@ -21,10 +21,10 @@
         class="home__section"
       />
       <ProductRow
-        title="عینک‌های آفتابی"
-        link="/category/sunglasses"
-        :products="sunglasses"
-        :loading="loadingSun"
+        title="پوشاک بچگانه"
+        link="/category/kids"
+        :products="kidsProducts"
+        :loading="loadingKids"
         class="home__section"
       />
       <MostViewed class="home__section" />
@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import HeroBanner    from '~/components/home/HeroBanner.vue'
+import HeroProduct   from '~/components/home/HeroProduct.vue'
 import CategoryBar   from '~/components/home/CategoryBar.vue'
 import FlashSale     from '~/components/home/FlashSale.vue'
 import ProductRow    from '~/components/home/ProductRow.vue'
@@ -62,16 +62,16 @@ useHead({ link: [{ rel: 'canonical', href: `${config.public.siteUrl}/` }] })
 const [
   { data: rawNew,  pending: loadingNew },
   { data: rawBest, pending: loadingBest },
-  { data: rawSun,  pending: loadingSun },
+  { data: rawKids, pending: loadingKids },
 ] = await Promise.all([
-  useAsyncData('home-new',  () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'newest' } }),                           { transform: (r) => r?.data ?? r }),
-  useAsyncData('home-best', () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'bestseller' } }),                       { transform: (r) => r?.data ?? r, lazy: true }),
-  useAsyncData('home-sun',  () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'newest', category: 'eynak-aftabi' } }), { transform: (r) => r?.data ?? r, lazy: true }),
+  useAsyncData('home-new',  () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'newest' } }),                     { transform: (r) => r?.data ?? r }),
+  useAsyncData('home-best', () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'bestseller' } }),                 { transform: (r) => r?.data ?? r, lazy: true }),
+  useAsyncData('home-kids', () => $fetch('/api/v1/products', { params: { status: 'active', limit: 8, sort: 'newest', category: 'kids' } }),   { transform: (r) => r?.data ?? r, lazy: true }),
 ])
 
-const newArrivals = computed(() => rawNew.value?.products  ?? rawNew.value?.items  ?? [])
-const bestsellers = computed(() => rawBest.value?.products ?? rawBest.value?.items ?? [])
-const sunglasses  = computed(() => rawSun.value?.products  ?? rawSun.value?.items  ?? [])
+const newArrivals  = computed(() => rawNew.value?.products  ?? rawNew.value?.items  ?? [])
+const bestsellers  = computed(() => rawBest.value?.products ?? rawBest.value?.items ?? [])
+const kidsProducts = computed(() => rawKids.value?.products ?? rawKids.value?.items ?? [])
 
 // ItemList JSON-LD for bestsellers
 useHead({

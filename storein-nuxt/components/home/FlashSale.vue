@@ -52,6 +52,7 @@
             :product="product"
             :wishlist="wishlistStore.isInWishlist(product._id)"
             @add-to-cart="handleAddToCart(product)"
+            @buy-now="handleBuyNow(product)"
             @toggle-wish="wishlistStore.toggle(product._id)"
           />
         </div>
@@ -65,6 +66,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter }       from 'vue-router'
 import { productService }  from '~/services/product.service'
 import { useCartStore }    from '~/stores/cart.store'
 import { useWishlistStore } from '~/stores/wishlist.store'
@@ -72,6 +74,7 @@ import { useUiStore }      from '~/stores/ui.store'
 import BaseProductCard from '~/components/common/BaseProductCard.vue'
 import BaseSkeleton    from '~/components/common/BaseSkeleton.vue'
 
+const router        = useRouter()
 const cartStore     = useCartStore()
 const wishlistStore = useWishlistStore()
 const ui            = useUiStore()
@@ -118,6 +121,17 @@ async function handleAddToCart(product) {
   }
 }
 
+async function handleBuyNow(product) {
+  const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]
+  if (!variant?._id) { ui.addToast('این محصول قابل سفارش نیست', 'error'); return }
+  try {
+    await cartStore.addItem(product._id, variant._id, 1)
+    router.push('/checkout')
+  } catch {
+    ui.addToast('خطا در افزودن به سبد خرید', 'error')
+  }
+}
+
 onMounted(async () => {
   updateTimer()
   timerInterval = setInterval(updateTimer, 1000)
@@ -148,7 +162,7 @@ onUnmounted(() => clearInterval(timerInterval))
 .flash {
   border-radius: 20px;
   overflow: hidden;
-  background: linear-gradient(135deg, #171717 0%, #232323 45%, #3A4212 100%);
+  background: linear-gradient(135deg, #171717 0%, #232323 45%, #1A3620 100%);
   position: relative;
 }
 

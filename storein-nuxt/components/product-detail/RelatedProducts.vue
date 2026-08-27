@@ -36,6 +36,7 @@
             :product="product"
             :wishlist="wishlistStore.isInWishlist(product._id)"
             @add-to-cart="handleAddToCart(product)"
+            @buy-now="handleBuyNow(product)"
             @toggle-wish="wishlistStore.toggle(product._id)"
           />
         </div>
@@ -47,6 +48,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter }        from 'vue-router'
 import { productService }   from '~/services/product.service'
 import { useWishlistStore } from '~/stores/wishlist.store'
 import { useCartStore }     from '~/stores/cart.store'
@@ -59,6 +61,7 @@ const props = defineProps({
   excludeId:    { type: String, default: '' },
 })
 
+const router         = useRouter()
 const wishlistStore = useWishlistStore()
 const cartStore     = useCartStore()
 const ui            = useUiStore()
@@ -75,6 +78,20 @@ async function handleAddToCart(product) {
   try {
     await cartStore.addItem(product._id, variant._id, 1)
     ui.addToast('محصول به سبد خرید افزوده شد ✓', 'success')
+  } catch {
+    ui.addToast('خطا در افزودن به سبد', 'error')
+  }
+}
+
+async function handleBuyNow(product) {
+  const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]
+  if (!variant?._id) {
+    ui.addToast('این محصول در حال حاضر قابل سفارش نیست', 'error')
+    return
+  }
+  try {
+    await cartStore.addItem(product._id, variant._id, 1)
+    router.push('/checkout')
   } catch {
     ui.addToast('خطا در افزودن به سبد', 'error')
   }

@@ -58,18 +58,6 @@
         @error="imgError = true"
       />
 
-      <!-- Color variant labels: bottom-start (right in RTL) — only in featured mode -->
-      <div v-if="featured && colorVariants.length" class="absolute bottom-2 start-2 z-10 flex flex-col gap-1 items-start">
-        <span
-          v-for="color in colorVariants.slice(0, 3)"
-          :key="color"
-          class="text-[11px] font-bold px-2 py-0.5 rounded-full text-white leading-tight"
-          style="background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);"
-        >
-          {{ color }}
-        </span>
-      </div>
-
       <!-- Out of stock overlay -->
       <div v-if="product.totalStock === 0" class="absolute inset-0 bg-white/75 flex items-center justify-center" aria-hidden="true">
         <span class="text-gray-700 font-semibold text-sm px-3 py-1.5 bg-white rounded-full shadow-sm">ناموجود</span>
@@ -107,22 +95,41 @@
         </p>
       </div>
 
-      <!-- Add to cart / In cart -->
+      <!-- In cart: single full-width status button -->
       <button
+        v-if="isInCart"
         type="button"
-        :class="[
-          'mt-2 w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5',
-          isInCart ? 'bg-success' : 'bg-brand hover:bg-brand-dark',
-        ]"
-        :disabled="product.totalStock === 0"
-        @click.stop="isInCart ? goToCart() : $emit('add-to-cart')"
-        :aria-label="isInCart ? 'مشاهده در سبد خرید' : `افزودن ${product.name} به سبد خرید`"
+        class="mt-2 w-full py-2.5 rounded-xl text-sm font-bold text-white bg-success transition-all duration-300 active:scale-95 flex items-center justify-center gap-1.5"
+        @click.stop="goToCart"
+        aria-label="مشاهده در سبد خرید"
       >
-        <svg v-if="isInCart" class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
         </svg>
-        {{ isInCart ? 'در سبد خرید' : '+ افزودن به سبد' }}
+        در سبد خرید
       </button>
+
+      <!-- Not in cart: dual Add-to-Cart / Buy-Now actions -->
+      <div v-else class="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold border-2 border-brand text-brand transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand/10 px-2 truncate"
+          :disabled="product.totalStock === 0"
+          @click.stop="$emit('add-to-cart')"
+          :aria-label="`افزودن ${product.name} به سبد خرید`"
+        >
+          افزودن به سبد
+        </button>
+        <button
+          type="button"
+          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-dark transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-2 truncate"
+          :disabled="product.totalStock === 0"
+          @click.stop="$emit('buy-now')"
+          :aria-label="`خرید سریع ${product.name}`"
+        >
+          خرید سریع
+        </button>
+      </div>
 
     </div>
   </article>
@@ -145,7 +152,7 @@ const props = defineProps({
   featured: { type: Boolean, default: false },
 })
 
-defineEmits(['click', 'add-to-cart', 'toggle-wish'])
+defineEmits(['click', 'add-to-cart', 'buy-now', 'toggle-wish'])
 
 const router    = useRouter()
 const cartStore = useCartStore()
@@ -171,21 +178,6 @@ function resolveImg(p) {
 const imgSrc = computed(() => imgError.value ? PRODUCT_PLACEHOLDER : resolveImg(props.product))
 
 watch(() => props.product?._id, () => { imgError.value = false })
-
-// Unique color variant names (max 3 shown)
-const colorVariants = computed(() => {
-  const seen = new Set()
-  const result = []
-  for (const v of props.product.variants ?? []) {
-    if (v.isActive === false) continue
-    const colorAttr = (v.attributes ?? []).find(a => a.key === 'رنگ')
-    if (colorAttr?.value && !seen.has(colorAttr.value)) {
-      seen.add(colorAttr.value)
-      result.push(colorAttr.value)
-    }
-  }
-  return result
-})
 
 // Find the variant whose price equals minPrice — use its own comparePrice
 // to avoid mixing prices from different variants (which inflates the discount).
