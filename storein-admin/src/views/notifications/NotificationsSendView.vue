@@ -15,7 +15,7 @@
         :class="[
           'flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
           activeTab === tab.id
-            ? 'bg-primary text-[#171717] shadow-sm'
+            ? 'bg-primary text-white shadow-sm'
             : 'text-text-secondary hover:text-text-primary hover:bg-bg',
         ]"
         @click="switchTab(tab.id)"

@@ -2,7 +2,6 @@ import rtl from 'tailwindcss-rtl'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: [
     './app.vue',
     './error.vue',
@@ -23,14 +22,14 @@ export default {
           light:   'rgb(var(--color-brand-light-rgb) / <alpha-value>)',
         },
         surface: {
-          DEFAULT: '#F4F6F9',
+          DEFAULT: '#EEF1EA',
           card:    '#FFFFFF',
-          border:  '#DDE3EC',
+          border:  '#E5E7E0',
         },
         text: {
-          primary:   '#171717',
-          secondary: '#4B5A3A',
-          disabled:  '#9CB68A',
+          primary:   '#1C1C1C',
+          secondary: '#6B7280',
+          disabled:  '#A8AFA9',
         },
         card: 'var(--color-card)',
         bg:   'var(--color-bg)',

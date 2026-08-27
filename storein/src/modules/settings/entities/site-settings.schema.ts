@@ -13,8 +13,8 @@ class SocialLinks {
 }
 
 class ThemeSettings {
-  @Prop({ default: 'carbon-lime' }) preset:       string;
-  @Prop({ default: '#C6FF34' })     primaryColor: string;
+  @Prop({ default: 'forest-green' }) preset:       string;
+  @Prop({ default: '#1A3620' })     primaryColor: string;
   @Prop({ default: 'light', enum: ['light', 'dark', 'system'] }) defaultMode: string;
 
   // Section colors — empty string means "use default"
@@ -59,8 +59,8 @@ class SmsSettings {
 class AnnouncementBar {
   @Prop({ default: false }) isActive:  boolean;
   @Prop({ default: '' })    text:      string;
-  @Prop({ default: '#C6FF34' }) bgColor:   string;
-  @Prop({ default: '#171717' }) textColor: string;
+  @Prop({ default: '#1A3620' }) bgColor:   string;
+  @Prop({ default: '#FFFFFF' }) textColor: string;
   @Prop({ default: '' })    link:      string;
 }
 
@@ -129,7 +129,7 @@ export class SiteSettings {
   footerLinks: FooterLink[];
 
   // ── Theme ─────────────────────────────────────────────────
-  @Prop({ type: ThemeSettings, default: () => ({ preset: 'carbon-lime', primaryColor: '#C6FF34' }) })
+  @Prop({ type: ThemeSettings, default: () => ({ preset: 'forest-green', primaryColor: '#1A3620' }) })
   theme: ThemeSettings;
 
   // ── Payment ───────────────────────────────────────────────
@@ -155,7 +155,7 @@ export class SiteSettings {
   // ── Announcement Bar ──────────────────────────────────────
   @Prop({
     type: { _id: false, isActive: Boolean, text: String, bgColor: String, textColor: String, link: String },
-    default: () => ({ isActive: false, text: '', bgColor: '#C6FF34', textColor: '#171717', link: '' }),
+    default: () => ({ isActive: false, text: '', bgColor: '#1A3620', textColor: '#FFFFFF', link: '' }),
   })
   announcementBar: AnnouncementBar;
 

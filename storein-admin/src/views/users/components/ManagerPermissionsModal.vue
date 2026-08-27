@@ -96,7 +96,7 @@
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg border cursor-pointer',
                 'text-xs font-medium transition-all duration-150 select-none',
                 selected.includes(`${perm.key}:${action.key}`)
-                  ? 'border-primary bg-primary text-[#171717]'
+                  ? 'border-primary bg-primary text-white'
                   : 'border-border text-text-secondary hover:border-primary/50 hover:text-primary',
               ]"
             >

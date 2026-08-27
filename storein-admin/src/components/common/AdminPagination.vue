@@ -24,7 +24,7 @@
         :class="[
           'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors font-fanum',
           p === modelValue
-            ? 'bg-primary text-[#171717] border border-primary'
+            ? 'bg-primary text-white border border-primary'
             : 'border border-border text-text-secondary hover:border-primary hover:text-primary',
         ]"
       >

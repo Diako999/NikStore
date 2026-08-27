@@ -827,7 +827,6 @@ onMounted(async () => {
   font-size: 0.72rem; color: #16a34a;
   background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2);
 }
-html.dark .duration-bar { color: #4ade80; background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.2); }
 .duration-bar strong { font-weight: 700; }
 
 /* ── Target: همه toggle ── */
@@ -844,7 +843,6 @@ html.dark .duration-bar { color: #4ade80; background: rgba(74,222,128,0.08); bor
 .sw-track { position: relative; width: 40px; height: 22px; border-radius: 999px; transition: background 0.2s; flex-shrink: 0; }
 .sw-on { background: #16a34a; }
 .sw-off { background: #d1d5db; }
-html.dark .sw-off { background: #475569; }
 .sw-thumb { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: transform 0.2s; display: block; }
 .sw-thumb-on { transform: translateX(18px); }
 
@@ -910,7 +908,6 @@ html.dark .sw-off { background: #475569; }
   font-size: 0.74rem; color: #1B4F8A;
   background: rgba(27,79,138,0.07); border: 1px solid rgba(27,79,138,0.2);
 }
-html.dark .target-summary { color: #93C5FD; background: rgba(147,197,253,0.08); border-color: rgba(147,197,253,0.2); }
 .target-summary strong { font-weight: 700; }
 
 /* ── Specific products ── */

@@ -53,46 +53,10 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
-/* ── Dark Mode ─────────────────────────────────────────────────
-   Uses CSS specificity: `.dark .utility` (0,2,0) > `.utility` (0,1,0)
-   so no !important needed. Component classes baked with @apply are
-   overridden by their own rule below.
-   ──────────────────────────────────────────────────────────── */
-html.dark body {
-  background-color: var(--color-surface);
-  color: var(--color-text-primary);
-}
-
-html.dark .bg-surface        { background-color: var(--color-surface); }
-html.dark .bg-card           { background-color: var(--color-card); }
-html.dark .border-border     { border-color: var(--color-border); }
-html.dark .text-text-primary   { color: var(--color-text-primary); }
-html.dark .text-text-secondary { color: var(--color-text-secondary); }
-html.dark .text-text-disabled  { color: var(--color-text-disabled); }
-
-/* Component classes that have @apply with hardcoded colors baked in */
-html.dark .admin-card {
-  background-color: var(--color-card);
-  border-color: var(--color-border);
-}
-html.dark .field-input {
-  background-color: var(--color-card);
-  border-color: var(--color-border);
-  color: var(--color-text-primary);
-}
-html.dark .field-label {
-  color: var(--color-text-primary);
-}
-
-/* Subtle shadow strengthening in dark mode */
-html.dark .shadow-card {
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-}
-
-/* ── vue3-persian-datetime-picker: force input text visible in all modes ─────
+/* ── vue3-persian-datetime-picker: force input text visible ──────────────────
    The library CSS doesn't set text color, and WebKit browsers may use
    -webkit-text-fill-color separately from `color`. Both must be set.
-   CSS variables resolve correctly in light (#0F172A) and dark (#F1F5F9).
+   CSS variable resolves to the theme's primary text color (#1C1C1C).
    ─────────────────────────────────────────────────────────────────────────── */
 .vpd-input-group > input {
   color: var(--color-text-primary) !important;

@@ -187,10 +187,8 @@ const router = useRouter()
 const ui     = useUiStore()
 const auth   = useAuthStore()
 const settingsStore = useSettingsStore()
-const { sidebarBg, sidebarBgDark } = useAdminTheme()
-const activeSidebarBg = computed(() =>
-  (ui.isDark && sidebarBgDark.value) ? sidebarBgDark.value : sidebarBg.value
-)
+const { sidebarBg } = useAdminTheme()
+const activeSidebarBg = computed(() => sidebarBg.value)
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -298,7 +296,7 @@ async function logout() {
   position: absolute;
   top: -80px; right: -80px;
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(198,255,52,0.10) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(61,92,68,0.10) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -316,13 +314,13 @@ async function logout() {
 }
 .sb-head__icon {
   width: 40px; height: 40px;
-  background: linear-gradient(145deg, #C6FF34 0%, #B3EA2E 60%, #A2D12A 100%);
+  background: linear-gradient(145deg, #3D5C44 0%, #2C4A33 60%, #1A3620 100%);
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   box-shadow:
-    0 0 0 1px rgba(198,255,52,0.25),
-    0 4px 20px rgba(198,255,52,0.35),
+    0 0 0 1px rgba(61,92,68,0.25),
+    0 4px 20px rgba(61,92,68,0.35),
     0 1px 3px rgba(0,0,0,0.4);
 }
 .sb-head__text {
@@ -346,9 +344,9 @@ async function logout() {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #C6FF34;
-  background: rgba(198,255,52,0.1);
-  border: 1px solid rgba(198,255,52,0.22);
+  color: #3D5C44;
+  background: rgba(61,92,68,0.1);
+  border: 1px solid rgba(61,92,68,0.22);
   padding: 2px 8px;
   border-radius: 5px;
 }
@@ -405,7 +403,7 @@ async function logout() {
 
 /* ── Active ── */
 .nav-item--on {
-  background: linear-gradient(135deg, rgba(198,255,52,0.16) 0%, rgba(198,255,52,0.04) 100%);
+  background: linear-gradient(135deg, rgba(61,92,68,0.16) 0%, rgba(61,92,68,0.04) 100%);
   color: #F5F5F5;
 }
 .nav-item--on::before {
@@ -413,7 +411,7 @@ async function logout() {
   position: absolute;
   left: 0; top: 6px; bottom: 6px;
   width: 3px;
-  background: linear-gradient(180deg, #D6FF6B 0%, #C6FF34 100%);
+  background: linear-gradient(180deg, #3D5C44 0%, #1A3620 100%);
   border-radius: 0 3px 3px 0;
 }
 .nav-item--on::after {
@@ -421,12 +419,12 @@ async function logout() {
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  border: 1px solid rgba(198,255,52,0.15);
+  border: 1px solid rgba(61,92,68,0.15);
   pointer-events: none;
 }
 .nav-item--on .nav-ico {
-  color: #C6FF34;
-  filter: drop-shadow(0 0 6px rgba(198,255,52,0.5));
+  color: #3D5C44;
+  filter: drop-shadow(0 0 6px rgba(61,92,68,0.5));
 }
 .nav-item--on .nav-lbl {
   font-weight: 600;
@@ -438,8 +436,8 @@ async function logout() {
   position: absolute;
   inset: 2px;
   border-radius: 8px;
-  border: 1px solid rgba(198,255,52,0.35);
-  box-shadow: inset 0 0 10px rgba(198,255,52,0.12);
+  border: 1px solid rgba(61,92,68,0.35);
+  box-shadow: inset 0 0 10px rgba(61,92,68,0.12);
   pointer-events: none;
 }
 
@@ -467,8 +465,8 @@ async function logout() {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
-  border: 1px solid rgba(198,255,52,0.15);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(198,255,52,0.05);
+  border: 1px solid rgba(61,92,68,0.15);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,92,68,0.05);
   z-index: 9999;
 }
 .nav-item:hover .nav-tip,
@@ -500,7 +498,7 @@ async function logout() {
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(198,255,52,0.22), 0 2px 10px rgba(0,0,0,0.45);
+  box-shadow: 0 0 0 1px rgba(61,92,68,0.22), 0 2px 10px rgba(0,0,0,0.45);
 }
 .sb-user__info {
   display: flex; flex-direction: column; min-width: 0; gap: 3px;
@@ -520,7 +518,7 @@ async function logout() {
   border-radius: 5px;
   width: fit-content;
 }
-.sb-user__role--admin { background: rgba(198,255,52,0.16); color: #C6FF34; }
+.sb-user__role--admin { background: rgba(61,92,68,0.16); color: #3D5C44; }
 .sb-user__role--mgr   { background: rgba(245,158,11,0.12); color: #FBBF24; }
 
 /* Online pulse dot */
