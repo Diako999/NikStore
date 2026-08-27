@@ -14,7 +14,7 @@
   <!-- Featured card -->
   <article
     v-else
-    class="rounded-3xl shadow-card overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col"
+    class="rounded-3xl shadow-soft overflow-hidden cursor-pointer hover:shadow-medium hover:-translate-y-1 transition-all duration-200 flex flex-col"
     style="background-color: var(--color-card);"
     @click="handleClick"
   >
@@ -24,30 +24,30 @@
     ══════════════════════════════════════ -->
     <div
       class="relative flex-shrink-0 overflow-hidden"
-      style="height: 280px; background: linear-gradient(145deg, #f5e8d4 0%, #e9d8bf 60%, #ddc9a8 100%);"
+      style="height: 280px; background: linear-gradient(145deg, #1B2A21 0%, #182A1E 60%, #142219 100%);"
     >
-      <!-- Heart button: top-left -->
+      <!-- Heart button: top-left — floating glass control, same language as BaseProductCard -->
       <button
         type="button"
-        class="absolute top-4 left-4 z-10 w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform duration-150"
-        style="background: #1a1a2e;"
+        class="absolute top-4 left-4 z-10 w-12 h-12 rounded-full flex items-center justify-center glass shadow-soft tactile hover:scale-110"
         @click.stop="$emit('toggle-wish')"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24"
-          :fill="wishlist ? '#f59e0b' : 'none'"
-          stroke="#f59e0b" stroke-width="1.8">
+          :fill="wishlist ? 'currentColor' : 'none'"
+          stroke="currentColor" stroke-width="1.8"
+          :class="wishlist ? 'text-red-400' : 'text-white/60'">
           <path stroke-linecap="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
         </svg>
       </button>
 
-      <!-- Discount badge: top-right -->
+      <!-- Discount badge: top-right — tinted glass chip -->
       <div
         v-if="discount > 0"
-        class="absolute top-4 right-4 z-10 rounded-2xl text-center shadow-sm"
-        style="background: #ffe4e6; padding: 10px 14px; min-width: 60px;"
+        class="absolute top-4 right-4 z-10 rounded-2xl text-center glass shadow-soft"
+        style="padding: 10px 14px; min-width: 60px; background: rgba(239,68,68,0.16);"
       >
-        <p class="text-red-500 font-black leading-none font-fanum" style="font-size: 1.4rem;">{{ discount }}%</p>
-        <p class="text-red-400 font-bold mt-1" style="font-size: 11px;">تخفیف</p>
+        <p class="text-red-300 font-black leading-none font-fanum" style="font-size: 1.4rem;">{{ discount }}%</p>
+        <p class="text-red-300/80 font-bold mt-1" style="font-size: 11px;">تخفیف</p>
       </div>
 
       <!-- Product image: changes with selected variant -->
@@ -81,7 +81,7 @@
           :disabled="variant.stock === 0"
           :class="[
             'relative flex-shrink-0 rounded-2xl overflow-hidden border-2 transition-all duration-150',
-            localSelected?._id === variant._id ? 'border-purple-500' : 'border-transparent',
+            localSelected?._id === variant._id ? 'border-brand' : 'border-transparent',
             variant.stock === 0 ? 'opacity-40 cursor-not-allowed' : '',
           ]"
           style="width: 86px; background: rgba(255,255,255,0.06);"
@@ -89,7 +89,7 @@
           <!-- Selected checkmark -->
           <div
             v-if="localSelected?._id === variant._id"
-            class="absolute top-1.5 end-1.5 z-10 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center"
+            class="absolute top-1.5 end-1.5 z-10 w-5 h-5 rounded-full bg-brand flex items-center justify-center"
           >
             <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
               <path stroke-linecap="round" d="M4.5 12.75l6 6 9-13.5"/>
@@ -117,18 +117,18 @@
             <!-- Icon circle -->
             <div
               class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style="background: rgba(168,85,247,0.15);"
+              style="background: rgb(var(--color-brand-rgb) / 0.15);"
             >
               <!-- Feather / quality -->
-              <svg v-if="i === 0" class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <svg v-if="i === 0" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904"/>
               </svg>
               <!-- Shield / warranty -->
-              <svg v-else-if="i === 1" class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <svg v-else-if="i === 1" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
               </svg>
               <!-- Eye / lens -->
-              <svg v-else class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <svg v-else class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z"/>
                 <path stroke-linecap="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
               </svg>
@@ -174,8 +174,8 @@
       <button
         v-if="isInCart"
         @click.stop="goToCart"
-        class="w-full h-11 rounded-full flex items-center justify-center gap-2 text-white font-bold active:scale-[0.98] transition-transform"
-        style="background: #16a34a; font-size: 0.875rem;"
+        class="w-full h-11 rounded-full flex items-center justify-center gap-2 text-white font-bold active:scale-[0.98] transition-transform bg-success"
+        style="font-size: 0.875rem;"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" d="M4.5 12.75l6 6 9-13.5"/>
@@ -341,7 +341,7 @@ const features = computed(() => {
   return [
     { title: 'کیفیت ممتاز', subtitle: 'مواد اولیه درجه یک' },
     { title: 'ضمانت اصالت', subtitle: 'کالای تضمین شده' },
-    { title: 'لنز UV400', subtitle: 'محافظت کامل از چشم' },
+    { title: 'دوخت ماندگار', subtitle: 'مقاوم در برابر شست‌وشو' },
   ]
 })
 

@@ -5,8 +5,8 @@
       :class="[
         'flex items-center rounded-full border transition-all duration-200',
         isFocused
-          ? 'border-brand shadow-[0_0_0_3px_rgba(27,79,138,0.12)] bg-[var(--color-card)]'
-          : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-gray-300',
+          ? 'border-brand shadow-[0_0_0_3px_rgb(var(--color-brand-rgb)/0.18)] bg-[var(--color-card)]'
+          : 'border-[var(--color-border)] bg-white/5 hover:border-white/20',
       ]"
     >
       <!-- Search icon -->
@@ -50,8 +50,7 @@
     <Transition name="search-drop">
       <div
         v-if="isOpen && query.trim().length >= 2"
-        class="absolute top-full mt-2 w-full rounded-2xl shadow-dropdown z-dropdown overflow-hidden"
-        style="background-color: var(--color-card); border: 1px solid var(--color-border);"
+        class="absolute top-full mt-2 w-full rounded-2xl shadow-dropdown z-dropdown overflow-hidden glass-strong"
       >
         <!-- Loading -->
         <div v-if="loading" class="p-4 space-y-3">
@@ -73,7 +72,7 @@
                 :key="item.slug"
                 type="button"
                 class="w-full text-right px-4 py-2.5 flex items-center gap-3 transition-colors duration-100 group"
-                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === idx ? 'var(--color-bg)' : '' }"
+                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === idx ? 'rgba(255,255,255,0.06)' : '' }"
                 @mouseenter="activeIndex = idx"
                 @mouseleave="activeIndex = -1"
                 @click="goToProduct(item)"
@@ -102,7 +101,7 @@
                 :key="cat.slug"
                 type="button"
                 class="w-full text-right px-4 py-2.5 flex items-center gap-3 transition-colors duration-100"
-                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === (suggestions.products?.length || 0) + cidx ? 'var(--color-bg)' : '' }"
+                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === (suggestions.products?.length || 0) + cidx ? 'rgba(255,255,255,0.06)' : '' }"
                 @mouseenter="activeIndex = (suggestions.products?.length || 0) + cidx"
                 @mouseleave="activeIndex = -1"
                 @click="goToCategory(cat)"
@@ -113,7 +112,7 @@
                   </svg>
                 </span>
                 <span class="text-sm truncate">{{ cat.name }}</span>
-                <span class="mr-auto text-xs px-2 py-0.5 rounded-full text-brand" style="background-color: rgba(27,79,138,0.08);">دسته‌بندی</span>
+                <span class="mr-auto text-xs px-2 py-0.5 rounded-full text-brand" style="background-color: rgb(var(--color-brand-rgb) / 0.15);">دسته‌بندی</span>
               </button>
             </div>
           </template>
@@ -129,7 +128,7 @@
             <button
               type="button"
               class="w-full px-4 py-3 text-sm text-brand flex items-center justify-center gap-2 font-medium transition-colors duration-100"
-              @mouseenter="e => e.currentTarget.style.backgroundColor = 'var(--color-bg)'"
+              @mouseenter="e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'"
               @mouseleave="e => e.currentTarget.style.backgroundColor = ''"
               @click="handleSearch"
             >

@@ -1,6 +1,5 @@
 ﻿<template>
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-header shadow-[0_-2px_8px_rgba(0,0,0,0.08)] h-14 transition-colors duration-200"
-    style="background-color: var(--color-card); border-top: 1px solid var(--color-border);">
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-header h-14 glass-strong shadow-floating">
     <div class="flex items-stretch h-full">
       <NuxtLink
         v-for="item in navItems"
@@ -21,6 +20,14 @@
             {{ item.badge > 9 ? '۹+' : item.badge }}
           </span>
         </ClientOnly>
+
+        <!-- Selected-state highlight — soft glass pill, not just a color change -->
+        <span
+          v-if="isActive(item)"
+          class="absolute inset-x-2.5 top-1.5 bottom-1.5 rounded-xl -z-10"
+          style="background: rgb(var(--color-brand-rgb) / 0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);"
+          aria-hidden="true"
+        />
 
         <component :is="item.icon" class="w-5 h-5" />
         <span class="text-xs font-medium">{{ item.label }}</span>

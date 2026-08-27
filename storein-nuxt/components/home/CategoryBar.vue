@@ -9,7 +9,7 @@
       >
         <div class="cat-tile__ico">
           <img v-if="item.image" :src="item.image" :alt="item.name" class="cat-tile__img" />
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="#1A3620"
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="#6EB082"
                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
                class="cat-tile__svg">
             <template v-if="iconFor(item.slug) === 'women'">
@@ -86,15 +86,19 @@ onMounted(async () => {
   gap: 0.5rem;
   padding: 1.1rem 0.5rem;
   border-radius: 18px;
-  background: #EEF1EA;
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid var(--glass-border);
   text-decoration: none;
   text-align: center;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, background-color 0.22s ease;
 }
 
 .cat-tile:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(26,54,32,0.14);
+  background: rgba(27, 42, 33, 0.72);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 
 .cat-tile__ico {
@@ -104,7 +108,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: rgb(var(--color-brand-rgb) / 0.16);
   flex-shrink: 0;
 }
 
@@ -123,7 +127,7 @@ onMounted(async () => {
 .cat-tile__lbl {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #1A3620;
+  color: var(--color-text-primary);
   white-space: nowrap;
 }
 

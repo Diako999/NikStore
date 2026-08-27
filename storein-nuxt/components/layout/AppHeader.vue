@@ -1,7 +1,12 @@
 ﻿<template>
   <header
-    class="sticky top-0 z-header shadow-sm transition-colors duration-200"
-    style="background-color: var(--color-header-bg); border-bottom: 1px solid var(--color-header-border);"
+    class="sticky top-0 z-header transition-colors duration-200"
+    style="
+      background-color: var(--color-header-bg);
+      backdrop-filter: blur(20px) saturate(150%);
+      -webkit-backdrop-filter: blur(20px) saturate(150%);
+      border-bottom: 1px solid var(--color-header-border);
+    "
   >
     <!-- Main row -->
     <div class="container-main flex items-center gap-3 h-14 md:h-16">
@@ -40,9 +45,9 @@
         <template #fallback>
           <!-- SSR placeholder — same size as real actions to prevent layout shift -->
           <div class="flex items-center gap-1 shrink-0">
-            <div class="w-9 h-9 rounded-lg bg-[var(--color-surface,rgba(0,0,0,.06))]" />
-            <div class="w-9 h-9 rounded-lg bg-[var(--color-surface,rgba(0,0,0,.06))]" />
-            <div class="w-9 h-9 rounded-lg bg-[var(--color-surface,rgba(0,0,0,.06))]" />
+            <div class="w-9 h-9 rounded-lg bg-white/8" />
+            <div class="w-9 h-9 rounded-lg bg-white/8" />
+            <div class="w-9 h-9 rounded-lg bg-white/8" />
           </div>
         </template>
       </ClientOnly>

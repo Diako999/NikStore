@@ -168,7 +168,7 @@
 
       <!-- ⑥ Action buttons — sticky on mobile, inline on desktop -->
       <div
-        class="sticky bottom-0 z-20 -mx-4 px-4 py-3 bg-card border-t border-surface-border md:static md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent md:border-0 flex gap-3"
+        class="sticky bottom-0 z-20 -mx-4 px-4 py-3 glass-strong shadow-floating md:static md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:shadow-none flex gap-3"
         style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));"
       >
         <button

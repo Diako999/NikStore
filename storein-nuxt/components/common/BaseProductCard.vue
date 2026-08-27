@@ -13,7 +13,7 @@
   <!-- Product card -->
   <article
     v-else
-    class="rounded-2xl shadow-card overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col h-full bg-card"
+    class="rounded-2xl shadow-soft overflow-hidden cursor-pointer hover:shadow-medium hover:-translate-y-1 transition-all duration-200 flex flex-col h-full bg-card"
     @click="handleClick"
     @keydown.enter.prevent="handleClick"
     @keydown.space.prevent="handleClick"
@@ -22,15 +22,12 @@
     :aria-label="product.name"
   >
     <!-- Image area -->
-    <div
-      class="aspect-square relative shrink-0 overflow-hidden"
-      :class="featured ? 'bg-white' : 'p-3 bg-card'"
-    >
+    <div class="aspect-square relative shrink-0 overflow-hidden p-3 bg-card">
 
-      <!-- Wishlist: top-end (physically left in RTL) -->
+      <!-- Wishlist: top-end (physically left in RTL) — floating glass control -->
       <button
         type="button"
-        class="absolute top-2.5 end-2.5 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-white/90 shadow-sm hover:scale-110 transition-transform duration-150"
+        class="absolute top-2.5 end-2.5 z-10 w-11 h-11 flex items-center justify-center rounded-full glass shadow-soft tactile hover:scale-110"
         @click.stop="$emit('toggle-wish')"
         :aria-label="wishlist ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
         :aria-pressed="wishlist"
@@ -38,7 +35,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
           :fill="wishlist ? 'currentColor' : 'none'"
           stroke="currentColor" stroke-width="1.8"
-          :class="['w-4 h-4', wishlist ? 'text-red-500' : 'text-gray-400']"
+          :class="['w-4 h-4', wishlist ? 'text-red-400' : 'text-white/60']"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
         </svg>
@@ -59,8 +56,8 @@
       />
 
       <!-- Out of stock overlay -->
-      <div v-if="product.totalStock === 0" class="absolute inset-0 bg-white/75 flex items-center justify-center" aria-hidden="true">
-        <span class="text-gray-700 font-semibold text-sm px-3 py-1.5 bg-white rounded-full shadow-sm">ناموجود</span>
+      <div v-if="product.totalStock === 0" class="absolute inset-0 bg-black/55 flex items-center justify-center" aria-hidden="true">
+        <span class="text-white font-semibold text-sm px-3 py-1.5 glass-strong rounded-full">ناموجود</span>
       </div>
     </div>
 

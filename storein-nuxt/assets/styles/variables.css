@@ -1,33 +1,46 @@
 :root {
-  /* Brand — Forest Green — RGB triplets (no commas) so Tailwind opacity modifiers work: bg-brand/10 */
-  --color-brand-rgb:       26 54 32;  /* #1A3620 */
-  --color-brand-dark-rgb:  18 41 24;  /* #122918 */
-  --color-brand-light-rgb: 61 92 68;  /* #3D5C44 */
+  /* Brand — bright emerald accent (used for buttons/links/active states —
+     needs to pop against the dark charcoal-green surfaces below).
+     RGB triplets (no commas) so Tailwind opacity modifiers work: bg-brand/10 */
+  --color-brand-rgb:       61 139 82;   /* #3D8B52 */
+  --color-brand-dark-rgb:  45 107 62;   /* #2D6B3E — hover/pressed */
+  --color-brand-light-rgb: 110 176 130; /* #6EB082 — lighter tint */
 
-  /* Surfaces — White with sage tint */
-  --color-bg:          #FFFFFF;
-  --color-card:        #FFFFFF;
-  --color-border:      #E5E7E0;
+  /* Deep forest — large solid fills (hero, footer), not a Tailwind utility,
+     referenced directly by components that need the darker anchor tone */
+  --color-deep-rgb: 26 54 32; /* #1A3620 */
 
-  /* Text */
-  --color-text-primary:   #1C1C1C;
-  --color-text-secondary: #6B7280;
-  --color-text-disabled:  #A8AFA9;
+  /* Surfaces — Level 1 (page/hero) charcoal-green, Level 2 (cards) one step up */
+  --color-bg:          #101913;
+  --color-card:        #1B2A21;
+  --color-border:      rgba(255, 255, 255, 0.08);
 
-  /* Header */
-  --color-header-bg:      #FFFFFF;
-  --color-header-border:  #E5E7E0;
+  /* Glass — Level 3 floating/interactive surfaces only (header, sticky bars,
+     dropdowns, overlays, selected states) — tinted, never generic white */
+  --glass-bg:           rgba(27, 42, 33, 0.55);
+  --glass-bg-strong:    rgba(16, 25, 19, 0.75);
+  --glass-border:       rgba(255, 255, 255, 0.10);
+  --glass-highlight:    rgba(255, 255, 255, 0.06);
 
-  /* Footer */
-  --color-footer-bg:      #14291A;
-  --color-footer-text:    #FFFFFF;
-  --color-footer-muted:   #A3A3A3;
+  /* Text — warm cream primary, muted sage secondary */
+  --color-text-primary:   #F2F0E8;
+  --color-text-secondary: #96A697;
+  --color-text-disabled:  #5A6459;
+
+  /* Header — glass, translucent so hero/content reads through on scroll */
+  --color-header-bg:      var(--glass-bg-strong);
+  --color-header-border:  var(--glass-border);
+
+  /* Footer — deeper than page bg to ground the layout */
+  --color-footer-bg:      #0B140F;
+  --color-footer-text:    #F2F0E8;
+  --color-footer-muted:   rgba(242, 240, 232, 0.55);
 
   /* Status */
-  --color-success: #059669;
-  --color-warning: #D97706;
-  --color-error:   #DC2626;
-  --color-info:    #2563EB;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error:   #EF4444;
+  --color-info:    #3B82F6;
 
   /* Layout */
   --header-height:        64px;

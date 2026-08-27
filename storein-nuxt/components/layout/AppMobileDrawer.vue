@@ -14,8 +14,8 @@
     <Transition name="drawer">
       <nav
         v-if="uiStore.isMenuOpen"
-        class="fixed top-0 right-0 bottom-0 w-[288px] z-[260] md:hidden flex flex-col overflow-y-auto"
-        style="background-color: var(--color-card); border-left: 1px solid var(--color-border);"
+        class="fixed top-0 right-0 bottom-0 w-[288px] z-[260] md:hidden flex flex-col overflow-y-auto glass-strong"
+        style="border-left: 1px solid var(--glass-border); border-top: none; border-bottom: none; border-right: none;"
       >
         <!-- Brand accent strip -->
         <div class="h-1 flex-shrink-0 bg-brand" />
