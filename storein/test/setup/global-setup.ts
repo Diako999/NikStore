@@ -17,7 +17,9 @@ export default async function globalSetup(): Promise<void> {
   process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret-e2e-very-long-key';
   process.env.JWT_REFRESH_EXPIRES_IN = '30d';
   process.env.OTP_EXPIRES_IN = '300';
-  process.env.OTP_LENGTH = '5';
+  // VerifyOtpDto hardcodes @Length(6, 6) by design (see verify-otp.dto.spec.ts) —
+  // must match the real 6-digit OTP contract, not an arbitrary test value.
+  process.env.OTP_LENGTH = '6';
   process.env.REDIS_HOST = 'localhost';
   process.env.REDIS_PORT = '6379';
   process.env.REDIS_TTL = '300';

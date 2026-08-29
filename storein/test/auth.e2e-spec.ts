@@ -176,14 +176,14 @@ describe('Auth (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/api/v1/auth/verify-otp')
-        .send({ phone, code: '00000' })
+        .send({ phone, code: '000000' })
         .expect(401);
     });
 
     it('no prior send-otp → 401', async () => {
       await request(app.getHttpServer())
         .post('/api/v1/auth/verify-otp')
-        .send({ phone: generateTestPhone(), code: '12345' })
+        .send({ phone: generateTestPhone(), code: '123456' })
         .expect(401);
     });
 
@@ -197,14 +197,14 @@ describe('Auth (e2e)', () => {
       for (let i = 0; i < 5; i++) {
         await request(app.getHttpServer())
           .post('/api/v1/auth/verify-otp')
-          .send({ phone, code: '00000' })
+          .send({ phone, code: '000000' })
           .expect(401);
       }
 
       // 6th attempt hits brute-force guard → 400
       const res = await request(app.getHttpServer())
         .post('/api/v1/auth/verify-otp')
-        .send({ phone, code: '00000' })
+        .send({ phone, code: '000000' })
         .expect(400);
 
       const body = res.body as ErrorResponseBody;
