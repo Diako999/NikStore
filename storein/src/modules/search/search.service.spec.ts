@@ -194,10 +194,13 @@ describe('SearchService', () => {
       expect(productModel.find).toHaveBeenCalled();
     });
 
-    it('adds text match when q is provided', async () => {
+    it('adds a case-insensitive regex $or match when q is provided', async () => {
       await service.search({ q: 'سامسونگ' });
       const callArg = productModel.find.mock.calls[0][0] as SearchFilterArg;
-      expect(callArg.$text).toEqual({ $search: 'سامسونگ' });
+      expect(callArg.$or).toHaveLength(4);
+      const nameClause = callArg.$or?.[0] as { name: { $regex: RegExp } };
+      expect(nameClause.name.$regex.source).toBe('سامسونگ');
+      expect(nameClause.name.$regex.flags).toBe('i');
     });
 
     it('filters by inStock', async () => {

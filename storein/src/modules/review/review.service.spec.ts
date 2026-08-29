@@ -78,6 +78,7 @@ interface MockReviewModel {
 }
 
 interface MockProductModel {
+  findById: jest.Mock;
   findByIdAndUpdate: jest.Mock;
 }
 
@@ -129,6 +130,11 @@ describe('ReviewService', () => {
     };
 
     productModel = {
+      findById: jest.fn().mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      }),
       findByIdAndUpdate: jest.fn().mockResolvedValue({}),
     };
 
@@ -195,10 +201,18 @@ describe('ReviewService', () => {
       );
     });
 
-    it('throws when order does not contain product', async () => {
+    it('creates an unverified review when no matching delivered order exists', async () => {
       orderModel.findOne.mockReturnValue(leanChain(null));
-      await expect(service.create(userId, dto)).rejects.toThrow(
-        BadRequestException,
+      reviewModel.findOne.mockReturnValue(leanChain(null));
+      reviewModel.create.mockResolvedValue({
+        ...mockReview({ isVerifiedPurchase: false }),
+        toObject: () => mockReview({ isVerifiedPurchase: false }),
+      });
+
+      const res = await service.create(userId, dto);
+      expect(res.isVerifiedPurchase).toBe(false);
+      expect(reviewModel.create).toHaveBeenCalledWith(
+        expect.objectContaining({ isVerifiedPurchase: false, orderId: null }),
       );
     });
 

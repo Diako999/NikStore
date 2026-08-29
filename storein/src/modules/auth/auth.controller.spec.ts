@@ -143,13 +143,16 @@ describe('AuthController', () => {
   });
 
   describe('cookie SameSite attributes (Railway cross-origin fix)', () => {
-    const originalEnv = process.env.NODE_ENV;
+    const originalSameSite = process.env.COOKIE_SAME_SITE;
+    const originalSecure = process.env.COOKIE_SECURE;
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv;
+      process.env.COOKIE_SAME_SITE = originalSameSite;
+      process.env.COOKIE_SECURE = originalSecure;
     });
 
     it('sets sameSite=none and secure=true in production (cross-origin Railway deployment)', async () => {
-      process.env.NODE_ENV = 'production';
+      process.env.COOKIE_SAME_SITE = 'none';
+      process.env.COOKIE_SECURE = 'true';
       mockService.verifyOtp.mockResolvedValue({
         accessToken: 'at',
         refreshToken: 'rt',
@@ -173,7 +176,8 @@ describe('AuthController', () => {
     });
 
     it('sets sameSite=lax and secure=false in development (same-origin local setup)', async () => {
-      process.env.NODE_ENV = 'development';
+      delete process.env.COOKIE_SAME_SITE;
+      delete process.env.COOKIE_SECURE;
       mockService.verifyOtp.mockResolvedValue({
         accessToken: 'at',
         refreshToken: 'rt',
@@ -197,7 +201,8 @@ describe('AuthController', () => {
     });
 
     it('clearCookie uses matching sameSite/secure attributes', async () => {
-      process.env.NODE_ENV = 'production';
+      process.env.COOKIE_SAME_SITE = 'none';
+      process.env.COOKIE_SECURE = 'true';
       mockService.logout.mockResolvedValue({ message: 'ok' });
       const res = makeRes();
       await controller.logout(makeUser(), makeReq(), asRes(res));
