@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
-import request              from 'supertest';
-import { getOtpFromRedis }  from './seed.helper';
+import type { Server } from 'http';
+import request from 'supertest';
+import { getOtpFromRedis } from './seed.helper';
 
 export interface AuthSession {
   accessToken: string;
@@ -9,10 +10,28 @@ export interface AuthSession {
   phone: string;
 }
 
+interface AccessTokenPayload {
+  sub: string;
+  phone: string;
+  iat: number;
+  exp: number;
+}
+
+interface VerifyOtpResponseBody {
+  accessToken: string;
+  isNewUser: boolean;
+}
+
+interface RefreshResponseBody {
+  accessToken: string;
+}
+
 /** Decodes the JWT payload without verifying signature. */
-export function parseAccessToken(token: string): { sub: string; phone: string; iat: number; exp: number } {
+export function parseAccessToken(token: string): AccessTokenPayload {
   const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-  return JSON.parse(Buffer.from(b64, 'base64').toString('utf8'));
+  return JSON.parse(
+    Buffer.from(b64, 'base64').toString('utf8'),
+  ) as AccessTokenPayload;
 }
 
 /** Generates a valid random Iranian mobile phone number. */
@@ -29,7 +48,7 @@ export function generateTestPhone(): string {
  * Returns { accessToken, cookie, phone }.
  */
 export async function loginAsNewUser(
-  app: INestApplication,
+  app: INestApplication<Server>,
   phone = generateTestPhone(),
 ): Promise<AuthSession> {
   await request(app.getHttpServer())
@@ -44,12 +63,15 @@ export async function loginAsNewUser(
     .send({ phone, code: otp })
     .expect(200);
 
-  const setCookieHeader = (res.headers['set-cookie'] as string[] | undefined) ?? [];
-  const fullCookie      = setCookieHeader.find(c => c.startsWith('refresh_token=')) ?? '';
+  const body = res.body as VerifyOtpResponseBody;
+  const setCookieHeader =
+    (res.headers['set-cookie'] as string[] | undefined) ?? [];
+  const fullCookie =
+    setCookieHeader.find((c) => c.startsWith('refresh_token=')) ?? '';
   // Cookie header for subsequent requests must be just 'refresh_token=JWT'
-  const cookie          = fullCookie.split(';')[0];
+  const cookie = fullCookie.split(';')[0];
 
-  return { accessToken: res.body.accessToken, cookie, phone };
+  return { accessToken: body.accessToken, cookie, phone };
 }
 
 /**
@@ -57,7 +79,7 @@ export async function loginAsNewUser(
  * Returns the new access token and rotated cookie.
  */
 export async function refreshSession(
-  app: INestApplication,
+  app: INestApplication<Server>,
   cookie: string,
 ): Promise<{ accessToken: string; newCookie: string }> {
   const res = await request(app.getHttpServer())
@@ -65,9 +87,12 @@ export async function refreshSession(
     .set('Cookie', cookie)
     .expect(200);
 
-  const setCookieHeader = (res.headers['set-cookie'] as string[] | undefined) ?? [];
-  const fullCookie      = setCookieHeader.find(c => c.startsWith('refresh_token=')) ?? '';
-  const newCookie       = fullCookie.split(';')[0];
+  const body = res.body as RefreshResponseBody;
+  const setCookieHeader =
+    (res.headers['set-cookie'] as string[] | undefined) ?? [];
+  const fullCookie =
+    setCookieHeader.find((c) => c.startsWith('refresh_token=')) ?? '';
+  const newCookie = fullCookie.split(';')[0];
 
-  return { accessToken: res.body.accessToken, newCookie };
+  return { accessToken: body.accessToken, newCookie };
 }

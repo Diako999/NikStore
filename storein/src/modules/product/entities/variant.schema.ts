@@ -8,7 +8,8 @@ export class VariantAttribute {
   @Prop({ required: true }) key: string;
   @Prop({ required: true }) value: string;
 }
-export const VariantAttributeSchema = SchemaFactory.createForClass(VariantAttribute);
+export const VariantAttributeSchema =
+  SchemaFactory.createForClass(VariantAttribute);
 
 @Schema({ _id: true, timestamps: false })
 export class Variant {

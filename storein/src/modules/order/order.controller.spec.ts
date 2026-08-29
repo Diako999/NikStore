@@ -4,20 +4,23 @@ import { Types } from 'mongoose';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
 import { OrderStatus } from './entities/order.schema';
+import type { UserDocument } from '../user/entities/user.schema';
 
 const mockService = {
-  createFromCart:  jest.fn(),
-  findMyOrders:    jest.fn(),
+  createFromCart: jest.fn(),
+  findMyOrders: jest.fn(),
   findMyOrderById: jest.fn(),
-  cancelMyOrder:   jest.fn(),
-  adminFindAll:    jest.fn(),
-  adminFindById:   jest.fn(),
-  updateStatus:    jest.fn(),
+  cancelMyOrder: jest.fn(),
+  adminFindAll: jest.fn(),
+  adminFindById: jest.fn(),
+  updateStatus: jest.fn(),
 };
 
-const userId  = new Types.ObjectId().toString();
+const userId = new Types.ObjectId().toString();
 const orderId = new Types.ObjectId().toString();
-const mockUser = { _id: { toString: () => userId } } as any;
+const mockUser = {
+  _id: { toString: () => userId },
+} as unknown as UserDocument;
 
 describe('OrderController', () => {
   let controller: OrderController;
@@ -43,8 +46,9 @@ describe('OrderController', () => {
 
     it('propagates BadRequestException on empty cart', async () => {
       mockService.createFromCart.mockRejectedValue(new BadRequestException());
-      await expect(controller.create(mockUser, { addressId: 'x' }))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        controller.create(mockUser, { addressId: 'x' }),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -52,14 +56,24 @@ describe('OrderController', () => {
     it('returns paginated orders', async () => {
       mockService.findMyOrders.mockResolvedValue({ orders: [], total: 0 });
       const result = await controller.findMyOrders(mockUser, 1, 10);
-      expect(mockService.findMyOrders).toHaveBeenCalledWith(userId, 1, 10, undefined);
+      expect(mockService.findMyOrders).toHaveBeenCalledWith(
+        userId,
+        1,
+        10,
+        undefined,
+      );
       expect(result.total).toBe(0);
     });
 
     it('passes status filter when provided', async () => {
       mockService.findMyOrders.mockResolvedValue({ orders: [], total: 0 });
       await controller.findMyOrders(mockUser, 1, 10, OrderStatus.PENDING);
-      expect(mockService.findMyOrders).toHaveBeenCalledWith(userId, 1, 10, OrderStatus.PENDING);
+      expect(mockService.findMyOrders).toHaveBeenCalledWith(
+        userId,
+        1,
+        10,
+        OrderStatus.PENDING,
+      );
     });
   });
 
@@ -72,32 +86,45 @@ describe('OrderController', () => {
 
     it('propagates NotFoundException when not found', async () => {
       mockService.findMyOrderById.mockRejectedValue(new NotFoundException());
-      await expect(controller.findMyOrderById(mockUser, orderId))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        controller.findMyOrderById(mockUser, orderId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('cancelMyOrder', () => {
     it('cancels order and returns updated doc', async () => {
-      mockService.cancelMyOrder.mockResolvedValue({ status: OrderStatus.CANCELLED });
+      mockService.cancelMyOrder.mockResolvedValue({
+        status: OrderStatus.CANCELLED,
+      });
       const result = await controller.cancelMyOrder(mockUser, orderId);
       expect(result.status).toBe(OrderStatus.CANCELLED);
     });
 
     it('propagates BadRequestException on illegal transition', async () => {
       mockService.cancelMyOrder.mockRejectedValue(new BadRequestException());
-      await expect(controller.cancelMyOrder(mockUser, orderId))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.cancelMyOrder(mockUser, orderId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('adminFindAll', () => {
     it('passes query params to service', async () => {
       mockService.adminFindAll.mockResolvedValue({ items: [], total: 0 });
-      await controller.adminFindAll(1, 20, OrderStatus.PENDING, 'test', '2024-01-01', '2024-12-31');
+      await controller.adminFindAll(
+        1,
+        20,
+        OrderStatus.PENDING,
+        'test',
+        '2024-01-01',
+        '2024-12-31',
+      );
       expect(mockService.adminFindAll).toHaveBeenCalledWith(1, 20, {
-        status: OrderStatus.PENDING, search: 'test',
-        startDate: '2024-01-01', endDate: '2024-12-31',
+        status: OrderStatus.PENDING,
+        search: 'test',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
       });
     });
   });
@@ -111,16 +138,24 @@ describe('OrderController', () => {
 
     it('propagates NotFoundException', async () => {
       mockService.adminFindById.mockRejectedValue(new NotFoundException());
-      await expect(controller.adminFindById(orderId)).rejects.toThrow(NotFoundException);
+      await expect(controller.adminFindById(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('updateStatus', () => {
     it('transitions order status', async () => {
-      mockService.updateStatus.mockResolvedValue({ status: OrderStatus.CONFIRMED });
-      const result = await controller.updateStatus(orderId, { status: OrderStatus.CONFIRMED });
+      mockService.updateStatus.mockResolvedValue({
+        status: OrderStatus.CONFIRMED,
+      });
+      const result = await controller.updateStatus(orderId, {
+        status: OrderStatus.CONFIRMED,
+      });
       expect(result.status).toBe(OrderStatus.CONFIRMED);
-      expect(mockService.updateStatus).toHaveBeenCalledWith(orderId, { status: OrderStatus.CONFIRMED });
+      expect(mockService.updateStatus).toHaveBeenCalledWith(orderId, {
+        status: OrderStatus.CONFIRMED,
+      });
     });
 
     it('propagates BadRequestException on illegal transition', async () => {

@@ -8,9 +8,10 @@ import {
 export class MockPushChannel extends PushNotificationChannel {
   private readonly logger = new Logger(MockPushChannel.name);
 
-  async send(payload: ChannelPayload): Promise<void> {
+  send(payload: ChannelPayload): Promise<void> {
     this.logger.log(
       `🔔 [MOCK PUSH] → ${payload.userId} | ${payload.title}: ${payload.body}`,
     );
+    return Promise.resolve();
   }
 }

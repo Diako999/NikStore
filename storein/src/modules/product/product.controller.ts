@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Delete, Get, Param,
-  Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -103,7 +110,10 @@ export class ProductController {
 
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Delete(':id/variants/:variantId')
-  removeVariant(@Param('id') id: string, @Param('variantId') variantId: string) {
+  removeVariant(
+    @Param('id') id: string,
+    @Param('variantId') variantId: string,
+  ) {
     return this.productService.removeVariant(id, variantId);
   }
 

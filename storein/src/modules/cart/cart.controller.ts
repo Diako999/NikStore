@@ -1,6 +1,14 @@
 import {
-  Body, Controller, Delete, Get,
-  HttpCode, HttpStatus, Param, Patch, Post, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
@@ -9,7 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserDocument } from '../user/entities/user.schema';
 
-const uid = (u: UserDocument) => (u._id as any).toString();
+const uid = (u: UserDocument) => u._id.toString();
 
 @UseGuards(JwtAuthGuard)
 @Controller('cart')

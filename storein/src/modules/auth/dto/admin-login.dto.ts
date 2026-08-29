@@ -6,7 +6,7 @@ export class AdminLoginDto {
   phone: string;
 
   @IsString()
-  @MinLength(6,  { message: 'رمز عبور حداقل ۶ کاراکتر است' })
+  @MinLength(6, { message: 'رمز عبور حداقل ۶ کاراکتر است' })
   @MaxLength(72, { message: 'رمز عبور حداکثر ۷۲ کاراکتر است' })
   password: string;
 }

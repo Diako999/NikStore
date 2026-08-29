@@ -1,17 +1,22 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { Reflector } from '@nestjs/core'
-import { IS_PUBLIC_KEY } from '../../../common/decorators/public.decorator';
+import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import type { UserDocument } from '../../user/entities/user.schema';
 
 const makeCtx = (handler = {}, cls = {}): ExecutionContext =>
-  ({ getHandler: () => handler, getClass: () => cls } as any);
+  ({
+    getHandler: () => handler,
+    getClass: () => cls,
+  }) as unknown as ExecutionContext;
 
 describe('JwtAuthGuard', () => {
   let guard: JwtAuthGuard;
   let reflector: jest.Mocked<Reflector>;
 
   beforeEach(() => {
-    reflector = { getAllAndOverride: jest.fn() } as any;
+    reflector = {
+      getAllAndOverride: jest.fn(),
+    } as unknown as jest.Mocked<Reflector>;
     guard = new JwtAuthGuard(reflector);
   });
 
@@ -26,7 +31,7 @@ describe('JwtAuthGuard', () => {
       const superActivate = jest
         .spyOn(Object.getPrototypeOf(JwtAuthGuard.prototype), 'canActivate')
         .mockReturnValue(true);
-      guard.canActivate(makeCtx());
+      void guard.canActivate(makeCtx());
       expect(superActivate).toHaveBeenCalled();
       superActivate.mockRestore();
     });
@@ -34,18 +39,23 @@ describe('JwtAuthGuard', () => {
 
   describe('handleRequest', () => {
     it('returns the user when valid', () => {
-      const user = { _id: 'u1', phone: '09120000000' };
+      const user = {
+        _id: 'u1',
+        phone: '09120000000',
+      } as unknown as UserDocument;
       expect(guard.handleRequest(null, user)).toBe(user);
     });
 
     it('throws UnauthorizedException when user is falsy', () => {
-      expect(() => guard.handleRequest(null, null))
-        .toThrow(UnauthorizedException);
+      expect(() => guard.handleRequest(null, false)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException when error is passed', () => {
-      expect(() => guard.handleRequest(new Error('jwt expired'), null))
-        .toThrow(UnauthorizedException);
+      expect(() =>
+        guard.handleRequest(new Error('jwt expired'), false),
+      ).toThrow(UnauthorizedException);
     });
   });
 });

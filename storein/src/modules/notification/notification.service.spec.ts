@@ -5,100 +5,277 @@ import { Types } from 'mongoose';
 import { NotificationService } from './notification.service';
 import { Notification, NotificationType } from './entities/notification.schema';
 import { BroadcastLog } from './entities/broadcast-log.schema';
-import { SmsLog }       from './entities/sms-log.schema';
+import { SmsLog } from './entities/sms-log.schema';
 import {
+  ChannelPayload,
   PushNotificationChannel,
   SmsNotificationChannel,
 } from './channels/notification-channel.abstract';
 import { NotificationsGateway } from '../../common/gateway/notifications.gateway';
 
-const userId  = new Types.ObjectId().toString();
+const userId = new Types.ObjectId().toString();
 const notifId = new Types.ObjectId().toString();
 
-const mockNotif = (overrides: any = {}) => ({
-  _id:    new Types.ObjectId(notifId),
+interface MockNotif {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown> | null;
+  isRead: boolean;
+  readAt: Date | null;
+}
+
+type MockNotifRecord = MockNotif & { toObject: () => MockNotif };
+
+const mockNotif = (overrides: Partial<MockNotif> = {}): MockNotif => ({
+  _id: new Types.ObjectId(notifId),
   userId: new Types.ObjectId(userId),
-  type:   NotificationType.ORDER_UPDATE,
-  title:  'سفارش ORD-001',
-  body:   'وضعیت سفارش شما تایید شد',
-  data:   null,
+  type: NotificationType.ORDER_UPDATE,
+  title: 'سفارش ORD-001',
+  body: 'وضعیت سفارش شما تایید شد',
+  data: null,
   isRead: false,
   readAt: null,
   ...overrides,
 });
 
+interface BroadcastLogRow {
+  _id: Types.ObjectId;
+  type: NotificationType;
+  title: string;
+  body: string;
+  target: string;
+  sent: number;
+}
+
+interface SmsLogRow {
+  _id: Types.ObjectId;
+  target: string;
+  phone: string | null;
+  message: string;
+  sent: number;
+  failed: number;
+}
+
+interface UserRow {
+  _id?: Types.ObjectId;
+  phone?: string | null;
+}
+
+// ── Generic chainable-query mock helpers ─────────────────────────
+interface LeanChain<T> {
+  lean: jest.Mock<Promise<T>, []>;
+}
+
+interface LimitChain<T> {
+  limit: jest.Mock<LeanChain<T>, [number]>;
+}
+
+interface SkipChain<T> {
+  skip: jest.Mock<LimitChain<T>, [number]>;
+}
+
+interface SortChain<T> {
+  sort: jest.Mock<SkipChain<T>, [Record<string, number>]>;
+}
+
+interface FullChain<T> {
+  select: jest.Mock<SortChain<T>, [string]>;
+}
+
+interface UserSubModel {
+  find: jest.Mock<
+    { select: jest.Mock<LeanChain<UserRow[]>, [string]> },
+    [Record<string, unknown>]
+  >;
+}
+
+function leanChain<T>(val: T): LeanChain<T> {
+  return { lean: jest.fn<Promise<T>, []>().mockResolvedValue(val) };
+}
+
+function limitChain<T>(val: T): LimitChain<T> {
+  return {
+    limit: jest.fn<LeanChain<T>, [number]>().mockReturnValue(leanChain(val)),
+  };
+}
+
+function skipChain<T>(val: T): SkipChain<T> {
+  return {
+    skip: jest.fn<LimitChain<T>, [number]>().mockReturnValue(limitChain(val)),
+  };
+}
+
+function sortChain<T>(val: T): SortChain<T> {
+  return {
+    sort: jest
+      .fn<SkipChain<T>, [Record<string, number>]>()
+      .mockReturnValue(skipChain(val)),
+  };
+}
+
+function fullChain<T>(val: T): FullChain<T> {
+  return {
+    select: jest.fn<SortChain<T>, [string]>().mockReturnValue(sortChain(val)),
+  };
+}
+
+// Alias kept for readability at call sites that mirror the log-listing chain
+// (find().sort().skip().limit().lean() — no `.select()` step).
+const logListChain = sortChain;
+
+interface NotifModelMock {
+  create: jest.Mock<Promise<MockNotifRecord>, [Record<string, unknown>]>;
+  find: jest.Mock<FullChain<MockNotif[]>, [Record<string, unknown>]>;
+  findOneAndUpdate: jest.Mock<
+    LeanChain<MockNotif | null>,
+    [Record<string, unknown>, Record<string, unknown>, Record<string, unknown>]
+  >;
+  findByIdAndDelete: jest.Mock<Promise<unknown>, [string]>;
+  updateMany: jest.Mock<
+    Promise<{ modifiedCount: number }>,
+    [Record<string, unknown>, Record<string, unknown>]
+  >;
+  countDocuments: jest.Mock<Promise<number>, [Record<string, unknown>?]>;
+  insertMany: jest.Mock<
+    Promise<unknown[]>,
+    [unknown[], Record<string, unknown>?]
+  >;
+  db: {
+    model: jest.Mock<UserSubModel, [string]>;
+  };
+}
+
+interface BroadcastLogModelMock {
+  create: jest.Mock<Promise<unknown>, [Record<string, unknown>]>;
+  find: jest.Mock<SortChain<BroadcastLogRow[]>, []>;
+  countDocuments: jest.Mock<Promise<number>, [Record<string, unknown>?]>;
+  findByIdAndDelete: jest.Mock<Promise<unknown>, [string]>;
+}
+
+interface SmsLogModelMock {
+  create: jest.Mock<Promise<unknown>, [Record<string, unknown>]>;
+  find: jest.Mock<SortChain<SmsLogRow[]>, []>;
+  countDocuments: jest.Mock<Promise<number>, [Record<string, unknown>?]>;
+}
+
+interface MockSmsChannel {
+  send: jest.Mock<Promise<void>, [string, string]>;
+}
+
+interface MockPushChannel {
+  send: jest.Mock<Promise<void>, [ChannelPayload]>;
+}
+
 describe('NotificationService', () => {
   let service: NotificationService;
-  let notifModel: any;
-  let broadcastLogModel: any;
-  let smsLogModel: any;
-  let smsChannel: jest.Mocked<SmsNotificationChannel>;
-  let pushChannel: jest.Mocked<PushNotificationChannel>;
+  let notifModel: NotifModelMock;
+  let broadcastLogModel: BroadcastLogModelMock;
+  let smsLogModel: SmsLogModelMock;
+  let smsChannel: MockSmsChannel;
+  let pushChannel: MockPushChannel;
   let gateway: { emitToUser: jest.Mock; emitBroadcast: jest.Mock };
 
-  const leanChain = (val: any) => ({ lean: jest.fn().mockResolvedValue(val) });
-
-  const fullChain = (val: any) => ({
-    select: jest.fn().mockReturnValue({
-      sort: jest.fn().mockReturnValue({
-        skip: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue(leanChain(val)),
+  function mockUserSubModel(users: UserRow[]): UserSubModel {
+    return {
+      find: jest
+        .fn<
+          { select: jest.Mock<LeanChain<UserRow[]>, [string]> },
+          [Record<string, unknown>]
+        >()
+        .mockReturnValue({
+          select: jest
+            .fn<LeanChain<UserRow[]>, [string]>()
+            .mockReturnValue(leanChain(users)),
         }),
-      }),
-    }),
-  });
-
-  const logListChain = (val: any) => ({
-    sort: jest.fn().mockReturnValue({
-      skip: jest.fn().mockReturnValue({
-        limit: jest.fn().mockReturnValue(leanChain(val)),
-      }),
-    }),
-  });
+    };
+  }
 
   beforeEach(async () => {
     notifModel = {
-      create:           jest.fn(),
-      find:             jest.fn().mockReturnValue(fullChain([])),
-      findOneAndUpdate: jest.fn(),
-      findByIdAndDelete:jest.fn(),
-      updateMany:       jest.fn().mockResolvedValue({ modifiedCount: 0 }),
-      countDocuments:   jest.fn().mockResolvedValue(0),
-      insertMany:       jest.fn().mockResolvedValue([]),
+      create: jest.fn<Promise<MockNotifRecord>, [Record<string, unknown>]>(),
+      find: jest
+        .fn<FullChain<MockNotif[]>, [Record<string, unknown>]>()
+        .mockReturnValue(fullChain([])),
+      findOneAndUpdate: jest.fn<
+        LeanChain<MockNotif | null>,
+        [
+          Record<string, unknown>,
+          Record<string, unknown>,
+          Record<string, unknown>,
+        ]
+      >(),
+      findByIdAndDelete: jest.fn<Promise<unknown>, [string]>(),
+      updateMany: jest
+        .fn<
+          Promise<{ modifiedCount: number }>,
+          [Record<string, unknown>, Record<string, unknown>]
+        >()
+        .mockResolvedValue({ modifiedCount: 0 }),
+      countDocuments: jest
+        .fn<Promise<number>, [Record<string, unknown>?]>()
+        .mockResolvedValue(0),
+      insertMany: jest
+        .fn<Promise<unknown[]>, [unknown[], Record<string, unknown>?]>()
+        .mockResolvedValue([]),
       db: {
-        model: jest.fn().mockReturnValue({
-          find: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue(leanChain([])),
-          }),
-        }),
+        model: jest
+          .fn<UserSubModel, [string]>()
+          .mockReturnValue(mockUserSubModel([])),
       },
     };
 
     broadcastLogModel = {
-      create:         jest.fn().mockResolvedValue({}),
-      find:           jest.fn().mockReturnValue(logListChain([])),
-      countDocuments: jest.fn().mockResolvedValue(0),
+      create: jest
+        .fn<Promise<unknown>, [Record<string, unknown>]>()
+        .mockResolvedValue({}),
+      find: jest
+        .fn<SortChain<BroadcastLogRow[]>, []>()
+        .mockReturnValue(logListChain([])),
+      countDocuments: jest
+        .fn<Promise<number>, [Record<string, unknown>?]>()
+        .mockResolvedValue(0),
+      findByIdAndDelete: jest.fn<Promise<unknown>, [string]>(),
     };
 
     smsLogModel = {
-      create:         jest.fn().mockResolvedValue({}),
-      find:           jest.fn().mockReturnValue(logListChain([])),
-      countDocuments: jest.fn().mockResolvedValue(0),
+      create: jest
+        .fn<Promise<unknown>, [Record<string, unknown>]>()
+        .mockResolvedValue({}),
+      find: jest
+        .fn<SortChain<SmsLogRow[]>, []>()
+        .mockReturnValue(logListChain([])),
+      countDocuments: jest
+        .fn<Promise<number>, [Record<string, unknown>?]>()
+        .mockResolvedValue(0),
     };
 
-    smsChannel  = { send: jest.fn().mockResolvedValue(undefined) } as any;
-    pushChannel = { send: jest.fn().mockResolvedValue(undefined) } as any;
-    gateway     = { emitToUser: jest.fn(), emitBroadcast: jest.fn() };
+    smsChannel = {
+      send: jest
+        .fn<Promise<void>, [string, string]>()
+        .mockResolvedValue(undefined),
+    };
+    pushChannel = {
+      send: jest
+        .fn<Promise<void>, [ChannelPayload]>()
+        .mockResolvedValue(undefined),
+    };
+    gateway = { emitToUser: jest.fn(), emitBroadcast: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationService,
-        { provide: getModelToken(Notification.name),  useValue: notifModel },
-        { provide: getModelToken(BroadcastLog.name),  useValue: broadcastLogModel },
-        { provide: getModelToken(SmsLog.name),        useValue: smsLogModel },
-        { provide: SmsNotificationChannel,            useValue: smsChannel },
-        { provide: PushNotificationChannel,           useValue: pushChannel },
-        { provide: NotificationsGateway,              useValue: gateway },
+        { provide: getModelToken(Notification.name), useValue: notifModel },
+        {
+          provide: getModelToken(BroadcastLog.name),
+          useValue: broadcastLogModel,
+        },
+        { provide: getModelToken(SmsLog.name), useValue: smsLogModel },
+        { provide: SmsNotificationChannel, useValue: smsChannel },
+        { provide: PushNotificationChannel, useValue: pushChannel },
+        { provide: NotificationsGateway, useValue: gateway },
       ],
     }).compile();
 
@@ -110,12 +287,15 @@ describe('NotificationService', () => {
   describe('create', () => {
     it('saves notification to DB', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       const res = await service.create({
-        userId, type: NotificationType.ORDER_UPDATE,
-        title: 'سفارش', body: 'تایید شد',
+        userId,
+        type: NotificationType.ORDER_UPDATE,
+        title: 'سفارش',
+        body: 'تایید شد',
       });
 
       expect(res.type).toBe(NotificationType.ORDER_UPDATE);
@@ -124,12 +304,15 @@ describe('NotificationService', () => {
 
     it('fires SMS channel when phone provided (fire-and-forget)', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       await service.create({
-        userId, type: NotificationType.ORDER_UPDATE,
-        title: 'سفارش', body: 'تایید شد',
+        userId,
+        type: NotificationType.ORDER_UPDATE,
+        title: 'سفارش',
+        body: 'تایید شد',
         phone: '09121234567',
       });
 
@@ -139,12 +322,15 @@ describe('NotificationService', () => {
 
     it('fires push channel by default', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       await service.create({
-        userId, type: NotificationType.SYSTEM,
-        title: 'خبر', body: 'پیام جدید',
+        userId,
+        type: NotificationType.SYSTEM,
+        title: 'خبر',
+        body: 'پیام جدید',
       });
 
       await new Promise(setImmediate);
@@ -179,8 +365,9 @@ describe('NotificationService', () => {
 
     it('throws when notification not found or not owned', async () => {
       notifModel.findOneAndUpdate.mockReturnValue(leanChain(null));
-      await expect(service.markRead(userId, notifId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.markRead(userId, notifId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -206,13 +393,14 @@ describe('NotificationService', () => {
   describe('adminBroadcast', () => {
     it('sends to specific user when targetUserId provided', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       const res = await service.adminBroadcast({
-        type:         NotificationType.PROMO,
-        title:        'تخفیف',
-        body:         'کد تخفیف ویژه',
+        type: NotificationType.PROMO,
+        title: 'تخفیف',
+        body: 'کد تخفیف ویژه',
         targetUserId: userId,
       });
 
@@ -221,19 +409,17 @@ describe('NotificationService', () => {
     });
 
     it('broadcasts to all active users', async () => {
-      const users = [
+      const users: UserRow[] = [
         { _id: new Types.ObjectId() },
         { _id: new Types.ObjectId() },
         { _id: new Types.ObjectId() },
       ];
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
 
       const res = await service.adminBroadcast({
-        type: NotificationType.SYSTEM, title: 'همه', body: 'پیام عمومی',
+        type: NotificationType.SYSTEM,
+        title: 'همه',
+        body: 'پیام عمومی',
       });
 
       expect(res.sent).toBe(3);
@@ -247,11 +433,14 @@ describe('NotificationService', () => {
 
     it('saves a BroadcastLog entry after send', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       await service.adminBroadcast({
-        type: NotificationType.PROMO, title: 'تخفیف', body: 'متن',
+        type: NotificationType.PROMO,
+        title: 'تخفیف',
+        body: 'متن',
         targetUserId: userId,
       });
 
@@ -261,14 +450,14 @@ describe('NotificationService', () => {
     });
 
     it('saves target=all in BroadcastLog for broadcast', async () => {
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain([{ _id: new Types.ObjectId() }])),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(
+        mockUserSubModel([{ _id: new Types.ObjectId() }]),
+      );
 
       await service.adminBroadcast({
-        type: NotificationType.SYSTEM, title: 'عنوان', body: 'متن',
+        type: NotificationType.SYSTEM,
+        title: 'عنوان',
+        body: 'متن',
       });
 
       expect(broadcastLogModel.create).toHaveBeenCalledWith(
@@ -277,29 +466,36 @@ describe('NotificationService', () => {
     });
 
     it('calls gateway.emitBroadcast after all-users insertMany so clients get real-time event', async () => {
-      const users = [{ _id: new Types.ObjectId() }, { _id: new Types.ObjectId() }];
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+      const users: UserRow[] = [
+        { _id: new Types.ObjectId() },
+        { _id: new Types.ObjectId() },
+      ];
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
 
       await service.adminBroadcast({
-        type: NotificationType.PROMO, title: 'تخفیف ویژه', body: 'همه کاربران',
+        type: NotificationType.PROMO,
+        title: 'تخفیف ویژه',
+        body: 'همه کاربران',
       });
 
       expect(gateway.emitBroadcast).toHaveBeenCalledWith(
-        expect.objectContaining({ title: 'تخفیف ویژه', type: NotificationType.PROMO }),
+        expect.objectContaining({
+          title: 'تخفیف ویژه',
+          type: NotificationType.PROMO,
+        }),
       );
     });
 
     it('does NOT call emitBroadcast for targeted single-user send (emitToUser handles it)', async () => {
       notifModel.create.mockResolvedValue({
-        ...mockNotif(), toObject: () => mockNotif(),
+        ...mockNotif(),
+        toObject: () => mockNotif(),
       });
 
       await service.adminBroadcast({
-        type: NotificationType.ORDER_UPDATE, title: 'سفارش', body: 'تایید شد',
+        type: NotificationType.ORDER_UPDATE,
+        title: 'سفارش',
+        body: 'تایید شد',
         targetUserId: userId,
       });
 
@@ -311,8 +507,14 @@ describe('NotificationService', () => {
   // ── adminSendSms ──────────────────────────────────────────────
   describe('adminSendSms', () => {
     it('sends SMS to a single phone number', async () => {
-      const res = await service.adminSendSms({ phone: '09121234567', message: 'پیام آزمایشی' });
-      expect(smsChannel.send).toHaveBeenCalledWith('09121234567', 'پیام آزمایشی');
+      const res = await service.adminSendSms({
+        phone: '09121234567',
+        message: 'پیام آزمایشی',
+      });
+      expect(smsChannel.send).toHaveBeenCalledWith(
+        '09121234567',
+        'پیام آزمایشی',
+      );
       expect(res).toEqual({ sent: 1, failed: 0 });
     });
 
@@ -322,16 +524,12 @@ describe('NotificationService', () => {
     });
 
     it('broadcasts to all active users when no phone given', async () => {
-      const users = [
+      const users: UserRow[] = [
         { _id: new Types.ObjectId(), phone: '09120000001' },
         { _id: new Types.ObjectId(), phone: '09120000002' },
         { _id: new Types.ObjectId(), phone: '09120000003' },
       ];
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
 
       const res = await service.adminSendSms({ message: 'پیام انبوه' });
       expect(smsChannel.send).toHaveBeenCalledTimes(3);
@@ -339,15 +537,11 @@ describe('NotificationService', () => {
     });
 
     it('counts failed sends in broadcast without throwing', async () => {
-      const users = [
+      const users: UserRow[] = [
         { phone: '09120000001' },
         { phone: '09120000002' },
       ];
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
       smsChannel.send
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('provider error'));
@@ -357,16 +551,12 @@ describe('NotificationService', () => {
     });
 
     it('skips users with no phone in broadcast', async () => {
-      const users = [
+      const users: UserRow[] = [
         { phone: '09120000001' },
         { phone: null },
         { phone: '09120000003' },
       ];
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
 
       const res = await service.adminSendSms({ message: 'پیام' });
       expect(smsChannel.send).toHaveBeenCalledTimes(2);
@@ -381,11 +571,9 @@ describe('NotificationService', () => {
     });
 
     it('saves target=all in SmsLog for broadcast', async () => {
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain([{ phone: '09120000001' }])),
-        }),
-      });
+      notifModel.db.model.mockReturnValue(
+        mockUserSubModel([{ phone: '09120000001' }]),
+      );
 
       await service.adminSendSms({ message: 'پیامک انبوه' });
       expect(smsLogModel.create).toHaveBeenCalledWith(
@@ -397,9 +585,13 @@ describe('NotificationService', () => {
   // ── adminListBroadcastLogs ────────────────────────────────────
   describe('adminListBroadcastLogs', () => {
     it('returns paginated broadcast logs', async () => {
-      const mockLog = {
-        _id: new Types.ObjectId(), type: NotificationType.PROMO,
-        title: 'تخفیف', body: 'متن', target: 'all', sent: 10,
+      const mockLog: BroadcastLogRow = {
+        _id: new Types.ObjectId(),
+        type: NotificationType.PROMO,
+        title: 'تخفیف',
+        body: 'متن',
+        target: 'all',
+        sent: 10,
       };
       broadcastLogModel.find.mockReturnValue(logListChain([mockLog]));
       broadcastLogModel.countDocuments.mockResolvedValue(1);
@@ -421,17 +613,13 @@ describe('NotificationService', () => {
 
   // ── broadcastToSegment ────────────────────────────────────────
   describe('broadcastToSegment', () => {
-    const allUsers = [
+    const allUsers: UserRow[] = [
       { _id: new Types.ObjectId() },
       { _id: new Types.ObjectId() },
     ];
 
-    function mockUserModel(users: any[]) {
-      notifModel.db.model.mockReturnValue({
-        find: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue(leanChain(users)),
-        }),
-      });
+    function mockUserModel(users: UserRow[]) {
+      notifModel.db.model.mockReturnValue(mockUserSubModel(users));
     }
 
     it('inserts one notification per active user', async () => {
@@ -444,16 +632,26 @@ describe('NotificationService', () => {
       expect(res.sent).toBe(2);
       expect(notifModel.insertMany).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ type: NotificationType.PROMO, title: 'تخفیف ویژه' }),
+          expect.objectContaining({
+            type: NotificationType.PROMO,
+            title: 'تخفیف ویژه',
+          }),
         ]),
         { ordered: false },
       );
     });
 
     it('queries users without any role filter', async () => {
-      const findMock = jest.fn().mockReturnValue({
-        select: jest.fn().mockReturnValue(leanChain(allUsers)),
-      });
+      const findMock = jest
+        .fn<
+          { select: jest.Mock<LeanChain<UserRow[]>, [string]> },
+          [Record<string, unknown>]
+        >()
+        .mockReturnValue({
+          select: jest
+            .fn<LeanChain<UserRow[]>, [string]>()
+            .mockReturnValue(leanChain(allUsers)),
+        });
       notifModel.db.model.mockReturnValue({ find: findMock });
 
       await service.broadcastToSegment({
@@ -463,7 +661,7 @@ describe('NotificationService', () => {
       });
 
       expect(findMock).toHaveBeenCalledWith(
-        expect.not.objectContaining({ role: expect.anything() }),
+        expect.not.objectContaining({ role: expect.anything() as unknown }),
       );
     });
 
@@ -501,7 +699,9 @@ describe('NotificationService', () => {
       });
       expect(notifModel.insertMany).toHaveBeenCalledWith(
         expect.arrayContaining([
-          expect.objectContaining({ data: { discountId: 'abc123', isCoupon: false } }),
+          expect.objectContaining({
+            data: { discountId: 'abc123', isCoupon: false },
+          }),
         ]),
         { ordered: false },
       );
@@ -511,9 +711,13 @@ describe('NotificationService', () => {
   // ── adminListSmsLogs ──────────────────────────────────────────
   describe('adminListSmsLogs', () => {
     it('returns paginated sms logs', async () => {
-      const mockLog = {
-        _id: new Types.ObjectId(), target: 'single',
-        phone: '0912****', message: 'پیام', sent: 1, failed: 0,
+      const mockLog: SmsLogRow = {
+        _id: new Types.ObjectId(),
+        target: 'single',
+        phone: '0912****',
+        message: 'پیام',
+        sent: 1,
+        failed: 0,
       };
       smsLogModel.find.mockReturnValue(logListChain([mockLog]));
       smsLogModel.countDocuments.mockResolvedValue(1);

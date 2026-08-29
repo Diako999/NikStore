@@ -5,19 +5,19 @@ export type TransactionDocument = Transaction & Document;
 
 export enum TransactionType {
   CREDIT = 'credit',
-  DEBIT  = 'debit',
+  DEBIT = 'debit',
 }
 
 export enum TransactionStatus {
   PENDING = 'pending',
   SUCCESS = 'success',
-  FAILED  = 'failed',
+  FAILED = 'failed',
 }
 
 export enum PaymentMethod {
-  WALLET  = 'wallet',
+  WALLET = 'wallet',
   GATEWAY = 'gateway',
-  MIXED   = 'mixed',
+  MIXED = 'mixed',
 }
 
 @Schema({ timestamps: true })

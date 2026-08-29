@@ -6,7 +6,9 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
-  Order, OrderDocument, OrderStatus,
+  Order,
+  OrderDocument,
+  OrderStatus,
   ORDER_TRANSITIONS,
 } from './entities/order.schema';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -20,15 +22,27 @@ import {
 } from '../notification/notification.listener';
 import type { UserDocument } from '../user/entities/user.schema';
 import { User } from '../user/entities/user.schema';
-import { AppLoggerService }      from '../../common/logger/app-logger.service';
-import { NotificationsGateway }  from '../../common/gateway/notifications.gateway';
-import { DiscountsService }      from '../../discounts/discounts.service';
+import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { NotificationsGateway } from '../../common/gateway/notifications.gateway';
+import { DiscountsService } from '../../discounts/discounts.service';
+
+/** `@Schema({ timestamps: true })` adds these at runtime; not reflected on the Order class. */
+interface OrderWithTimestamps {
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+interface OrderAdminFilter {
+  status?: OrderStatus;
+  createdAt?: { $gte?: Date; $lte?: Date };
+  $or?: Record<string, unknown>[];
+}
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
-    @InjectModel(User.name)  private userModel: Model<UserDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private cartService: CartService,
     private productService: ProductService,
     private eventEmitter: EventEmitter2,
@@ -39,15 +53,19 @@ export class OrderService {
     this.logger.setContext('OrderService');
   }
 
-  async createFromCart(userId: string, dto: CreateOrderDto): Promise<OrderDocument> {
+  async createFromCart(
+    userId: string,
+    dto: CreateOrderDto,
+  ): Promise<OrderDocument> {
     const cart = await this.cartService.getRawCart(userId);
-    if (!cart.items.length)
-      throw new BadRequestException('سبد خرید خالی است');
+    if (!cart.items.length) throw new BadRequestException('سبد خرید خالی است');
 
     const itemsToOrder = cart.items;
 
     if (!itemsToOrder.length)
-      throw new BadRequestException('هیچ آیتم مناسبی برای این نوع سفارش یافت نشد');
+      throw new BadRequestException(
+        'هیچ آیتم مناسبی برای این نوع سفارش یافت نشد',
+      );
 
     const user = await this.userModel
       .findById(userId)
@@ -61,27 +79,39 @@ export class OrderService {
     if (!address) throw new NotFoundException('آدرس یافت نشد');
 
     // Batch fetch all products in one query (eliminates N+1)
-    const productIds = [...new Set(cart.items.map(i => new Types.ObjectId(i.productId)))];
-    const products   = await this.productService.findManyByIds(productIds.map(id => id.toString()));
-    const productMap = new Map(products.map(p => [(p._id as Types.ObjectId).toString(), p]));
+    const productIds = [
+      ...new Set(cart.items.map((i) => new Types.ObjectId(i.productId))),
+    ];
+    const products = await this.productService.findManyByIds(
+      productIds.map((id) => id.toString()),
+    );
+    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
     // Full stock validation pass before any write
     for (const item of itemsToOrder) {
       const product = productMap.get(item.productId);
-      if (!product) throw new BadRequestException(`محصول "${item.name}" یافت نشد`);
-      const variant  = product.variants.find(
-        (v: any) => v._id.toString() === item.variantId,
+      if (!product)
+        throw new BadRequestException(`محصول "${item.name}" یافت نشد`);
+      const variant = product.variants.find(
+        (v) => v._id.toString() === item.variantId,
       );
       if (!variant?.isActive) {
         this.logger.warn('Order blocked: variant inactive', {
-          userId, productId: item.productId, variantId: item.variantId, name: item.name,
+          userId,
+          productId: item.productId,
+          variantId: item.variantId,
+          name: item.name,
         });
         throw new BadRequestException(`ویریانت "${item.name}" موجود نیست`);
       }
       if (variant.stock < item.quantity) {
         this.logger.warn('Order blocked: insufficient stock', {
-          userId, productId: item.productId, variantId: item.variantId,
-          name: item.name, requested: item.quantity, available: variant.stock,
+          userId,
+          productId: item.productId,
+          variantId: item.variantId,
+          name: item.name,
+          requested: item.quantity,
+          available: variant.stock,
         });
         throw new BadRequestException(
           `موجودی "${item.name}" کافی نیست. موجود: ${variant.stock}`,
@@ -91,9 +121,9 @@ export class OrderService {
 
     const subtotal = itemsToOrder.reduce((s, i) => s + i.price * i.quantity, 0);
 
-    let discount   = 0;
+    let discount = 0;
     let couponCode: string | undefined;
-    let couponId:   string | undefined;
+    let couponId: string | undefined;
 
     if (dto.couponCode) {
       const result = await this.discountsService.validateCoupon(
@@ -104,35 +134,35 @@ export class OrderService {
       if (!result.isValid) {
         throw new BadRequestException(result.message);
       }
-      discount   = result.discountAmount;
+      discount = result.discountAmount;
       couponCode = dto.couponCode.toUpperCase().trim();
-      couponId   = result.discountId;
+      couponId = result.discountId;
     }
 
     const total = Math.max(0, subtotal - discount);
 
     const order = await this.orderModel.create({
-      userId:      new Types.ObjectId(userId),
+      userId: new Types.ObjectId(userId),
       orderNumber: this.genOrderNumber(),
       items: itemsToOrder.map((i) => ({
-        productId:    new Types.ObjectId(i.productId),
-        variantId:    i.variantId,
-        sku:          i.sku,
-        name:         i.name,
-        thumbnail:    i.thumbnail ?? '',
-        price:        i.price,
+        productId: new Types.ObjectId(i.productId),
+        variantId: i.variantId,
+        sku: i.sku,
+        name: i.name,
+        thumbnail: i.thumbnail ?? '',
+        price: i.price,
         comparePrice: i.comparePrice ?? null,
-        quantity:     i.quantity,
-        attributes:   i.attributes ?? [],
+        quantity: i.quantity,
+        attributes: i.attributes ?? [],
       })),
       shippingAddress: {
-        recipientName:  address.recipientName,
+        recipientName: address.recipientName,
         recipientPhone: address.recipientPhone,
-        province:       address.province,
-        city:           address.city,
-        street:         address.street,
-        detail:         address.detail,
-        postalCode:     address.postalCode,
+        province: address.province,
+        city: address.city,
+        street: address.street,
+        detail: address.detail,
+        postalCode: address.postalCode,
       },
       subtotal,
       discount,
@@ -154,17 +184,17 @@ export class OrderService {
       await this.discountsService.recordCouponUsage(
         couponId,
         userId,
-        (order._id as any).toString(),
+        order._id.toString(),
         discount,
       );
     }
 
     this.logger.log('Order created', {
-      orderId:     (order._id as any).toString(),
+      orderId: order._id.toString(),
       orderNumber: order.orderNumber,
       userId,
       total,
-      itemCount:   itemsToOrder.length,
+      itemCount: itemsToOrder.length,
     });
 
     const customerName =
@@ -172,11 +202,13 @@ export class OrderService {
       (user.phone ?? '').slice(0, -4) + '****';
 
     const orderPayload = {
-      orderId:      (order._id as any).toString(),
-      orderNumber:  order.orderNumber,
-      total:        order.total,
+      orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
+      total: order.total,
       customerName,
-      createdAt:    (order as any).createdAt?.toISOString() ?? new Date().toISOString(),
+      createdAt:
+        (order as unknown as OrderWithTimestamps).createdAt?.toISOString() ??
+        new Date().toISOString(),
     };
 
     this.gateway.emitNewOrder(orderPayload);
@@ -184,7 +216,12 @@ export class OrderService {
     return order.toObject();
   }
 
-  async findMyOrders(userId: string, page = 1, limit = 10, status?: OrderStatus) {
+  async findMyOrders(
+    userId: string,
+    page = 1,
+    limit = 10,
+    status?: OrderStatus,
+  ) {
     const filter: Record<string, any> = { userId: new Types.ObjectId(userId) };
     if (status) filter.status = status;
     const skip = (page - 1) * limit;
@@ -203,7 +240,10 @@ export class OrderService {
     return { orders, total, page, totalPages: Math.ceil(total / limit) };
   }
 
-  async findMyOrderById(userId: string, orderId: string): Promise<OrderDocument> {
+  async findMyOrderById(
+    userId: string,
+    orderId: string,
+  ): Promise<OrderDocument> {
     this.assertId(orderId);
     const order = await this.orderModel
       .findOne({ _id: orderId, userId: new Types.ObjectId(userId) })
@@ -216,7 +256,8 @@ export class OrderService {
   async cancelMyOrder(userId: string, orderId: string): Promise<OrderDocument> {
     this.assertId(orderId);
     const order = await this.orderModel.findOne({
-      _id: orderId, userId: new Types.ObjectId(userId),
+      _id: orderId,
+      userId: new Types.ObjectId(userId),
     });
     if (!order) throw new NotFoundException('سفارش یافت نشد');
 
@@ -231,26 +272,28 @@ export class OrderService {
     );
 
     const previousStatus = order.status;
-    order.status         = OrderStatus.CANCELLED;
-    order.cancelReason   = 'لغو توسط خریدار';
+    order.status = OrderStatus.CANCELLED;
+    order.cancelReason = 'لغو توسط خریدار';
     await order.save();
 
     this.logger.log('Order cancelled by user', {
-      orderId:        (order._id as any).toString(),
-      orderNumber:    order.orderNumber,
+      orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
       userId,
       previousStatus,
     });
 
     const userForEvent = await this.userModel
-      .findById(order.userId).select('phone').lean<UserDocument>();
+      .findById(order.userId)
+      .select('phone')
+      .lean<UserDocument>();
     if (userForEvent) {
       const event: OrderStatusChangedEvent = {
-        orderId:        (order._id as any).toString(),
-        orderNumber:    order.orderNumber,
-        userId:         order.userId.toString(),
-        phone:          (userForEvent as any).phone,
-        status:         order.status,
+        orderId: order._id.toString(),
+        orderNumber: order.orderNumber,
+        userId: order.userId.toString(),
+        phone: userForEvent.phone,
+        status: order.status,
         previousStatus: previousStatus,
       };
       this.eventEmitter.emit(EVENTS.ORDER_STATUS_CHANGED, event);
@@ -260,28 +303,28 @@ export class OrderService {
   }
 
   async adminFindAll(
-    page  = 1,
+    page = 1,
     limit = 20,
     filters: {
-      status?:    OrderStatus;
-      search?:    string;
+      status?: OrderStatus;
+      search?: string;
       startDate?: string;
-      endDate?:   string;
+      endDate?: string;
     } = {},
   ) {
-    const filter: Record<string, any> = {};
+    const filter: OrderAdminFilter = {};
 
-    if (filters.status)    filter.status = filters.status;
+    if (filters.status) filter.status = filters.status;
     if (filters.startDate || filters.endDate) {
       filter.createdAt = {};
-      if (filters.startDate) filter.createdAt.$gte = new Date(filters.startDate);
-      if (filters.endDate)   filter.createdAt.$lte = new Date(filters.endDate + 'T23:59:59');
+      if (filters.startDate)
+        filter.createdAt.$gte = new Date(filters.startDate);
+      if (filters.endDate)
+        filter.createdAt.$lte = new Date(filters.endDate + 'T23:59:59');
     }
     if (filters.search) {
       const s = filters.search.trim();
-      filter.$or = [
-        { orderNumber: { $regex: s, $options: 'i' } },
-      ];
+      filter.$or = [{ orderNumber: { $regex: s, $options: 'i' } }];
     }
 
     const skip = (page - 1) * limit;
@@ -295,17 +338,14 @@ export class OrderService {
       .populate('userId', 'phone firstName lastName');
 
     // When searching by phone we need to match populated user — do a two-step query
-    if (filters.search && /^[\d\+]/.test(filters.search.trim())) {
+    if (filters.search && /^[\d+]/.test(filters.search.trim())) {
       const matchedUsers = await this.userModel
         .find({ phone: { $regex: filters.search.trim(), $options: 'i' } })
         .select('_id')
         .lean<{ _id: Types.ObjectId }[]>();
       if (matchedUsers.length) {
-        const userIds = matchedUsers.map(u => u._id);
-        filter.$or = [
-          ...(filter.$or ?? []),
-          { userId: { $in: userIds } },
-        ];
+        const userIds = matchedUsers.map((u) => u._id);
+        filter.$or = [...(filter.$or ?? []), { userId: { $in: userIds } }];
         query = this.orderModel
           .find(filter)
           .select('-__v')
@@ -335,7 +375,10 @@ export class OrderService {
     return order;
   }
 
-  async updateStatus(orderId: string, dto: UpdateOrderStatusDto): Promise<OrderDocument> {
+  async updateStatus(
+    orderId: string,
+    dto: UpdateOrderStatusDto,
+  ): Promise<OrderDocument> {
     this.assertId(orderId);
     const order = await this.orderModel.findById(orderId);
     if (!order) throw new NotFoundException('سفارش یافت نشد');
@@ -354,25 +397,27 @@ export class OrderService {
     }
 
     const previousStatus = order.status;
-    order.status         = dto.status;
+    order.status = dto.status;
     await order.save();
 
     this.logger.log('Order status updated by admin', {
-      orderId:        (order._id as any).toString(),
-      orderNumber:    order.orderNumber,
+      orderId: order._id.toString(),
+      orderNumber: order.orderNumber,
       previousStatus,
-      newStatus:      dto.status,
+      newStatus: dto.status,
     });
 
     const userForEvent = await this.userModel
-      .findById(order.userId).select('phone').lean<UserDocument>();
+      .findById(order.userId)
+      .select('phone')
+      .lean<UserDocument>();
     if (userForEvent) {
       const event: OrderStatusChangedEvent = {
-        orderId:        (order._id as any).toString(),
-        orderNumber:    order.orderNumber,
-        userId:         order.userId.toString(),
-        phone:          (userForEvent as any).phone,
-        status:         order.status,
+        orderId: order._id.toString(),
+        orderNumber: order.orderNumber,
+        userId: order.userId.toString(),
+        phone: userForEvent.phone,
+        status: order.status,
         previousStatus: previousStatus,
       };
       this.eventEmitter.emit(EVENTS.ORDER_STATUS_CHANGED, event);

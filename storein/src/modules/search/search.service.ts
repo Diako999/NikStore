@@ -1,10 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PipelineStage, Types } from 'mongoose';
+import { Model, PipelineStage, SortOrder, Types } from 'mongoose';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
-import { Product, ProductDocument, ProductStatus } from '../product/entities/product.schema';
-import { Category, CategoryDocument } from '../category/entities/category.schema';
+import {
+  Product,
+  ProductDocument,
+  ProductStatus,
+} from '../product/entities/product.schema';
+import {
+  Category,
+  CategoryDocument,
+} from '../category/entities/category.schema';
 import { SearchQueryDto } from './dto/search-query.dto';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 
@@ -12,12 +19,22 @@ const HISTORY_KEY = (uid: string) => `search:history:${uid}`;
 const HISTORY_MAX = 10;
 const SUGGEST_TTL = 300;
 
+interface SuggestResult {
+  products: { name: string; slug: string }[];
+  categories: { name: string; slug: string }[];
+}
+
+interface FacetAggregationResult {
+  priceRange: { min: number; max: number }[];
+  attributeValues: { key: string; values: string[] }[];
+}
+
 @Injectable()
 export class SearchService {
   constructor(
-    @InjectModel(Product.name)  private productModel: Model<ProductDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
     @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
-    @Inject(REDIS_CLIENT)       private redis: Redis,
+    @Inject(REDIS_CLIENT) private redis: Redis,
     private readonly logger: AppLoggerService,
   ) {
     this.logger.setContext('SearchService');
@@ -31,18 +48,28 @@ export class SearchService {
     totalPages: number;
     facets: { priceRange: any; attributes: any[] };
   }> {
-    const { q, category, minPrice, maxPrice, inStock, attrs, sort, page = 1, limit = 20 } = dto;
+    const {
+      q,
+      category,
+      minPrice,
+      maxPrice,
+      inStock,
+      attrs,
+      sort,
+      page = 1,
+      limit = 20,
+    } = dto;
 
     const match: Record<string, any> = { status: ProductStatus.ACTIVE };
 
     if (q?.trim()) {
-      const term  = q.trim();
+      const term = q.trim();
       const regex = new RegExp(this.escapeRegex(term), 'i');
       match.$or = [
-        { name:             { $regex: regex } },
+        { name: { $regex: regex } },
         { shortDescription: { $regex: regex } },
-        { tags:             { $elemMatch: { $regex: regex } } },
-        { description:      { $regex: regex } },
+        { tags: { $elemMatch: { $regex: regex } } },
+        { description: { $regex: regex } },
       ];
     }
 
@@ -52,9 +79,10 @@ export class SearchService {
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
-      match.minPrice = {};
-      if (minPrice !== undefined) match.minPrice.$gte = minPrice;
-      if (maxPrice !== undefined) match.minPrice.$lte = maxPrice;
+      const priceFilter: { $gte?: number; $lte?: number } = {};
+      if (minPrice !== undefined) priceFilter.$gte = minPrice;
+      if (maxPrice !== undefined) priceFilter.$lte = maxPrice;
+      match.minPrice = priceFilter;
     }
 
     if (inStock) match.totalStock = { $gt: 0 };
@@ -70,13 +98,13 @@ export class SearchService {
       }
     }
 
-    const sortMap: Record<string, any> = {
-      newest:     { createdAt: -1 },
-      price_asc:  { minPrice: 1 },
+    const sortMap: Record<string, Record<string, SortOrder>> = {
+      newest: { createdAt: -1 },
+      price_asc: { minPrice: 1 },
       price_desc: { minPrice: -1 },
-      popular:    { soldCount: -1, createdAt: -1 },
+      popular: { soldCount: -1, createdAt: -1 },
       mostViewed: { viewCount: -1, createdAt: -1 },
-      relevant:   { soldCount: -1, createdAt: -1 },
+      relevant: { soldCount: -1, createdAt: -1 },
     };
     const resolvedSort = sort ?? (q ? 'relevant' : 'newest');
     const sortStage = sortMap[resolvedSort];
@@ -86,9 +114,19 @@ export class SearchService {
 
     const hasTextSearch = false; // regex-only: no textScore needed
     const projectFields = {
-      name: 1, slug: 1, thumbnail: 1, images: 1,
-      minPrice: 1, maxPrice: 1, maxComparePrice: 1, totalStock: 1,
-      category: 1, tags: 1, soldCount: 1, createdAt: 1, avgRating: 1,
+      name: 1,
+      slug: 1,
+      thumbnail: 1,
+      images: 1,
+      minPrice: 1,
+      maxPrice: 1,
+      maxComparePrice: 1,
+      totalStock: 1,
+      category: 1,
+      tags: 1,
+      soldCount: 1,
+      createdAt: 1,
+      avgRating: 1,
       ...(hasTextSearch ? { score: { $meta: 'textScore' } } : {}),
     };
 
@@ -117,10 +155,7 @@ export class SearchService {
   }
 
   // ── Autocomplete Suggestions ──────────────────────────────────
-  async suggest(q: string): Promise<{
-    products:   { name: string; slug: string }[];
-    categories: { name: string; slug: string }[];
-  }> {
+  async suggest(q: string): Promise<SuggestResult> {
     const term = q.trim();
     if (!term) return { products: [], categories: [] };
 
@@ -133,10 +168,12 @@ export class SearchService {
       const cached = await this.redis.get(cacheKey);
       if (cached) {
         this.logger.log(`suggest: cache hit for "${term}"`);
-        return JSON.parse(cached);
+        return JSON.parse(cached) as SuggestResult;
       }
     } catch (redisErr) {
-      this.logger.warn(`suggest: Redis get failed, falling back to DB — ${redisErr}`);
+      this.logger.warn(
+        `suggest: Redis get failed, falling back to DB — ${redisErr}`,
+      );
     }
 
     const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
@@ -155,7 +192,7 @@ export class SearchService {
     ]);
 
     const result = {
-      products:   productDocs.map((p) => ({ name: p.name, slug: p.slug })),
+      products: productDocs.map((p) => ({ name: p.name, slug: p.slug })),
       categories: categoryDocs.map((c) => ({ name: c.name, slug: c.slug })),
     };
 
@@ -219,14 +256,14 @@ export class SearchService {
             {
               $group: {
                 _id: {
-                  key:   '$variants.attributes.key',
+                  key: '$variants.attributes.key',
                   value: '$variants.attributes.value',
                 },
               },
             },
             {
               $group: {
-                _id:    '$_id.key',
+                _id: '$_id.key',
                 values: { $addToSet: '$_id.value' },
               },
             },
@@ -237,7 +274,8 @@ export class SearchService {
       },
     ];
 
-    const [result] = await this.productModel.aggregate(pipeline);
+    const [result] =
+      await this.productModel.aggregate<FacetAggregationResult>(pipeline);
 
     return {
       priceRange: result?.priceRange?.[0]
@@ -248,7 +286,9 @@ export class SearchService {
   }
 
   // ── Private Helpers ───────────────────────────────────────────
-  private async getCategorySubtreeIds(categoryId: string): Promise<Types.ObjectId[]> {
+  private async getCategorySubtreeIds(
+    categoryId: string,
+  ): Promise<Types.ObjectId[]> {
     const oid = new Types.ObjectId(categoryId);
     const cats = await this.categoryModel
       .find({
@@ -257,7 +297,7 @@ export class SearchService {
       })
       .select('_id')
       .lean();
-    return cats.map((c) => c._id as Types.ObjectId);
+    return cats.map((c) => c._id);
   }
 
   private escapeRegex(str: string): string {

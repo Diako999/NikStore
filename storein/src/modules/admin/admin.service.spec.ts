@@ -3,7 +3,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { AdminService } from './admin.service';
-import { User } from '../user/entities/user.schema';
+import { User, UserDocument } from '../user/entities/user.schema';
 import { Order } from '../order/entities/order.schema';
 import { Product } from '../product/entities/product.schema';
 import { Transaction } from '../payment/entities/transaction.schema';
@@ -11,43 +11,78 @@ import { REDIS_CLIENT } from '../../redis/redis.module';
 
 const userId = new Types.ObjectId().toString();
 
-const mockUser = (overrides: any = {}) => ({
-  _id:      new Types.ObjectId(userId),
-  phone:    '09121234567',
-  isActive: true,
-  isAdmin:  false,
-  ...overrides,
-});
+const mockUser = (overrides: Partial<UserDocument> = {}): UserDocument =>
+  ({
+    _id: new Types.ObjectId(userId),
+    phone: '09121234567',
+    isActive: true,
+    isAdmin: false,
+    ...overrides,
+  }) as unknown as UserDocument;
+
+interface MockUserModel {
+  countDocuments: jest.Mock;
+  findByIdAndUpdate: jest.Mock;
+  find: jest.Mock;
+  db: {
+    db: {
+      admin: jest.Mock;
+    };
+  };
+}
+
+interface MockOrderModel {
+  countDocuments: jest.Mock;
+  aggregate: jest.Mock;
+  find: jest.Mock;
+}
+
+interface MockProductModel {
+  countDocuments: jest.Mock;
+  find: jest.Mock;
+}
+
+interface MockTxModel {
+  aggregate: jest.Mock;
+}
+
+interface MockRedis {
+  get: jest.Mock;
+  setex: jest.Mock;
+  keys: jest.Mock;
+  del: jest.Mock;
+  ping: jest.Mock;
+}
 
 describe('AdminService', () => {
   let service: AdminService;
-  let userModel: any;
-  let orderModel: any;
-  let productModel: any;
-  let txModel: any;
-  let redis: jest.Mocked<any>;
+  let userModel: MockUserModel;
+  let orderModel: MockOrderModel;
+  let productModel: MockProductModel;
+  let txModel: MockTxModel;
+  let redis: MockRedis;
 
-  const lean    = (v: any) => ({ lean: jest.fn().mockResolvedValue(v) });
-  const selSort = (v: any) => ({
+  const lean = (v: unknown) => ({ lean: jest.fn().mockResolvedValue(v) });
+  const selSort = (v: unknown) => ({
     select: jest.fn().mockReturnValue({
       sort: jest.fn().mockReturnValue({
         limit: jest.fn().mockReturnValue({
           populate: jest.fn().mockReturnValue(lean(v)),
-          lean:     jest.fn().mockResolvedValue(v),
+          lean: jest.fn().mockResolvedValue(v),
         }),
         lean: jest.fn().mockResolvedValue(v),
       }),
     }),
   });
-  const selLean = (v: any) => ({
+  const selLean = (v: unknown) => ({
     select: jest.fn().mockReturnValue(lean(v)),
   });
 
   beforeEach(async () => {
     userModel = {
-      countDocuments:    jest.fn().mockResolvedValue(0),
+      countDocuments: jest.fn().mockResolvedValue(0),
       findByIdAndUpdate: jest.fn(),
-      find:              jest.fn().mockReturnValue(selSort([])),
+      find: jest.fn().mockReturnValue(selSort([])),
       db: {
         db: {
           admin: jest.fn().mockReturnValue({
@@ -59,13 +94,13 @@ describe('AdminService', () => {
 
     orderModel = {
       countDocuments: jest.fn().mockResolvedValue(0),
-      aggregate:      jest.fn().mockResolvedValue([]),
-      find:           jest.fn().mockReturnValue(selSort([])),
+      aggregate: jest.fn().mockResolvedValue([]),
+      find: jest.fn().mockReturnValue(selSort([])),
     };
 
     productModel = {
       countDocuments: jest.fn().mockResolvedValue(0),
-      find:           jest.fn().mockReturnValue(selSort([])),
+      find: jest.fn().mockReturnValue(selSort([])),
     };
 
     txModel = {
@@ -73,21 +108,21 @@ describe('AdminService', () => {
     };
 
     redis = {
-      get:   jest.fn().mockResolvedValue(null),
+      get: jest.fn().mockResolvedValue(null),
       setex: jest.fn(),
-      keys:  jest.fn().mockResolvedValue([]),
-      del:   jest.fn(),
-      ping:  jest.fn().mockResolvedValue('PONG'),
+      keys: jest.fn().mockResolvedValue([]),
+      del: jest.fn(),
+      ping: jest.fn().mockResolvedValue('PONG'),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AdminService,
-        { provide: getModelToken(User.name),        useValue: userModel },
-        { provide: getModelToken(Order.name),       useValue: orderModel },
-        { provide: getModelToken(Product.name),     useValue: productModel },
+        { provide: getModelToken(User.name), useValue: userModel },
+        { provide: getModelToken(Order.name), useValue: orderModel },
+        { provide: getModelToken(Product.name), useValue: productModel },
         { provide: getModelToken(Transaction.name), useValue: txModel },
-        { provide: REDIS_CLIENT,                    useValue: redis },
+        { provide: REDIS_CLIENT, useValue: redis },
       ],
     }).compile();
 
@@ -98,7 +133,10 @@ describe('AdminService', () => {
   // ── getDashboard ──────────────────────────────────────────────
   describe('getDashboard', () => {
     it('returns cached dashboard when available', async () => {
-      const cached = { users: { total: 100 }, generatedAt: new Date().toISOString() };
+      const cached = {
+        users: { total: 100 },
+        generatedAt: new Date().toISOString(),
+      };
       redis.get.mockResolvedValue(JSON.stringify(cached));
 
       const res = await service.getDashboard();
@@ -130,7 +168,10 @@ describe('AdminService', () => {
         { _id: { y: 2025, m: 1, d: 16 }, amount: 3_000_000 },
       ]);
 
-      const res = await service.getRevenue({ from: '2025-01-01', to: '2025-01-31' });
+      const res = await service.getRevenue({
+        from: '2025-01-01',
+        to: '2025-01-31',
+      });
       expect(res.total).toBe(8_000_000);
       expect(res.byDay).toHaveLength(2);
       expect(res.byDay[0].date).toBe('2025-01-15');
@@ -176,8 +217,9 @@ describe('AdminService', () => {
 
     it('throws when user not found', async () => {
       userModel.findByIdAndUpdate.mockReturnValue(selLean(null));
-      await expect(service.promoteToAdmin(userId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.promoteToAdmin(userId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -199,7 +241,10 @@ describe('AdminService', () => {
       redis.keys.mockResolvedValue(['admin:dashboard', 'admin:revenue:x']);
       const res = await service.clearStatsCache();
       expect(res.cleared).toBe(2);
-      expect(redis.del).toHaveBeenCalledWith('admin:dashboard', 'admin:revenue:x');
+      expect(redis.del).toHaveBeenCalledWith(
+        'admin:dashboard',
+        'admin:revenue:x',
+      );
     });
 
     it('returns 0 when no cache keys exist', async () => {

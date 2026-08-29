@@ -1,9 +1,24 @@
 import {
-  IsString, IsNotEmpty, IsEnum, IsNumber, IsOptional,
-  IsDateString, IsArray, IsBoolean, Min, Matches, MaxLength,
-  registerDecorator, ValidationOptions, ValidationArguments,
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsDateString,
+  IsArray,
+  IsBoolean,
+  Min,
+  Matches,
+  MaxLength,
+  registerDecorator,
+  ValidationOptions,
+  ValidationArguments,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+interface DateRangeObject {
+  startDate?: string;
+}
 
 export function IsAfterStartDate(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -13,8 +28,8 @@ export function IsAfterStartDate(validationOptions?: ValidationOptions) {
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
-          const obj = args.object as any;
+        validate(value: string, args: ValidationArguments) {
+          const obj = args.object as DateRangeObject;
           if (!obj.startDate || !value) return true;
           return new Date(value) > new Date(obj.startDate);
         },
@@ -26,35 +41,49 @@ export function IsAfterStartDate(validationOptions?: ValidationOptions) {
 
 export class CreateDiscountDto {
   // ── Core ─────────────────────────────────────────────────────
-  @IsString() @IsNotEmpty() @MaxLength(200)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(200)
   title: string;
 
-  @IsOptional() @IsString() @MaxLength(500)
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
   description?: string;
 
   @IsEnum(['percentage', 'fixed'])
   discountType: 'percentage' | 'fixed';
 
-  @IsNumber() @Min(0) @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   value: number;
 
-  @IsOptional() @IsNumber() @Min(0) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   maxDiscountAmount?: number;
 
   // ── Coupon (optional) ─────────────────────────────────────────
   // اگر code وجود داشت → کوپن؛ اگر null/undefined → auto-apply
   @IsOptional()
   @IsString()
-  @Matches(/^[A-Z0-9\-]{3,20}$/, {
-    message: 'کد فقط شامل حروف انگلیسی بزرگ، اعداد و خط‌تیره باشد (۳ تا ۲۰ کاراکتر)',
+  @Matches(/^[A-Z0-9-]{3,20}$/, {
+    message:
+      'کد فقط شامل حروف انگلیسی بزرگ، اعداد و خط‌تیره باشد (۳ تا ۲۰ کاراکتر)',
   })
   code?: string;
 
-  @IsOptional() @IsNumber() @Min(1) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
   perUserLimit?: number;
 
   // ── Time gate (optional) ─────────────────────────────────────
-  @IsOptional() @IsDateString()
+  @IsOptional()
+  @IsDateString()
   startDate?: string;
 
   @IsOptional()
@@ -66,25 +95,42 @@ export class CreateDiscountDto {
   @IsEnum(['all', 'products', 'categories', 'brands', 'brand_category'])
   targetType: 'all' | 'products' | 'categories' | 'brands' | 'brand_category';
 
-  @IsOptional() @IsArray() @IsString({ each: true })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   targetIds?: string[];
 
-  @IsOptional() @IsArray() @IsString({ each: true })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   brandIds?: string[];
 
   // ── Conditions ───────────────────────────────────────────────
-  @IsOptional() @IsNumber() @Min(0) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   minOrderAmount?: number;
 
-  @IsOptional() @IsNumber() @Min(1) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
   minQuantity?: number;
 
-  @IsOptional() @IsNumber() @Min(1) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Type(() => Number)
   maxUsageCount?: number;
 
-  @IsOptional() @IsNumber() @Min(0) @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Type(() => Number)
   priority?: number;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 }

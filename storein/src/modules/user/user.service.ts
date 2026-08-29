@@ -1,10 +1,18 @@
 import {
-  Injectable, NotFoundException, BadRequestException, Logger,
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User, UserDocument } from './entities/user.schema';
-import { Order, OrderDocument, OrderStatus } from '../order/entities/order.schema';
+import { Address } from './entities/address.schema';
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+} from '../order/entities/order.schema';
 import { Review, ReviewDocument } from '../review/entities/review.schema';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateAddressDto } from './dto/create-address.dto';
@@ -17,8 +25,8 @@ export class UserService {
   private readonly logger = new Logger(UserService.name);
 
   constructor(
-    @InjectModel(User.name)   private userModel:   Model<UserDocument>,
-    @InjectModel(Order.name)  private orderModel:  Model<OrderDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
   ) {}
 
@@ -32,9 +40,16 @@ export class UserService {
     return user;
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserDocument> {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<UserDocument> {
     const user = await this.userModel
-      .findByIdAndUpdate(userId, { $set: dto }, { new: true, runValidators: true })
+      .findByIdAndUpdate(
+        userId,
+        { $set: dto },
+        { new: true, runValidators: true },
+      )
       .select('-__v')
       .lean<UserDocument>();
     if (!user) throw new NotFoundException('کاربر یافت نشد');
@@ -43,7 +58,10 @@ export class UserService {
   }
 
   // ── Addresses ─────────────────────────────────────────────────
-  async addAddress(userId: string, dto: CreateAddressDto): Promise<UserDocument> {
+  async addAddress(
+    userId: string,
+    dto: CreateAddressDto,
+  ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('کاربر یافت نشد');
 
@@ -55,7 +73,10 @@ export class UserService {
       dto.isDefault = true;
     }
 
-    user.addresses.push({ ...dto, _id: new Types.ObjectId() } as any);
+    user.addresses.push({
+      ...dto,
+      _id: new Types.ObjectId(),
+    } as unknown as Address);
     await user.save();
     return user.toObject();
   }
@@ -78,7 +99,10 @@ export class UserService {
     return user.toObject();
   }
 
-  async removeAddress(userId: string, addressId: string): Promise<UserDocument> {
+  async removeAddress(
+    userId: string,
+    addressId: string,
+  ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('کاربر یافت نشد');
 
@@ -95,14 +119,19 @@ export class UserService {
     return user.toObject();
   }
 
-  async setDefaultAddress(userId: string, addressId: string): Promise<UserDocument> {
+  async setDefaultAddress(
+    userId: string,
+    addressId: string,
+  ): Promise<UserDocument> {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('کاربر یافت نشد');
 
     const addr = user.addresses.find((a) => a._id.toString() === addressId);
     if (!addr) throw new NotFoundException('آدرس یافت نشد');
 
-    user.addresses.forEach((a) => (a.isDefault = a._id.toString() === addressId));
+    user.addresses.forEach(
+      (a) => (a.isDefault = a._id.toString() === addressId),
+    );
     await user.save();
     return user.toObject();
   }
@@ -114,34 +143,45 @@ export class UserService {
     search?: string,
     isBlocked?: string,
     role?: string,
-  ): Promise<{ items: any[]; total: number }> {
-    const skip    = (page - 1) * limit;
+  ): Promise<{
+    items: (UserDocument & { isBlocked: boolean })[];
+    total: number;
+  }> {
+    const skip = (page - 1) * limit;
     const filter: Record<string, unknown> = {};
 
     if (search) {
       const re = new RegExp(search, 'i');
-      filter['$or'] = [
-        { phone: re },
-        { firstName: re },
-        { lastName: re },
-      ];
+      filter['$or'] = [{ phone: re }, { firstName: re }, { lastName: re }];
     }
 
-    if (isBlocked === 'true')  filter['isActive'] = false;
+    if (isBlocked === 'true') filter['isActive'] = false;
     if (isBlocked === 'false') filter['isActive'] = true;
 
     if (role) filter['role'] = role;
 
     const [users, total] = await Promise.all([
-      this.userModel.find(filter).select('-__v').sort({ createdAt: -1 }).skip(skip).limit(limit).lean<UserDocument[]>(),
+      this.userModel
+        .find(filter)
+        .select('-__v')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean<UserDocument[]>(),
       this.userModel.countDocuments(filter),
     ]);
 
-    const items = users.map(u => ({ ...u, isBlocked: !u.isActive }));
+    const items = users.map((u) => ({ ...u, isBlocked: !u.isActive }));
     return { items, total };
   }
 
-  async findById(userId: string): Promise<any> {
+  async findById(userId: string): Promise<
+    UserDocument & {
+      isBlocked: boolean;
+      ordersCount: number;
+      totalSpent: number;
+    }
+  > {
     if (!Types.ObjectId.isValid(userId))
       throw new BadRequestException('شناسه کاربر معتبر نیست');
 
@@ -151,7 +191,9 @@ export class UserService {
       this.userModel.findById(oid).select('-__v').lean<UserDocument>(),
       this.orderModel.aggregate<{ count: number; total: number }>([
         { $match: { userId: oid, status: { $ne: OrderStatus.CANCELLED } } },
-        { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$total' } } },
+        {
+          $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$total' } },
+        },
       ]),
     ]);
 
@@ -160,17 +202,25 @@ export class UserService {
     const stats = statsResult[0] ?? { count: 0, total: 0 };
     return {
       ...user,
-      isBlocked:   !user.isActive,
+      isBlocked: !user.isActive,
       ordersCount: stats.count,
-      totalSpent:  stats.total,
+      totalSpent: stats.total,
     };
   }
 
-  async getUserReviews(userId: string, page = 1, limit = 10): Promise<any> {
+  async getUserReviews(
+    userId: string,
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    items: ReviewDocument[];
+    total: number;
+    totalPages: number;
+  }> {
     if (!Types.ObjectId.isValid(userId))
       throw new BadRequestException('شناسه کاربر معتبر نیست');
 
-    const oid  = new Types.ObjectId(userId);
+    const oid = new Types.ObjectId(userId);
     const skip = (page - 1) * limit;
 
     const [reviews, total] = await Promise.all([
@@ -188,7 +238,9 @@ export class UserService {
     return { items: reviews, total, totalPages: Math.ceil(total / limit) };
   }
 
-  async toggleBlock(userId: string): Promise<any> {
+  async toggleBlock(
+    userId: string,
+  ): Promise<UserDocument & { isBlocked: boolean }> {
     if (!Types.ObjectId.isValid(userId))
       throw new BadRequestException('شناسه کاربر معتبر نیست');
     const user = await this.userModel.findById(userId);

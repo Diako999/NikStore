@@ -1,21 +1,41 @@
 import { INestApplication } from '@nestjs/common';
-import request              from 'supertest';
-import { REDIS_CLIENT }     from 'src/redis/redis.module';
+import type { Server } from 'http';
+import request from 'supertest';
+import type Redis from 'ioredis';
+import { REDIS_CLIENT } from 'src/redis/redis.module';
 import { createTestApp, closeTestApp } from './helpers/app.helper';
 import {
   loginAsNewUser,
   refreshSession,
   generateTestPhone,
 } from './helpers/auth.helper';
-import { getOtpFromRedis }  from './helpers/seed.helper';
+import { getOtpFromRedis } from './helpers/seed.helper';
+
+interface SendOtpResponseBody {
+  message: string;
+  expiresIn: number;
+}
+
+interface ErrorResponseBody {
+  message: string | string[];
+}
+
+interface VerifyOtpResponseBody {
+  accessToken: string;
+  isNewUser: boolean;
+}
+
+interface RefreshResponseBody {
+  accessToken: string;
+}
 
 describe('Auth (e2e)', () => {
-  let app: INestApplication;
-  let redis: any;
+  let app: INestApplication<Server>;
+  let redis: Redis;
 
   beforeAll(async () => {
-    app   = await createTestApp();
-    redis = app.get(REDIS_CLIENT);
+    app = (await createTestApp()) as INestApplication<Server>;
+    redis = app.get<Redis>(REDIS_CLIENT);
   });
 
   afterAll(async () => {
@@ -35,8 +55,9 @@ describe('Auth (e2e)', () => {
         .send({ phone: generateTestPhone() })
         .expect(200);
 
-      expect(res.body.message).toBeDefined();
-      expect(res.body.expiresIn).toBeDefined();
+      const body = res.body as SendOtpResponseBody;
+      expect(body.message).toBeDefined();
+      expect(body.expiresIn).toBeDefined();
     });
 
     it('invalid phone format → 400', async () => {
@@ -62,7 +83,8 @@ describe('Auth (e2e)', () => {
         .send({ phone })
         .expect(400);
 
-      expect(res.body.message).toMatch(/درخواست زیاد/);
+      const body = res.body as ErrorResponseBody;
+      expect(body.message).toMatch(/درخواست زیاد/);
     });
   });
 
@@ -81,8 +103,9 @@ describe('Auth (e2e)', () => {
         .send({ phone, code: otp })
         .expect(200);
 
-      expect(res.body.accessToken).toBeDefined();
-      expect(typeof res.body.isNewUser).toBe('boolean');
+      const body = res.body as VerifyOtpResponseBody;
+      expect(body.accessToken).toBeDefined();
+      expect(typeof body.isNewUser).toBe('boolean');
     });
 
     it('response carries Set-Cookie with refresh_token', async () => {
@@ -97,8 +120,9 @@ describe('Auth (e2e)', () => {
         .send({ phone, code: otp })
         .expect(200);
 
-      const setCookie = (res.headers['set-cookie'] as string[] | undefined) ?? [];
-      const cookie    = setCookie.find(c => c.startsWith('refresh_token='));
+      const setCookie =
+        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+      const cookie = setCookie.find((c) => c.startsWith('refresh_token='));
       expect(cookie).toBeDefined();
     });
 
@@ -113,8 +137,10 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/verify-otp')
         .send({ phone, code: otp });
 
-      const cookie = ((res.headers['set-cookie'] as string[]) ?? [])
-        .find(c => c.startsWith('refresh_token=')) ?? '';
+      const cookie =
+        ((res.headers['set-cookie'] as string[]) ?? []).find((c) =>
+          c.startsWith('refresh_token='),
+        ) ?? '';
       expect(cookie).toMatch(/HttpOnly/i);
     });
 
@@ -129,8 +155,10 @@ describe('Auth (e2e)', () => {
         .post('/api/v1/auth/verify-otp')
         .send({ phone, code: otp });
 
-      const cookie = ((res.headers['set-cookie'] as string[]) ?? [])
-        .find(c => c.startsWith('refresh_token=')) ?? '';
+      const cookie =
+        ((res.headers['set-cookie'] as string[]) ?? []).find((c) =>
+          c.startsWith('refresh_token='),
+        ) ?? '';
       expect(cookie).toContain('Path=/api/v1/auth');
     });
 
@@ -179,7 +207,8 @@ describe('Auth (e2e)', () => {
         .send({ phone, code: '00000' })
         .expect(400);
 
-      expect(res.body.message).toMatch(/تلاش/);
+      const body = res.body as ErrorResponseBody;
+      expect(body.message).toMatch(/تلاش/);
     });
   });
 
@@ -193,7 +222,8 @@ describe('Auth (e2e)', () => {
         .set('Cookie', cookie)
         .expect(200);
 
-      expect(res.body.accessToken).toBeDefined();
+      const body = res.body as RefreshResponseBody;
+      expect(body.accessToken).toBeDefined();
     });
 
     it('response rotates the refresh cookie', async () => {
@@ -203,8 +233,9 @@ describe('Auth (e2e)', () => {
         .set('Cookie', cookie)
         .expect(200);
 
-      const newCookies = (res.headers['set-cookie'] as string[] | undefined) ?? [];
-      expect(newCookies.some(c => c.startsWith('refresh_token='))).toBe(true);
+      const newCookies =
+        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+      expect(newCookies.some((c) => c.startsWith('refresh_token='))).toBe(true);
     });
 
     it('no cookie → 401', async () => {
@@ -251,8 +282,9 @@ describe('Auth (e2e)', () => {
         .set('Cookie', cookie)
         .expect(200);
 
-      const setCookies = (res.headers['set-cookie'] as string[] | undefined) ?? [];
-      const cleared    = setCookies.find(c => c.startsWith('refresh_token='));
+      const setCookies =
+        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+      const cleared = setCookies.find((c) => c.startsWith('refresh_token='));
       expect(cleared).toBeDefined();
       // Expiry must be in the past or Max-Age=0
       expect(cleared).toMatch(/Expires=Thu, 01 Jan 1970|Max-Age=0/);

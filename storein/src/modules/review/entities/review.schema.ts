@@ -4,7 +4,7 @@ import { Document, Types } from 'mongoose';
 export type ReviewDocument = Review & Document;
 
 export enum ReviewStatus {
-  PENDING  = 'pending',
+  PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
 }

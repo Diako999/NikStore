@@ -20,10 +20,14 @@ export class DynamicSmsService extends SmsService {
     try {
       const s = await this.settingsService.findSettings();
       const isKavenegar = s.sms?.provider === 'kavenegar';
-      this.logger.debug(`[DynamicSms] active provider: ${isKavenegar ? 'kavenegar' : 'mock'}`);
+      this.logger.debug(
+        `[DynamicSms] active provider: ${isKavenegar ? 'kavenegar' : 'mock'}`,
+      );
       return isKavenegar ? this.kavenegar : this.mock;
     } catch {
-      this.logger.warn('[DynamicSms] failed to read settings — falling back to mock');
+      this.logger.warn(
+        '[DynamicSms] failed to read settings — falling back to mock',
+      );
       return this.mock;
     }
   }

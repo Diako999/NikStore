@@ -13,7 +13,10 @@ import { KavenegarSmsService } from './sms/kavenegar-sms.service';
 import { DynamicSmsService } from './sms/dynamic-sms.service';
 import { UserModule } from '../user/user.module';
 import { SettingsModule } from '../settings/settings.module';
-import { RefreshToken, RefreshTokenSchema } from './entities/refresh-token.schema';
+import {
+  RefreshToken,
+  RefreshTokenSchema,
+} from './entities/refresh-token.schema';
 
 @Module({
   imports: [
@@ -25,7 +28,7 @@ import { RefreshToken, RefreshTokenSchema } from './entities/refresh-token.schem
       inject: [ConfigService],
       useFactory: (cs: ConfigService) => ({
         secret: cs.get<string>('jwt.secret')!,
-        signOptions: { expiresIn: cs.get('jwt.expiresIn') as any },
+        signOptions: { expiresIn: cs.get('jwt.expiresIn') },
       }),
     }),
     MongooseModule.forFeature([

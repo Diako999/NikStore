@@ -1,21 +1,36 @@
-import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateBrandDto {
-  @IsString() @MaxLength(80)
+  @IsString()
+  @MaxLength(80)
   name: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   slug?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   logo?: string;
 
-  @IsOptional() @IsString() @MaxLength(300)
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
   description?: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @IsNumber() @Min(0)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   sortOrder?: number;
 }

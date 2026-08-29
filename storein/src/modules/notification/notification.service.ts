@@ -6,25 +6,37 @@ import {
   NotificationDocument,
   NotificationType,
 } from './entities/notification.schema';
-import { BroadcastLog, BroadcastLogDocument } from './entities/broadcast-log.schema';
-import { SmsLog, SmsLogDocument }             from './entities/sms-log.schema';
+import {
+  BroadcastLog,
+  BroadcastLogDocument,
+} from './entities/broadcast-log.schema';
+import { SmsLog, SmsLogDocument } from './entities/sms-log.schema';
 import {
   ChannelPayload,
   PushNotificationChannel,
   SmsNotificationChannel,
 } from './channels/notification-channel.abstract';
-import { AdminBroadcastDto }    from './dto/admin-broadcast.dto';
-import { AdminSmsDto }          from './dto/admin-sms.dto';
+import { AdminBroadcastDto } from './dto/admin-broadcast.dto';
+import { AdminSmsDto } from './dto/admin-sms.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationsGateway } from '../../common/gateway/notifications.gateway';
+import { User, UserDocument } from '../user/entities/user.schema';
+
+interface LeanUserId {
+  _id: Types.ObjectId;
+}
+
+interface LeanUserPhone {
+  phone?: string;
+}
 
 export interface CreateNotificationPayload {
-  userId:    string;
-  type:      NotificationType;
-  title:     string;
-  body:      string;
-  data?:     Record<string, any>;
-  phone?:    string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  data?: Record<string, any>;
+  phone?: string;
   sendPush?: boolean;
 }
 
@@ -39,56 +51,62 @@ export class NotificationService {
     private broadcastLogModel: Model<BroadcastLogDocument>,
     @InjectModel(SmsLog.name)
     private smsLogModel: Model<SmsLogDocument>,
-    private smsChannel:  SmsNotificationChannel,
+    private smsChannel: SmsNotificationChannel,
     private pushChannel: PushNotificationChannel,
-    private gateway:     NotificationsGateway,
+    private gateway: NotificationsGateway,
   ) {}
 
   // ── Create (internal — called by listener or admin) ───────────
-  async create(payload: CreateNotificationPayload): Promise<NotificationDocument> {
+  async create(
+    payload: CreateNotificationPayload,
+  ): Promise<NotificationDocument> {
     const notif = await this.notifModel.create({
       userId: new Types.ObjectId(payload.userId),
-      type:   payload.type,
-      title:  payload.title,
-      body:   payload.body,
-      data:   payload.data ?? null,
+      type: payload.type,
+      title: payload.title,
+      body: payload.body,
+      data: payload.data ?? null,
     });
 
     // Push real-time notification to user's WebSocket room (best-effort)
     try {
       this.gateway.emitToUser(payload.userId, {
-        _id:       (notif._id as any).toString(),
-        type:      notif.type,
-        title:     notif.title,
-        body:      notif.body,
-        data:      notif.data,
-        isRead:    notif.isRead,
-        createdAt: (notif as any).createdAt,
+        _id: notif._id.toString(),
+        type: notif.type,
+        title: notif.title,
+        body: notif.body,
+        data: notif.data,
+        isRead: notif.isRead,
+        createdAt: (notif as NotificationDocument & { createdAt: Date })
+          .createdAt,
       });
-    } catch (err: any) {
-      this.logger.warn(`Real-time emit failed for user ${payload.userId}: ${err?.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Real-time emit failed for user ${payload.userId}: ${message}`,
+      );
     }
 
     if (payload.phone) {
       this.smsChannel
         .send(payload.phone, payload.body)
-        .catch((err) =>
-          this.logger.error(`SMS notify failed: ${err.message}`),
-        );
+        .catch((err: unknown) => {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.error(`SMS notify failed: ${message}`);
+        });
     }
 
     if (payload.sendPush !== false) {
       const pushPayload: ChannelPayload = {
         userId: payload.userId,
-        title:  payload.title,
-        body:   payload.body,
-        data:   payload.data,
+        title: payload.title,
+        body: payload.body,
+        data: payload.data,
       };
-      this.pushChannel
-        .send(pushPayload)
-        .catch((err) =>
-          this.logger.error(`Push notify failed: ${err.message}`),
-        );
+      this.pushChannel.send(pushPayload).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Push notify failed: ${message}`);
+      });
     }
 
     return notif.toObject();
@@ -133,11 +151,14 @@ export class NotificationService {
   }
 
   // ── User: Mark one as read ────────────────────────────────────
-  async markRead(userId: string, notifId: string): Promise<NotificationDocument> {
+  async markRead(
+    userId: string,
+    notifId: string,
+  ): Promise<NotificationDocument> {
     const notif = await this.notifModel
       .findOneAndUpdate(
         {
-          _id:    new Types.ObjectId(notifId),
+          _id: new Types.ObjectId(notifId),
           userId: new Types.ObjectId(userId),
         },
         { $set: { isRead: true, readAt: new Date() } },
@@ -174,25 +195,24 @@ export class NotificationService {
     if (dto.targetUserId) {
       await this.create({
         userId: dto.targetUserId,
-        type:   dto.type,
-        title:  dto.title,
-        body:   dto.body,
-        data:   dto.data,
+        type: dto.type,
+        title: dto.title,
+        body: dto.body,
+        data: dto.data,
       });
       sent = 1;
     } else {
-      const UserModel = this.notifModel.db.model('User');
-      const users: any[] = await UserModel
-        .find({ isActive: true })
+      const UserModel = this.notifModel.db.model<UserDocument>(User.name);
+      const users = await UserModel.find({ isActive: true })
         .select('_id')
-        .lean();
+        .lean<LeanUserId[]>();
 
       const docs = users.map((u) => ({
         userId: u._id,
-        type:   dto.type,
-        title:  dto.title,
-        body:   dto.body,
-        data:   dto.data ?? null,
+        type: dto.type,
+        title: dto.title,
+        body: dto.body,
+        data: dto.data ?? null,
         isRead: false,
         readAt: null,
       }));
@@ -203,25 +223,30 @@ export class NotificationService {
         // users see the notification in real-time without polling the DB.
         try {
           this.gateway.emitBroadcast({
-            type:      dto.type,
-            title:     dto.title,
-            body:      dto.body,
-            data:      dto.data ?? null,
+            type: dto.type,
+            title: dto.title,
+            body: dto.body,
+            data: dto.data ?? null,
             createdAt: new Date().toISOString(),
           });
-          this.logger.log(`Broadcast real-time event emitted to ${sent} connected users`);
-        } catch (err: any) {
-          this.logger.warn(`Broadcast real-time emit failed (non-critical): ${err?.message}`);
+          this.logger.log(
+            `Broadcast real-time event emitted to ${sent} connected users`,
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.warn(
+            `Broadcast real-time emit failed (non-critical): ${message}`,
+          );
         }
       }
       sent = docs.length;
     }
 
     await this.broadcastLogModel.create({
-      type:         dto.type,
-      title:        dto.title,
-      body:         dto.body,
-      target:       dto.targetUserId ? 'single' : 'all',
+      type: dto.type,
+      title: dto.title,
+      body: dto.body,
+      target: dto.targetUserId ? 'single' : 'all',
       targetUserId: dto.targetUserId ?? null,
       sent,
     });
@@ -231,11 +256,13 @@ export class NotificationService {
   }
 
   // ── Admin: Send SMS (targeted or broadcast) ──────────────────
-  async adminSendSms(dto: AdminSmsDto): Promise<{ sent: number; failed: number }> {
+  async adminSendSms(
+    dto: AdminSmsDto,
+  ): Promise<{ sent: number; failed: number }> {
     const normalizePhone = (p: string) =>
       p.startsWith('+98') ? '0' + p.slice(3) : p;
 
-    let sent   = 0;
+    let sent = 0;
     let failed = 0;
     let phone: string | null = null;
 
@@ -243,29 +270,33 @@ export class NotificationService {
       phone = normalizePhone(dto.phone);
       await this.smsChannel.send(phone, dto.message);
       sent = 1;
-      this.logger.log(`Admin SMS sent to single target: ${phone.slice(0, -4)}****`);
+      this.logger.log(
+        `Admin SMS sent to single target: ${phone.slice(0, -4)}****`,
+      );
     } else {
-      const UserModel = this.notifModel.db.model('User');
-      const users: any[] = await UserModel
-        .find({ isActive: true })
+      const UserModel = this.notifModel.db.model<UserDocument>(User.name);
+      const users = await UserModel.find({ isActive: true })
         .select('phone')
-        .lean();
+        .lean<LeanUserPhone[]>();
 
       for (const user of users) {
         if (!user.phone) continue;
         try {
           await this.smsChannel.send(user.phone, dto.message);
           sent++;
-        } catch (err: any) {
+        } catch (err) {
           failed++;
-          this.logger.error(`Admin SMS broadcast failed for ${user.phone.slice(0, -4)}****: ${err?.message}`);
+          const message = err instanceof Error ? err.message : String(err);
+          this.logger.error(
+            `Admin SMS broadcast failed for ${user.phone.slice(0, -4)}****: ${message}`,
+          );
         }
       }
     }
 
     await this.smsLogModel.create({
-      target:  dto.phone ? 'single' : 'all',
-      phone:   phone ? `${phone.slice(0, 5)}****` : null,
+      target: dto.phone ? 'single' : 'all',
+      phone: phone ? `${phone.slice(0, 5)}****` : null,
       message: dto.message,
       sent,
       failed,
@@ -328,18 +359,17 @@ export class NotificationService {
   // ── Segment broadcast (discount/promo notifications) ─────────
   // Sends to all active users.
   async broadcastToSegment(params: {
-    type:  NotificationType;
+    type: NotificationType;
     title: string;
-    body:  string;
+    body: string;
     data?: Record<string, any>;
   }): Promise<{ sent: number }> {
     const { type, title, body, data } = params;
 
-    const UserModel = this.notifModel.db.model('User');
-    const users: { _id: any }[] = await UserModel
-      .find({ isActive: true })
+    const UserModel = this.notifModel.db.model<UserDocument>(User.name);
+    const users = await UserModel.find({ isActive: true })
       .select('_id')
-      .lean();
+      .lean<LeanUserId[]>();
 
     if (!users.length) {
       this.logger.log('Segment broadcast skipped — no eligible users');
@@ -351,7 +381,7 @@ export class NotificationService {
       type,
       title,
       body,
-      data:   data ?? null,
+      data: data ?? null,
       isRead: false,
       readAt: null,
     }));
@@ -364,11 +394,14 @@ export class NotificationService {
         type,
         title,
         body,
-        data:      data ?? null,
+        data: data ?? null,
         createdAt: new Date().toISOString(),
       });
-    } catch (err: any) {
-      this.logger.warn(`Segment broadcast real-time emit failed (non-critical): ${err?.message}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(
+        `Segment broadcast real-time emit failed (non-critical): ${message}`,
+      );
     }
 
     this.logger.log(`Segment broadcast complete — sent: ${users.length}`);

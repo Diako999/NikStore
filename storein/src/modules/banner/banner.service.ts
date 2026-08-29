@@ -46,12 +46,20 @@ export class BannerService {
   }
 
   async create(dto: CreateBannerDto): Promise<BannerDocument> {
-    const type      = dto.type ?? 'hero';
-    const count     = await this.bannerModel.countDocuments({ type });
+    const type = dto.type ?? 'hero';
+    const count = await this.bannerModel.countDocuments({ type });
     const sortOrder = dto.sortOrder ?? count;
-    const banner    = await this.bannerModel.create({ mobileImageUrl: '', ...dto, type, sortOrder });
+    const banner = await this.bannerModel.create({
+      mobileImageUrl: '',
+      ...dto,
+      type,
+      sortOrder,
+    });
     this.logger.log('Banner created', {
-      bannerId: String(banner._id), title: banner.title, type, sortOrder,
+      bannerId: String(banner._id),
+      title: banner.title,
+      type,
+      sortOrder,
     });
     return banner;
   }
@@ -62,14 +70,22 @@ export class BannerService {
       .select('-__v')
       .lean<BannerDocument>();
     if (!banner) throw new NotFoundException('بنر یافت نشد');
-    this.logger.log('Banner updated', { bannerId: id, type: banner.type, fields: Object.keys(dto) });
+    this.logger.log('Banner updated', {
+      bannerId: id,
+      type: banner.type,
+      fields: Object.keys(dto),
+    });
     return banner;
   }
 
   async remove(id: string): Promise<void> {
     const banner = await this.bannerModel.findByIdAndDelete(id);
     if (!banner) throw new NotFoundException('بنر یافت نشد');
-    this.logger.log('Banner deleted', { bannerId: id, title: banner.title, type: banner.type });
+    this.logger.log('Banner deleted', {
+      bannerId: id,
+      title: banner.title,
+      type: banner.type,
+    });
   }
 
   async reorder(dto: ReorderBannersDto): Promise<void> {
@@ -88,7 +104,11 @@ export class BannerService {
     if (!banner) throw new NotFoundException('بنر یافت نشد');
     banner.isActive = !banner.isActive;
     await banner.save();
-    this.logger.log('Banner toggled', { bannerId: id, isActive: banner.isActive, type: banner.type });
+    this.logger.log('Banner toggled', {
+      bannerId: id,
+      isActive: banner.isActive,
+      type: banner.type,
+    });
     return banner.toObject();
   }
 }

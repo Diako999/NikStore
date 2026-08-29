@@ -33,7 +33,9 @@ export class BulkDiscountDto {
 
   @IsOptional()
   @IsDateString()
-  @ValidateIf((o) => !!o.startDate)
-  @IsEndDateAfterStartDate('startDate', { message: 'تاریخ پایان باید بعد از تاریخ شروع باشد' })
+  @ValidateIf((o: BulkDiscountDto) => !!o.startDate)
+  @IsEndDateAfterStartDate('startDate', {
+    message: 'تاریخ پایان باید بعد از تاریخ شروع باشد',
+  })
   endDate?: string;
 }

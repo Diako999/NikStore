@@ -1,6 +1,12 @@
 import {
-  Body, Controller, Get, Param,
-  Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -11,7 +17,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserDocument } from '../user/entities/user.schema';
 import { OrderStatus } from './entities/order.schema';
 
-const uid = (u: UserDocument) => (u._id as any).toString();
+const uid = (u: UserDocument) => u._id.toString();
 
 @UseGuards(JwtAuthGuard)
 @Controller('orders')
@@ -26,8 +32,8 @@ export class OrderController {
   @Get('my')
   findMyOrders(
     @CurrentUser() user: UserDocument,
-    @Query('page')   page    = 1,
-    @Query('limit')  limit   = 10,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
     @Query('status') status?: OrderStatus,
   ) {
     return this.orderService.findMyOrders(uid(user), +page, +limit, status);
@@ -46,14 +52,19 @@ export class OrderController {
   @UseGuards(AdminGuard)
   @Get('admin')
   adminFindAll(
-    @Query('page')      page       = 1,
-    @Query('limit')     limit      = 20,
-    @Query('status')    status?:   OrderStatus,
-    @Query('search')    search?:   string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('status') status?: OrderStatus,
+    @Query('search') search?: string,
     @Query('startDate') startDate?: string,
-    @Query('endDate')   endDate?:   string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.orderService.adminFindAll(+page, +limit, { status, search, startDate, endDate });
+    return this.orderService.adminFindAll(+page, +limit, {
+      status,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @UseGuards(AdminGuard)

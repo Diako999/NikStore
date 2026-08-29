@@ -1,25 +1,36 @@
 import { INestApplication } from '@nestjs/common';
-import request              from 'supertest';
+import type { Server } from 'http';
+import request from 'supertest';
 import { createTestApp, closeTestApp } from './helpers/app.helper';
-import {
-  createTestCategory,
-  createTestProduct,
-} from './helpers/seed.helper';
+import { createTestCategory, createTestProduct } from './helpers/seed.helper';
+import { CategoryDocument } from 'src/modules/category/entities/category.schema';
+import { ProductDocument } from 'src/modules/product/entities/product.schema';
+
+interface ProductListResponseBody {
+  products: { slug: string }[];
+  total: number;
+  totalPages: number;
+}
+
+interface ProductDetailResponseBody {
+  slug: string;
+  variants: unknown[];
+}
 
 describe('Products — public browsing (e2e)', () => {
-  let app: INestApplication;
-  let category: any;
-  let activeProduct1: any;
-  let activeProduct2: any;
-  let draftProduct: any;
+  let app: INestApplication<Server>;
+  let category: CategoryDocument;
+  let activeProduct1: ProductDocument;
+  let activeProduct2: ProductDocument;
+  let draftProduct: ProductDocument;
 
   beforeAll(async () => {
-    app      = await createTestApp();
+    app = (await createTestApp()) as INestApplication<Server>;
     category = await createTestCategory(app);
 
     activeProduct1 = await createTestProduct(app, category._id.toString());
     activeProduct2 = await createTestProduct(app, category._id.toString());
-    draftProduct   = await createTestProduct(app, category._id.toString(), {
+    draftProduct = await createTestProduct(app, category._id.toString(), {
       status: 'draft',
     });
   });
@@ -36,7 +47,8 @@ describe('Products — public browsing (e2e)', () => {
         .get(`/api/v1/products?category=${category.slug}`)
         .expect(200);
 
-      const slugs = (res.body.products as any[]).map((p: any) => p.slug);
+      const body = res.body as ProductListResponseBody;
+      const slugs = body.products.map((p) => p.slug);
       expect(slugs).toContain(activeProduct1.slug);
       expect(slugs).toContain(activeProduct2.slug);
       expect(slugs).not.toContain(draftProduct.slug);
@@ -47,7 +59,8 @@ describe('Products — public browsing (e2e)', () => {
         .get(`/api/v1/products?category=${category.slug}`)
         .expect(200);
 
-      expect(res.body.total).toBe(2);
+      const body = res.body as ProductListResponseBody;
+      expect(body.total).toBe(2);
     });
 
     it('pagination: limit=1 returns 1 item with correct total', async () => {
@@ -55,9 +68,10 @@ describe('Products — public browsing (e2e)', () => {
         .get(`/api/v1/products?category=${category.slug}&page=1&limit=1`)
         .expect(200);
 
-      expect(res.body.products).toHaveLength(1);
-      expect(res.body.total).toBe(2);
-      expect(res.body.totalPages).toBe(2);
+      const body = res.body as ProductListResponseBody;
+      expect(body.products).toHaveLength(1);
+      expect(body.total).toBe(2);
+      expect(body.totalPages).toBe(2);
     });
 
     it('filter by category returns matching products only', async () => {
@@ -69,13 +83,12 @@ describe('Products — public browsing (e2e)', () => {
         .expect(200);
 
       // Should still be exactly 2 — the one in otherCat must not appear
-      expect(res.body.total).toBe(2);
+      const body = res.body as ProductListResponseBody;
+      expect(body.total).toBe(2);
     });
 
     it('no auth required (public endpoint)', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/products')
-        .expect(200);
+      await request(app.getHttpServer()).get('/api/v1/products').expect(200);
     });
   });
 
@@ -87,8 +100,9 @@ describe('Products — public browsing (e2e)', () => {
         .get(`/api/v1/products/slug/${activeProduct1.slug}`)
         .expect(200);
 
-      expect(res.body.slug).toBe(activeProduct1.slug);
-      expect(res.body.variants).toBeDefined();
+      const body = res.body as ProductDetailResponseBody;
+      expect(body.slug).toBe(activeProduct1.slug);
+      expect(body.variants).toBeDefined();
     });
 
     it('draft product slug → 404 (not visible to public)', async () => {

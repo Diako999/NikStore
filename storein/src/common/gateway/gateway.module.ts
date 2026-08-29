@@ -1,9 +1,9 @@
-import { Module }               from '@nestjs/common';
-import { JwtModule }            from '@nestjs/jwt';
-import { MongooseModule }       from '@nestjs/mongoose';
-import { ConfigService }        from '@nestjs/config';
+import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
 import { NotificationsGateway } from './notifications.gateway';
-import { User, UserSchema }     from '../../modules/user/entities/user.schema';
+import { User, UserSchema } from '../../modules/user/entities/user.schema';
 
 @Module({
   imports: [
@@ -16,6 +16,6 @@ import { User, UserSchema }     from '../../modules/user/entities/user.schema';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   providers: [NotificationsGateway],
-  exports:   [NotificationsGateway],
+  exports: [NotificationsGateway],
 })
 export class GatewayModule {}

@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Delete, Get,
-  Param, Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -12,7 +19,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { UserDocument } from '../user/entities/user.schema';
 
-const uid = (u: UserDocument) => (u._id as any).toString();
+const uid = (u: UserDocument) => u._id.toString();
 
 @Controller('reviews')
 export class ReviewController {

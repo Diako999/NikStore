@@ -12,9 +12,9 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService): Redis => {
         const client = new Redis({
-          host:      configService.get<string>('redis.host'),
-          port:      configService.get<number>('redis.port'),
-          password:  configService.get<string>('redis.password') || undefined,
+          host: configService.get<string>('redis.host'),
+          port: configService.get<number>('redis.port'),
+          password: configService.get<string>('redis.password') || undefined,
           lazyConnect: true,
           // Fail fast instead of hanging a request for tens of seconds when
           // Redis is briefly unreachable — callers that rely on Redis for

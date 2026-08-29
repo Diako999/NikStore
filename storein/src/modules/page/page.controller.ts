@@ -1,13 +1,19 @@
 import {
-  Body, Controller, Delete, Get, Param,
-  Patch, Post, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { PageService }    from './page.service';
-import { CreatePageDto }  from './dto/create-page.dto';
-import { UpdatePageDto }  from './dto/update-page.dto';
-import { JwtAuthGuard }   from '../auth/guards/jwt-auth.guard';
-import { AdminGuard }     from '../../common/guards/admin.guard';
-import { Public }         from '../../common/decorators/public.decorator';
+import { PageService } from './page.service';
+import { CreatePageDto } from './dto/create-page.dto';
+import { UpdatePageDto } from './dto/update-page.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('pages')
 @UseGuards(JwtAuthGuard)

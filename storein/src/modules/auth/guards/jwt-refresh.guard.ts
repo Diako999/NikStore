@@ -11,11 +11,15 @@ export class JwtRefreshGuard extends AuthGuard('jwt-refresh') {
    * Without this override, the default AuthGuard.handleRequest does `throw err`
    * on a non-null err, which re-throws the raw jsonwebtoken error → 500.
    */
-  handleRequest<TUser = any>(err: any, user: TUser, info: any): TUser {
+  handleRequest<TUser>(
+    err: Error | null,
+    user: TUser,
+    info: Error | undefined,
+  ): TUser {
     if (err || !user) {
       this.logger.debug(
         `Refresh token rejected — ${err?.name ?? info?.name ?? 'no token'}: ` +
-        (err?.message ?? info?.message ?? 'cookie missing or invalid'),
+          (err?.message ?? info?.message ?? 'cookie missing or invalid'),
       );
       throw new UnauthorizedException('توکن نامعتبر یا منقضی است');
     }

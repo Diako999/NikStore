@@ -4,8 +4,8 @@ import {
   GatewayCreateResult,
   GatewayVerifyResult,
 } from './payment-gateway.abstract';
-import { SettingsService }    from '../../settings/settings.service';
-import { ZarinpalGateway }    from './zarinpal-gateway.service';
+import { SettingsService } from '../../settings/settings.service';
+import { ZarinpalGateway } from './zarinpal-gateway.service';
 import { MockPaymentGateway } from './mock-payment-gateway.service';
 
 @Injectable()
@@ -24,10 +24,14 @@ export class DynamicGateway extends PaymentGateway {
     try {
       const settings = await this.settingsService.findSettings();
       const isZarinpal = settings.payment?.gateway === 'zarinpal';
-      this.logger.debug(`[DynamicGateway] active gateway: ${isZarinpal ? 'zarinpal' : 'mock'}`);
+      this.logger.debug(
+        `[DynamicGateway] active gateway: ${isZarinpal ? 'zarinpal' : 'mock'}`,
+      );
       return isZarinpal ? this.zarinpal : this.mock;
-    } catch (err) {
-      this.logger.warn('[DynamicGateway] failed to read settings — falling back to mock');
+    } catch {
+      this.logger.warn(
+        '[DynamicGateway] failed to read settings — falling back to mock',
+      );
       return this.mock;
     }
   }
@@ -40,7 +44,10 @@ export class DynamicGateway extends PaymentGateway {
     return (await this.active()).create(amount, description, callbackUrl);
   }
 
-  async verify(authority: string, amount: number): Promise<GatewayVerifyResult> {
+  async verify(
+    authority: string,
+    amount: number,
+  ): Promise<GatewayVerifyResult> {
     return (await this.active()).verify(authority, amount);
   }
 }

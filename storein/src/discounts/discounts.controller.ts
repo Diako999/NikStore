@@ -18,6 +18,7 @@ import { ValidateDiscountDto } from './dto/validate-discount.dto';
 import { JwtAuthGuard } from '../modules/auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { UserDocument } from '../modules/user/entities/user.schema';
 
 @Controller('discounts')
 export class DiscountsController {
@@ -35,7 +36,7 @@ export class DiscountsController {
   @UseGuards(JwtAuthGuard)
   @Post('validate')
   async validateCoupon(
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserDocument,
     @Body() dto: ValidateDiscountDto,
   ) {
     return this.service.validateCoupon(
@@ -56,18 +57,18 @@ export class DiscountsController {
   @UseGuards(JwtAuthGuard, AdminGuard)
   @Get()
   async findAll(
-    @Query('page')     page      = '1',
-    @Query('limit')    limit     = '20',
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
     @Query('isActive') isActive?: string,
-    @Query('kind')     kind?:     string,
-    @Query('hasCode')  hasCode?:  string,
+    @Query('kind') kind?: string,
+    @Query('hasCode') hasCode?: string,
   ) {
     return this.service.findAll({
-      page:     Number(page),
-      limit:    Number(limit),
+      page: Number(page),
+      limit: Number(limit),
       isActive: isActive === undefined ? undefined : isActive === 'true',
       kind,
-      hasCode:  hasCode === undefined ? undefined : hasCode === 'true',
+      hasCode: hasCode === undefined ? undefined : hasCode === 'true',
     });
   }
 

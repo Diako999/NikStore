@@ -2,49 +2,65 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, PayloadTooLargeException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UploadService } from './upload.service';
-import { StorageProvider } from './storage/storage-provider.abstract';
+import {
+  ProcessedFile,
+  StorageProvider,
+  StorageResult,
+  UploadFolder,
+} from './storage/storage-provider.abstract';
 
 jest.mock('sharp', () => {
   const chain = {
-    resize:   jest.fn().mockReturnThis(),
-    webp:     jest.fn().mockReturnThis(),
+    resize: jest.fn().mockReturnThis(),
+    webp: jest.fn().mockReturnThis(),
     toBuffer: jest.fn().mockResolvedValue(Buffer.from('processed-image')),
   };
   const sharpFn = jest.fn().mockReturnValue(chain);
-  // __esModule:true tells __importStar to return sharpFn directly (stays callable)
-  (sharpFn as any).__esModule = true;
-  return sharpFn;
+  // __esModule:true + a `default` pointing back at the callable mock, so
+  // TS's esModuleInterop-compiled `import sharp from 'sharp'` (sharp_1.default(...))
+  // resolves to the callable mock instead of undefined.
+  return Object.assign(sharpFn, { __esModule: true, default: sharpFn });
 });
 
-const mockFile = (overrides: Partial<Express.Multer.File> = {}): Express.Multer.File =>
+const mockFile = (
+  overrides: Partial<Express.Multer.File> = {},
+): Express.Multer.File =>
   ({
-    fieldname:    'file',
+    fieldname: 'file',
     originalname: 'test.jpg',
-    encoding:     '7bit',
-    mimetype:     'image/jpeg',
-    size:         1024,
-    buffer:       Buffer.from('fake-image-data'),
+    encoding: '7bit',
+    mimetype: 'image/jpeg',
+    size: 1024,
+    buffer: Buffer.from('fake-image-data'),
     ...overrides,
-  } as Express.Multer.File);
+  }) as Express.Multer.File;
 
 const mockStorageResult = (key = 'products/test.webp') => ({
   key,
-  url:      `/uploads/${key}`,   // relative path — no hostname (see local-storage.provider.ts)
+  url: `/uploads/${key}`, // relative path — no hostname (see local-storage.provider.ts)
   filename: 'test.webp',
-  size:     800,
+  size: 800,
   mimeType: 'image/webp',
 });
 
+interface MockedStorageProvider {
+  save: jest.Mock<Promise<StorageResult>, [ProcessedFile, UploadFolder]>;
+  delete: jest.Mock<Promise<void>, [string]>;
+  getUrl: jest.Mock<string, [string]>;
+}
+
 describe('UploadService', () => {
   let service: UploadService;
-  let storage: jest.Mocked<StorageProvider>;
+  let storage: MockedStorageProvider;
 
   beforeEach(async () => {
     storage = {
-      save:   jest.fn().mockResolvedValue(mockStorageResult()),
-      delete: jest.fn().mockResolvedValue(undefined),
-      getUrl: jest.fn().mockReturnValue('/uploads/test'),
-    } as any;
+      save: jest
+        .fn<Promise<StorageResult>, [ProcessedFile, UploadFolder]>()
+        .mockResolvedValue(mockStorageResult()),
+      delete: jest.fn<Promise<void>, [string]>().mockResolvedValue(undefined),
+      getUrl: jest.fn<string, [string]>().mockReturnValue('/uploads/test'),
+    };
 
     const configService = {
       get: jest.fn((key: string) => {
@@ -57,7 +73,7 @@ describe('UploadService', () => {
       providers: [
         UploadService,
         { provide: StorageProvider, useValue: storage },
-        { provide: ConfigService,   useValue: configService },
+        { provide: ConfigService, useValue: configService },
       ],
     }).compile();
 
@@ -87,7 +103,10 @@ describe('UploadService', () => {
 
     it('throws BadRequestException for invalid MIME type', async () => {
       await expect(
-        service.uploadImage(mockFile({ mimetype: 'application/pdf' }), 'products'),
+        service.uploadImage(
+          mockFile({ mimetype: 'application/pdf' }),
+          'products',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -99,7 +118,7 @@ describe('UploadService', () => {
 
     it('throws when no file provided', async () => {
       await expect(
-        service.uploadImage(null as any, 'products'),
+        service.uploadImage(null as unknown as Express.Multer.File, 'products'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -115,14 +134,16 @@ describe('UploadService', () => {
     });
 
     it('throws when no files provided', async () => {
-      await expect(service.uploadImages([], 'products'))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.uploadImages([], 'products')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws when more than 10 files', async () => {
-      const files = Array(11).fill(mockFile());
-      await expect(service.uploadImages(files, 'products'))
-        .rejects.toThrow(BadRequestException);
+      const files = Array(11).fill(mockFile()) as Express.Multer.File[];
+      await expect(service.uploadImages(files, 'products')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -139,7 +160,9 @@ describe('UploadService', () => {
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error('not found'));
 
-      await expect(service.deleteFile('products/abc.webp')).resolves.not.toThrow();
+      await expect(
+        service.deleteFile('products/abc.webp'),
+      ).resolves.not.toThrow();
     });
   });
 });

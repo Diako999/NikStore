@@ -1,15 +1,21 @@
 import {
-  Body, Controller, Get, Param,
-  Patch, Post, Query, UseGuards,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { IsArray, IsIn, IsString } from 'class-validator';
 import { AdminService } from './admin.service';
 import { DateRangeDto, LowStockDto } from './dto/date-range.dto';
-import { JwtAuthGuard }    from '../auth/guards/jwt-auth.guard';
-import { AdminGuard }      from '../../common/guards/admin.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
 import { SuperAdminGuard } from '../../common/guards/super-admin.guard';
-import { Public }          from '../../common/decorators/public.decorator';
-import { UserRole }        from '../user/entities/user.schema';
+import { Public } from '../../common/decorators/public.decorator';
+import { UserRole } from '../user/entities/user.schema';
 
 class SetRoleDto {
   @IsIn(Object.values(UserRole))

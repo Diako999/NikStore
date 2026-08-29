@@ -5,6 +5,8 @@ export class UpdateReviewStatusDto {
   @IsEnum([ReviewStatus.APPROVED, ReviewStatus.REJECTED])
   status: ReviewStatus.APPROVED | ReviewStatus.REJECTED;
 
-  @IsOptional() @IsString() @MaxLength(300)
+  @IsOptional()
+  @IsString()
+  @MaxLength(300)
   adminNote?: string;
 }

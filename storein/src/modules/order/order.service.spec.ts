@@ -9,97 +9,186 @@ import { User } from '../user/entities/user.schema';
 import { CartService } from '../cart/cart.service';
 import { ProductService } from '../product/product.service';
 import { DiscountsService } from '../../discounts/discounts.service';
-import { AppLoggerService }    from '../../common/logger/app-logger.service';
+import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { NotificationsGateway } from '../../common/gateway/notifications.gateway';
 
 const mockLogger = {
   setContext: jest.fn().mockReturnThis(),
-  log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
 };
 
-const userId  = new Types.ObjectId().toString();
+const userId = new Types.ObjectId().toString();
 const orderId = new Types.ObjectId().toString();
-const addrId  = new Types.ObjectId();
-const prodId  = new Types.ObjectId().toString();
-const varId   = new Types.ObjectId().toString();
+const addrId = new Types.ObjectId();
+const prodId = new Types.ObjectId().toString();
+const varId = new Types.ObjectId().toString();
 
 const mockAddress = () => ({
-  _id:            { toString: () => addrId.toString() },
-  recipientName:  'علی رضایی',
+  _id: { toString: () => addrId.toString() },
+  recipientName: 'علی رضایی',
   recipientPhone: '09121111111',
-  province: 'تهران', city: 'تهران',
-  street: 'آزادی', detail: 'پ۱', postalCode: '1234567890',
+  province: 'تهران',
+  city: 'تهران',
+  street: 'آزادی',
+  detail: 'پ۱',
+  postalCode: '1234567890',
 });
 
 const mockCartItem = () => ({
-  productId: prodId, variantId: varId, sku: 'SKU-1',
-  name: 'سامسونگ A55', thumbnail: null,
-  price: 10_000_000, comparePrice: null,
-  quantity: 2, stock: 5, attributes: [],
+  productId: prodId,
+  variantId: varId,
+  sku: 'SKU-1',
+  name: 'سامسونگ A55',
+  thumbnail: null,
+  price: 10_000_000,
+  comparePrice: null,
+  quantity: 2,
+  stock: 5,
+  attributes: [],
 });
 
 const mockProductVariant = () => ({
   _id: { toString: () => varId },
-  sku: 'SKU-1', price: 10_000_000,
-  stock: 5, isActive: true, attributes: [],
+  sku: 'SKU-1',
+  price: 10_000_000,
+  stock: 5,
+  isActive: true,
+  attributes: [],
 });
 
-const mockOrder = (overrides: any = {}) => ({
-  _id:         new Types.ObjectId(orderId),
-  userId:      new Types.ObjectId(userId),
+interface MockOrderItem {
+  productId: Types.ObjectId;
+  variantId: string;
+  sku: string;
+  name: string;
+  price: number;
+  quantity: number;
+  attributes: unknown[];
+}
+
+interface MockOrder {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  orderNumber: string;
+  status: OrderStatus;
+  items: MockOrderItem[];
+  subtotal: number;
+  total: number;
+  cancelReason?: string;
+  save: jest.Mock;
+  toObject: jest.Mock;
+}
+
+const mockOrder = (overrides: Partial<MockOrder> = {}): MockOrder => ({
+  _id: new Types.ObjectId(orderId),
+  userId: new Types.ObjectId(userId),
   orderNumber: 'ORD-123-TEST',
-  status:      OrderStatus.PENDING,
-  items: [{
-    productId: new Types.ObjectId(prodId),
-    variantId: varId, sku: 'SKU-1', name: 'سامسونگ A55',
-    price: 10_000_000, quantity: 2, attributes: [],
-  }],
-  subtotal: 20_000_000, total: 20_000_000,
-  save:     jest.fn().mockResolvedValue(true),
+  status: OrderStatus.PENDING,
+  items: [
+    {
+      productId: new Types.ObjectId(prodId),
+      variantId: varId,
+      sku: 'SKU-1',
+      name: 'سامسونگ A55',
+      price: 10_000_000,
+      quantity: 2,
+      attributes: [],
+    },
+  ],
+  subtotal: 20_000_000,
+  total: 20_000_000,
+  save: jest.fn().mockResolvedValue(true),
   toObject: jest.fn().mockReturnThis(),
   ...overrides,
 });
 
+interface MockOrderModel {
+  create: jest.Mock;
+  find: jest.Mock;
+  findOne: jest.Mock;
+  findById: jest.Mock;
+  countDocuments: jest.Mock;
+}
+
+interface MockUserModel {
+  findById: jest.Mock;
+}
+
+interface MockCartService {
+  getRawCart: jest.Mock;
+  clearCart: jest.Mock;
+}
+
+interface MockProductService {
+  findById: jest.Mock;
+  findManyByIds: jest.Mock;
+  adjustStock: jest.Mock;
+  bulkAdjustStock: jest.Mock;
+}
+
+interface MockDiscountsService {
+  validateCoupon: jest.Mock;
+  recordCouponUsage: jest.Mock;
+}
+
+interface MockEventEmitter {
+  emit: jest.Mock;
+}
+
 describe('OrderService', () => {
   let service: OrderService;
-  let orderModel: any;
-  let userModel: any;
-  let cartService: jest.Mocked<any>;
-  let productService: jest.Mocked<any>;
-  let discountService: jest.Mocked<any>;
-  let eventEmitter: jest.Mocked<any>;
+  let orderModel: MockOrderModel;
+  let userModel: MockUserModel;
+  let cartService: MockCartService;
+  let productService: MockProductService;
+  let discountService: MockDiscountsService;
+  let eventEmitter: MockEventEmitter;
 
   beforeEach(async () => {
     orderModel = {
-      create:         jest.fn(),
-      find:           jest.fn(),
-      findOne:        jest.fn(),
-      findById:       jest.fn(),
+      create: jest.fn(),
+      find: jest.fn(),
+      findOne: jest.fn(),
+      findById: jest.fn(),
       countDocuments: jest.fn().mockResolvedValue(0),
     };
-    userModel        = {
+    userModel = {
       findById: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           lean: jest.fn().mockResolvedValue(null),
         }),
       }),
     };
-    cartService      = { getRawCart: jest.fn(), clearCart: jest.fn() };
-    productService   = { findById: jest.fn(), findManyByIds: jest.fn(), adjustStock: jest.fn().mockResolvedValue({}), bulkAdjustStock: jest.fn().mockResolvedValue(undefined) };
-    discountService  = { validateCoupon: jest.fn(), recordCouponUsage: jest.fn().mockResolvedValue(undefined) };
-    eventEmitter     = { emit: jest.fn() };
+    cartService = { getRawCart: jest.fn(), clearCart: jest.fn() };
+    productService = {
+      findById: jest.fn(),
+      findManyByIds: jest.fn(),
+      adjustStock: jest.fn().mockResolvedValue({}),
+      bulkAdjustStock: jest.fn().mockResolvedValue(undefined),
+    };
+    discountService = {
+      validateCoupon: jest.fn(),
+      recordCouponUsage: jest.fn().mockResolvedValue(undefined),
+    };
+    eventEmitter = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrderService,
         { provide: getModelToken(Order.name), useValue: orderModel },
-        { provide: getModelToken(User.name),  useValue: userModel },
-        { provide: CartService,               useValue: cartService },
-        { provide: ProductService,            useValue: productService },
-        { provide: DiscountsService,           useValue: discountService },
-        { provide: EventEmitter2,             useValue: eventEmitter },
-        { provide: AppLoggerService,          useValue: mockLogger },
-        { provide: NotificationsGateway,      useValue: { emitNewOrder: jest.fn() } },
+        { provide: getModelToken(User.name), useValue: userModel },
+        { provide: CartService, useValue: cartService },
+        { provide: ProductService, useValue: productService },
+        { provide: DiscountsService, useValue: discountService },
+        { provide: EventEmitter2, useValue: eventEmitter },
+        { provide: AppLoggerService, useValue: mockLogger },
+        {
+          provide: NotificationsGateway,
+          useValue: { emitNewOrder: jest.fn() },
+        },
       ],
     }).compile();
 
@@ -110,18 +199,24 @@ describe('OrderService', () => {
   describe('createFromCart', () => {
     beforeEach(() => {
       cartService.getRawCart.mockResolvedValue({
-        userId, updatedAt: '', items: [mockCartItem()],
+        userId,
+        updatedAt: '',
+        items: [mockCartItem()],
       });
       userModel.findById.mockReturnValue({
         select: jest.fn().mockReturnValue({
           lean: jest.fn().mockResolvedValue({ addresses: [mockAddress()] }),
         }),
       });
-      productService.findManyByIds.mockResolvedValue([{
-        _id: new Types.ObjectId(prodId), variants: [mockProductVariant()],
-      }]);
+      productService.findManyByIds.mockResolvedValue([
+        {
+          _id: new Types.ObjectId(prodId),
+          variants: [mockProductVariant()],
+        },
+      ]);
       orderModel.create.mockResolvedValue({
-        ...mockOrder(), toObject: () => mockOrder(),
+        ...mockOrder(),
+        toObject: () => mockOrder(),
       });
     });
 
@@ -132,13 +227,23 @@ describe('OrderService', () => {
         expect.objectContaining({ total: 20_000_000 }),
       );
       expect(productService.bulkAdjustStock).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ productId: prodId, variantId: varId, delta: -2 })]),
+        expect.arrayContaining([
+          expect.objectContaining({
+            productId: prodId,
+            variantId: varId,
+            delta: -2,
+          }),
+        ]),
       );
       expect(cartService.clearCart).toHaveBeenCalledWith(userId);
     });
 
     it('throws when cart is empty', async () => {
-      cartService.getRawCart.mockResolvedValue({ userId, updatedAt: '', items: [] });
+      cartService.getRawCart.mockResolvedValue({
+        userId,
+        updatedAt: '',
+        items: [],
+      });
       await expect(
         service.createFromCart(userId, { addressId: addrId.toString() }),
       ).rejects.toThrow(BadRequestException);
@@ -156,9 +261,12 @@ describe('OrderService', () => {
     });
 
     it('throws when stock insufficient', async () => {
-      productService.findManyByIds.mockResolvedValue([{
-        _id: new Types.ObjectId(prodId), variants: [{ ...mockProductVariant(), stock: 1 }],
-      }]);
+      productService.findManyByIds.mockResolvedValue([
+        {
+          _id: new Types.ObjectId(prodId),
+          variants: [{ ...mockProductVariant(), stock: 1 }],
+        },
+      ]);
       await expect(
         service.createFromCart(userId, { addressId: addrId.toString() }),
       ).rejects.toThrow(BadRequestException);
@@ -167,7 +275,9 @@ describe('OrderService', () => {
     it('creates order when variant has empty SKU (regression for required:true bug)', async () => {
       const cartItemNoSku = { ...mockCartItem(), sku: '' };
       cartService.getRawCart.mockResolvedValue({
-        userId, updatedAt: '', items: [cartItemNoSku],
+        userId,
+        updatedAt: '',
+        items: [cartItemNoSku],
       });
 
       await service.createFromCart(userId, { addressId: addrId.toString() });
@@ -176,15 +286,18 @@ describe('OrderService', () => {
         expect.objectContaining({
           items: expect.arrayContaining([
             expect.objectContaining({ sku: '' }),
-          ]),
+          ]) as unknown,
         }),
       );
     });
 
     it('throws when variant is inactive', async () => {
-      productService.findManyByIds.mockResolvedValue([{
-        _id: new Types.ObjectId(prodId), variants: [{ ...mockProductVariant(), isActive: false }],
-      }]);
+      productService.findManyByIds.mockResolvedValue([
+        {
+          _id: new Types.ObjectId(prodId),
+          variants: [{ ...mockProductVariant(), isActive: false }],
+        },
+      ]);
       await expect(
         service.createFromCart(userId, { addressId: addrId.toString() }),
       ).rejects.toThrow(BadRequestException);
@@ -193,39 +306,44 @@ describe('OrderService', () => {
     it('applies coupon discount and records usage after order creation', async () => {
       const discountId = new Types.ObjectId().toString();
       discountService.validateCoupon.mockResolvedValue({
-        isValid:        true,
+        isValid: true,
         discountAmount: 2_000_000,
-        message:        'ok',
+        message: 'ok',
         discountId,
       });
 
       await service.createFromCart(userId, {
-        addressId:  addrId.toString(),
+        addressId: addrId.toString(),
         couponCode: 'SAVE20',
       });
 
       expect(orderModel.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          discount:   2_000_000,
-          total:      18_000_000,    // 20_000_000 subtotal − 2_000_000
+          discount: 2_000_000,
+          total: 18_000_000, // 20_000_000 subtotal − 2_000_000
           couponCode: 'SAVE20',
         }),
       );
       expect(discountService.recordCouponUsage).toHaveBeenCalledWith(
-        expect.any(String),   // discountId
+        expect.any(String), // discountId
         userId,
-        expect.any(String),   // orderId
+        expect.any(String), // orderId
         2_000_000,
       );
     });
 
     it('rejects order when coupon is invalid', async () => {
       discountService.validateCoupon.mockResolvedValue({
-        isValid: false, discountAmount: 0, message: 'کد تخفیف منقضی شده است',
+        isValid: false,
+        discountAmount: 0,
+        message: 'کد تخفیف منقضی شده است',
       });
 
       await expect(
-        service.createFromCart(userId, { addressId: addrId.toString(), couponCode: 'EXPIRED' }),
+        service.createFromCart(userId, {
+          addressId: addrId.toString(),
+          couponCode: 'EXPIRED',
+        }),
       ).rejects.toThrow(BadRequestException);
       expect(orderModel.create).not.toHaveBeenCalled();
     });
@@ -240,23 +358,31 @@ describe('OrderService', () => {
 
       expect(order.status).toBe(OrderStatus.CANCELLED);
       expect(productService.bulkAdjustStock).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ productId: prodId, variantId: varId, delta: 2 })]),
+        expect.arrayContaining([
+          expect.objectContaining({
+            productId: prodId,
+            variantId: varId,
+            delta: 2,
+          }),
+        ]),
       );
       expect(order.save).toHaveBeenCalled();
     });
 
     it('throws when order not found', async () => {
       orderModel.findOne.mockResolvedValue(null);
-      await expect(service.cancelMyOrder(userId, orderId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.cancelMyOrder(userId, orderId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws when cancelling a delivered order', async () => {
       orderModel.findOne.mockResolvedValue(
         mockOrder({ status: OrderStatus.DELIVERED }),
       );
-      await expect(service.cancelMyOrder(userId, orderId))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.cancelMyOrder(userId, orderId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -288,7 +414,13 @@ describe('OrderService', () => {
       });
 
       expect(productService.bulkAdjustStock).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ productId: prodId, variantId: varId, delta: 2 })]),
+        expect.arrayContaining([
+          expect.objectContaining({
+            productId: prodId,
+            variantId: varId,
+            delta: 2,
+          }),
+        ]),
       );
       expect(order.cancelReason).toBe('موجود نیست');
     });
@@ -314,8 +446,9 @@ describe('OrderService', () => {
         }),
       });
 
-      await expect(service.findMyOrderById(userId, orderId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.findMyOrderById(userId, orderId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -343,8 +476,9 @@ describe('OrderService', () => {
         }),
       });
 
-      await expect(service.adminFindById(orderId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.adminFindById(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

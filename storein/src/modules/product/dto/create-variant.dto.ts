@@ -1,6 +1,12 @@
 import {
-  IsArray, IsBoolean, IsMongoId, IsNumber,
-  IsOptional, IsString, Min, ValidateNested,
+  IsArray,
+  IsBoolean,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -11,19 +17,26 @@ class VariantAttributeDto {
 }
 
 export class CreateVariantDto {
-  @IsOptional() @IsMongoId()
+  @IsOptional()
+  @IsMongoId()
   _id?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   sku?: string;
 
-  @IsNumber() @Min(0)
+  @IsNumber()
+  @Min(0)
   price: number;
 
-  @IsOptional() @IsNumber() @Min(0)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   comparePrice?: number;
 
-  @IsOptional() @IsNumber() @Min(0)
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   stock?: number;
 
   @IsOptional()
@@ -32,12 +45,18 @@ export class CreateVariantDto {
   @Type(() => VariantAttributeDto)
   attributes?: VariantAttributeDto[];
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   costPrice?: number | null;
 
-  @IsOptional() @IsArray() @IsString({ each: true })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
   images?: string[];
 }

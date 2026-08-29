@@ -1,7 +1,8 @@
 import { INestApplication } from '@nestjs/common';
-import { getModelToken }    from '@nestjs/mongoose';
-import { Model }            from 'mongoose';
-import request              from 'supertest';
+import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import type { Server } from 'http';
+import request from 'supertest';
 import { createTestApp, closeTestApp } from './helpers/app.helper';
 import {
   createTestCategory,
@@ -9,36 +10,58 @@ import {
   addAddressToUser,
   creditWallet,
 } from './helpers/seed.helper';
-import {
-  loginAsNewUser,
-  parseAccessToken,
-} from './helpers/auth.helper';
+import { loginAsNewUser, parseAccessToken } from './helpers/auth.helper';
+import { CategoryDocument } from 'src/modules/category/entities/category.schema';
+import { ProductDocument } from 'src/modules/product/entities/product.schema';
+
+interface OrderResponseBody {
+  _id: string;
+  status: string;
+}
+
+interface WalletBalanceResponseBody {
+  balance: number;
+}
+
+interface TopupResponseBody {
+  authority: string;
+  gatewayUrl: string;
+}
+
+interface PayOrderResponseBody {
+  success: boolean;
+}
 
 describe('Payment flow (e2e)', () => {
-  let app: INestApplication;
-  let category: any;
-  let product: any;
+  let app: INestApplication<Server>;
+  let category: CategoryDocument;
+  let product: ProductDocument;
   let variantId: string;
-  let productModel: Model<any>;
+  let productModel: Model<ProductDocument>;
 
   beforeAll(async () => {
-    app          = await createTestApp();
-    productModel = app.get<Model<any>>(getModelToken('Product'));
-    category     = await createTestProduct(app, (await createTestCategory(app))._id.toString());
+    app = (await createTestApp()) as INestApplication<Server>;
+    productModel = app.get<Model<ProductDocument>>(getModelToken('Product'));
+    await createTestProduct(
+      app,
+      (await createTestCategory(app))._id.toString(),
+    );
 
     // Use a dedicated product for payment tests (price = 100_000)
     category = await createTestCategory(app);
-    product  = await createTestProduct(app, category._id.toString(), {
-      variants: [{
-        sku:          'PAY-SKU-001',
-        price:        50_000,
-        comparePrice: null,
-        stock:        20,
-        isActive:     true,
-        attributes:   [],
-      }],
-      minPrice:   50_000,
-      maxPrice:   50_000,
+    product = await createTestProduct(app, category._id.toString(), {
+      variants: [
+        {
+          sku: 'PAY-SKU-001',
+          price: 50_000,
+          comparePrice: null,
+          stock: 20,
+          isActive: true,
+          attributes: [],
+        },
+      ],
+      minPrice: 50_000,
+      maxPrice: 50_000,
       totalStock: 20,
     });
     variantId = product.variants[0]._id.toString();
@@ -59,12 +82,16 @@ describe('Payment flow (e2e)', () => {
 
   async function freshSession() {
     const { accessToken, cookie } = await loginAsNewUser(app);
-    const userId                  = parseAccessToken(accessToken).sub;
-    const addressId               = await addAddressToUser(app, userId);
+    const userId = parseAccessToken(accessToken).sub;
+    const addressId = await addAddressToUser(app, userId);
     return { accessToken, cookie, userId, addressId };
   }
 
-  async function placeOrder(accessToken: string, addressId: string, qty = 1): Promise<string> {
+  async function placeOrder(
+    accessToken: string,
+    addressId: string,
+    qty = 1,
+  ): Promise<string> {
     await request(app.getHttpServer())
       .post('/api/v1/cart/items')
       .set('Authorization', `Bearer ${accessToken}`)
@@ -75,7 +102,7 @@ describe('Payment flow (e2e)', () => {
       .set('Authorization', `Bearer ${accessToken}`)
       .send({ addressId });
 
-    return res.body._id as string;
+    return (res.body as OrderResponseBody)._id;
   }
 
   // ── Wallet balance ────────────────────────────────────────────────────────
@@ -88,7 +115,8 @@ describe('Payment flow (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(res.body.balance).toBe(0);
+      const body = res.body as WalletBalanceResponseBody;
+      expect(body.balance).toBe(0);
     });
 
     it('no auth → 401', async () => {
@@ -109,10 +137,11 @@ describe('Payment flow (e2e)', () => {
         .send({ amount: 50_000 })
         .expect(200);
 
-      expect(res.body.authority).toBeDefined();
-      expect(typeof res.body.authority).toBe('string');
-      expect(res.body.gatewayUrl).toBeDefined();
-      expect(typeof res.body.gatewayUrl).toBe('string');
+      const body = res.body as TopupResponseBody;
+      expect(body.authority).toBeDefined();
+      expect(typeof body.authority).toBe('string');
+      expect(body.gatewayUrl).toBeDefined();
+      expect(typeof body.gatewayUrl).toBe('string');
     });
 
     it('amount below minimum (10_000) → 400', async () => {
@@ -147,7 +176,8 @@ describe('Payment flow (e2e)', () => {
         .send({ orderId, method: 'wallet' })
         .expect(200);
 
-      expect(res.body.success).toBe(true);
+      const body = res.body as PayOrderResponseBody;
+      expect(body.success).toBe(true);
     });
 
     it('order status becomes confirmed after wallet payment', async () => {
@@ -165,7 +195,8 @@ describe('Payment flow (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(orderRes.body.status).toBe('confirmed');
+      const orderBody = orderRes.body as OrderResponseBody;
+      expect(orderBody.status).toBe('confirmed');
     });
 
     it('wallet balance is debited after payment', async () => {
@@ -183,7 +214,8 @@ describe('Payment flow (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
 
-      expect(walletRes.body.balance).toBe(150_000); // 200_000 - 50_000
+      const walletBody = walletRes.body as WalletBalanceResponseBody;
+      expect(walletBody.balance).toBe(150_000); // 200_000 - 50_000
     });
 
     it('insufficient wallet balance → 400', async () => {

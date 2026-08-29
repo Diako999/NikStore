@@ -11,17 +11,17 @@ import {
 
 @Injectable()
 export class LocalStorageProvider extends StorageProvider {
-  private readonly logger  = new Logger(LocalStorageProvider.name);
-  private readonly dest:    string;
+  private readonly logger = new Logger(LocalStorageProvider.name);
+  private readonly dest: string;
   private readonly baseUrl: string;
 
   constructor(private configService: ConfigService) {
     super();
-    this.dest    = this.configService.get<string>('upload.dest')!;
+    this.dest = this.configService.get<string>('upload.dest')!;
     this.baseUrl = this.configService.get<string>('upload.baseUrl')!;
   }
 
-  async save(file: ProcessedFile, folder: UploadFolder): Promise<StorageResult> {
+  save(file: ProcessedFile, folder: UploadFolder): Promise<StorageResult> {
     const dir = path.join(this.dest, folder);
 
     if (!fs.existsSync(dir)) {
@@ -34,21 +34,22 @@ export class LocalStorageProvider extends StorageProvider {
     const key = `${folder}/${file.filename}`;
     this.logger.debug(`Saved file: ${key}`);
 
-    return {
+    return Promise.resolve({
       key,
-      url:      this.getUrl(key),
+      url: this.getUrl(key),
       filename: file.filename,
-      size:     file.size,
+      size: file.size,
       mimeType: file.mimeType,
-    };
+    });
   }
 
-  async delete(key: string): Promise<void> {
+  delete(key: string): Promise<void> {
     const filePath = path.join(this.dest, key);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       this.logger.debug(`Deleted file: ${key}`);
     }
+    return Promise.resolve();
   }
 
   getUrl(key: string): string {

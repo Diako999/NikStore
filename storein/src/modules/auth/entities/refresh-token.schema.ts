@@ -5,7 +5,12 @@ export type RefreshTokenDocument = RefreshToken & Document;
 
 @Schema({ timestamps: true })
 export class RefreshToken {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: MongooseSchema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
   userId: Types.ObjectId;
 
   @Prop({ required: true }) token: string;

@@ -7,55 +7,88 @@ import { AppLoggerService } from '../../common/logger/app-logger.service';
 // ── Shared fixtures ────────────────────────────────────────────────────────
 const mockLogger = {
   setContext: jest.fn().mockReturnThis(),
-  log:   jest.fn(),
-  warn:  jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
 };
 
 const DEFAULT_TRUST_ITEMS = [
-  { icon: '🔒', title: 'پرداخت امن',    subtitle: 'درگاه پرداخت معتبر و رمزنگاری شده',    bgColor: '#EBF4FF' },
-  { icon: '↩️', title: 'ضمانت ۷ روزه', subtitle: 'بازگشت کالا در صورت عدم رضایت',        bgColor: '#F0FDF4' },
-  { icon: '✅', title: 'اصالت کالا',    subtitle: 'تمام محصولات دارای گارانتی اصالت',     bgColor: '#FFFBEB' },
-  { icon: '🚚', title: 'ارسال سریع',   subtitle: 'ارسال به سراسر کشور در کمترین زمان',   bgColor: '#FFF1F2' },
+  {
+    icon: '🔒',
+    title: 'پرداخت امن',
+    subtitle: 'درگاه پرداخت معتبر و رمزنگاری شده',
+    bgColor: '#EBF4FF',
+  },
+  {
+    icon: '↩️',
+    title: 'ضمانت ۷ روزه',
+    subtitle: 'بازگشت کالا در صورت عدم رضایت',
+    bgColor: '#F0FDF4',
+  },
+  {
+    icon: '✅',
+    title: 'اصالت کالا',
+    subtitle: 'تمام محصولات دارای گارانتی اصالت',
+    bgColor: '#FFFBEB',
+  },
+  {
+    icon: '🚚',
+    title: 'ارسال سریع',
+    subtitle: 'ارسال به سراسر کشور در کمترین زمان',
+    bgColor: '#FFF1F2',
+  },
 ];
 
 const defaultDoc = {
-  siteName:        'استورین',
-  tagline:         'فروشگاه تخصصی عینک',
-  logoUrl:         '',
-  faviconUrl:      '',
-  description:     '',
-  keywords:        '',
-  ogImage:         '',
-  social:          { instagram: '', telegram: '', twitter: '', whatsapp: '', linkedin: '', youtube: '' },
-  footerTagline:   '',
+  siteName: 'استورین',
+  tagline: 'فروشگاه تخصصی عینک',
+  logoUrl: '',
+  faviconUrl: '',
+  description: '',
+  keywords: '',
+  ogImage: '',
+  social: {
+    instagram: '',
+    telegram: '',
+    twitter: '',
+    whatsapp: '',
+    linkedin: '',
+    youtube: '',
+  },
+  footerTagline: '',
   footerCopyright: 'تمامی حقوق برای استورین محفوظ است',
-  footerLinks:     [],
-  phone:           '',
-  email:           '',
-  address:         '',
-  trustItems:      DEFAULT_TRUST_ITEMS,
+  footerLinks: [],
+  phone: '',
+  email: '',
+  address: '',
+  trustItems: DEFAULT_TRUST_ITEMS,
 };
 
 /** Simulates Mongoose chainable query: .select().lean() */
 const chainable = (value: unknown) => {
   const q = {
     select: jest.fn().mockReturnThis(),
-    lean:   jest.fn().mockResolvedValue(value),
+    lean: jest.fn().mockResolvedValue(value),
   };
   return q;
 };
 
+interface MockSettingsModel {
+  findOne: jest.Mock;
+  create: jest.Mock;
+  findOneAndUpdate: jest.Mock;
+}
+
 // ── Suite ──────────────────────────────────────────────────────────────────
 describe('SettingsService', () => {
   let service: SettingsService;
-  let model: any;
+  let model: MockSettingsModel;
 
   beforeEach(async () => {
     model = {
-      findOne:          jest.fn(),
-      create:           jest.fn().mockResolvedValue(defaultDoc),
+      findOne: jest.fn(),
+      create: jest.fn().mockResolvedValue(defaultDoc),
       findOneAndUpdate: jest.fn(),
     };
 
@@ -63,7 +96,7 @@ describe('SettingsService', () => {
       providers: [
         SettingsService,
         { provide: getModelToken(SiteSettings.name), useValue: model },
-        { provide: AppLoggerService,                  useValue: mockLogger },
+        { provide: AppLoggerService, useValue: mockLogger },
       ],
     }).compile();
 
@@ -175,7 +208,10 @@ describe('SettingsService', () => {
       expect(mockLogger.log).toHaveBeenCalledWith(
         'Site settings updated',
         expect.objectContaining({
-          fields: expect.arrayContaining(['siteName', 'description']),
+          fields: expect.arrayContaining([
+            'siteName',
+            'description',
+          ]) as string[],
         }),
       );
     });
@@ -183,7 +219,9 @@ describe('SettingsService', () => {
     it('logs hasSocial: true when social block is present', async () => {
       model.findOneAndUpdate.mockReturnValue(chainable(defaultDoc));
 
-      await service.updateSettings({ social: { instagram: 'https://instagram.com/storein' } } as any);
+      await service.updateSettings({
+        social: { instagram: 'https://instagram.com/storein' },
+      });
 
       expect(mockLogger.log).toHaveBeenCalledWith(
         'Site settings updated',
@@ -207,11 +245,11 @@ describe('SettingsService', () => {
       const dto = {
         footerLinks: [
           { label: 'درباره ما', url: '/about' },
-          { label: 'تماس',     url: '/contact' },
+          { label: 'تماس', url: '/contact' },
         ],
       };
 
-      await service.updateSettings(dto as any);
+      await service.updateSettings(dto);
 
       expect(mockLogger.log).toHaveBeenCalledWith(
         'Site settings updated',
@@ -234,7 +272,7 @@ describe('SettingsService', () => {
       model.findOneAndUpdate.mockReturnValue(chainable(defaultDoc));
       const dto = { trustItems: DEFAULT_TRUST_ITEMS };
 
-      await service.updateSettings(dto as any);
+      await service.updateSettings(dto);
 
       expect(mockLogger.log).toHaveBeenCalledWith(
         'Site settings updated',
@@ -257,11 +295,16 @@ describe('SettingsService', () => {
       model.findOneAndUpdate.mockReturnValue(chainable(defaultDoc));
       const dto = {
         trustItems: [
-          { icon: '🎁', title: 'هدیه رایگان', subtitle: 'با هر خرید بالای ۵۰۰ هزار تومان', bgColor: '#FDF4FF' },
+          {
+            icon: '🎁',
+            title: 'هدیه رایگان',
+            subtitle: 'با هر خرید بالای ۵۰۰ هزار تومان',
+            bgColor: '#FDF4FF',
+          },
         ],
       };
 
-      await service.updateSettings(dto as any);
+      await service.updateSettings(dto);
 
       expect(model.findOneAndUpdate).toHaveBeenCalledWith(
         { _key: 'default' },
@@ -271,10 +314,12 @@ describe('SettingsService', () => {
     });
 
     it('handles empty trustItems array without throwing', async () => {
-      model.findOneAndUpdate.mockReturnValue(chainable({ ...defaultDoc, trustItems: [] }));
+      model.findOneAndUpdate.mockReturnValue(
+        chainable({ ...defaultDoc, trustItems: [] }),
+      );
 
       await expect(
-        service.updateSettings({ trustItems: [] } as any),
+        service.updateSettings({ trustItems: [] }),
       ).resolves.toBeDefined();
 
       expect(mockLogger.log).toHaveBeenCalledWith(
@@ -286,24 +331,24 @@ describe('SettingsService', () => {
     it('handles empty DTO without throwing', async () => {
       model.findOneAndUpdate.mockReturnValue(chainable(defaultDoc));
 
-      await expect(service.updateSettings({} as any)).resolves.toBeDefined();
+      await expect(service.updateSettings({})).resolves.toBeDefined();
     });
 
     it('passes full DTO through $set unchanged', async () => {
       model.findOneAndUpdate.mockReturnValue(chainable(defaultDoc));
       const dto = {
-        siteName:    'کامل',
-        tagline:     'شعار',
+        siteName: 'کامل',
+        tagline: 'شعار',
         description: 'توضیح',
-        keywords:    'کلید',
-        phone:       '021-111',
-        email:       'a@b.com',
-        address:     'تهران',
-        social:      { telegram: 'https://t.me/x' },
+        keywords: 'کلید',
+        phone: '021-111',
+        email: 'a@b.com',
+        address: 'تهران',
+        social: { telegram: 'https://t.me/x' },
         footerLinks: [{ label: 'صفحه', url: '/page' }],
       };
 
-      await service.updateSettings(dto as any);
+      await service.updateSettings(dto);
 
       expect(model.findOneAndUpdate).toHaveBeenCalledWith(
         { _key: 'default' },

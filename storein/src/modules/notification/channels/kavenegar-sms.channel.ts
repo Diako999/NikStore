@@ -2,6 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SmsNotificationChannel } from './notification-channel.abstract';
 import { SettingsService } from '../../settings/settings.service';
 
+interface KavenegarSendResponse {
+  return?: {
+    status?: number;
+    message?: string;
+  };
+}
+
 @Injectable()
 export class KavenegarSmsChannel extends SmsNotificationChannel {
   private readonly logger = new Logger(KavenegarSmsChannel.name);
@@ -20,7 +27,7 @@ export class KavenegarSmsChannel extends SmsNotificationChannel {
     } catch {
       return {
         apiKey: process.env.KAVENEGAR_API_KEY ?? '',
-        sender: process.env.KAVENEGAR_SENDER  ?? '',
+        sender: process.env.KAVENEGAR_SENDER ?? '',
       };
     }
   }
@@ -29,25 +36,29 @@ export class KavenegarSmsChannel extends SmsNotificationChannel {
     const { apiKey, sender } = await this.config();
 
     if (!apiKey) {
-      this.logger.warn('[KAVENEGAR] API key not set — notification SMS not sent');
+      this.logger.warn(
+        '[KAVENEGAR] API key not set — notification SMS not sent',
+      );
       return;
     }
 
-    const url  = `https://api.kavenegar.com/v1/${apiKey}/sms/send.json`;
+    const url = `https://api.kavenegar.com/v1/${apiKey}/sms/send.json`;
     const body = new URLSearchParams({ receptor: phone, sender, message });
 
-    const res  = await fetch(url, {
-      method:  'POST',
+    const res = await fetch(url, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body:    body.toString(),
+      body: body.toString(),
     });
 
-    const json   = (await res.json()) as any;
-    const status = json?.return?.status as number;
+    const json = (await res.json()) as KavenegarSendResponse;
+    const status = json.return?.status;
 
     if (status !== 200) {
-      const msg = json?.return?.message ?? `HTTP ${res.status}`;
-      this.logger.error(`[KAVENEGAR] SMS failed | phone: ${phone} | status: ${status} | ${msg}`);
+      const msg = json.return?.message ?? `HTTP ${res.status}`;
+      this.logger.error(
+        `[KAVENEGAR] SMS failed | phone: ${phone} | status: ${status} | ${msg}`,
+      );
       throw new Error(`Kavenegar SMS error: ${msg}`);
     }
 

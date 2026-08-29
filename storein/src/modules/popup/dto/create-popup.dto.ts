@@ -1,31 +1,52 @@
-import { IsBoolean, IsEnum, IsNumber, IsOptional, IsString, IsUrl, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePopupDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   title?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   description?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   buttonText?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   buttonLink?: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0) @Max(30)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(30)
   showDelay?: number;
 
-  @IsOptional() @IsEnum(['session', 'day', 'week', 'always'])
+  @IsOptional()
+  @IsEnum(['session', 'day', 'week', 'always'])
   showOncePer?: string;
 
-  @IsOptional() @Type(() => Number) @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
   sortOrder?: number;
 }

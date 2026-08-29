@@ -7,67 +7,150 @@ import { Blog, BlogStatus } from './entities/blog.schema';
 import { BlogLike } from './entities/blog-like.schema';
 import { BlogComment } from './entities/blog-comment.schema';
 
-const lean    = (val: any) => ({ lean: jest.fn().mockResolvedValue(val) });
-const newLean = (val: any) => ({ new: true, lean: jest.fn().mockResolvedValue(val) });
+// ── Plain mock-data shapes ───────────────────────────────────────────────────
+interface PostLike {
+  _id: Types.ObjectId;
+  title: string;
+  slug: string;
+  status: BlogStatus;
+  likeCount: number;
+  viewCount: number;
+}
 
-const mockId      = new Types.ObjectId().toString();
-const mockUserId  = new Types.ObjectId().toString();
+interface CommentLike {
+  _id: Types.ObjectId | string;
+  blog: Types.ObjectId;
+  author: Types.ObjectId;
+  content: string;
+  isApproved: boolean;
+}
 
-const mockPost = (overrides: Record<string, any> = {}) => ({
-  _id:        new Types.ObjectId(mockId),
-  title:      'تست مقاله',
-  slug:       'test-post',
-  status:     BlogStatus.PUBLISHED,
-  likeCount:  0,
-  viewCount:  0,
+// ── Chainable Mongoose-query mock shapes ────────────────────────────────────
+interface LeanOnly<T> {
+  lean: jest.Mock<Promise<T>, []>;
+}
+interface SelectThenLean<T> {
+  select: jest.Mock<LeanOnly<T>, [string]>;
+}
+interface SortThenLean<T> {
+  sort: jest.Mock<LeanOnly<T>, [Record<string, number>]>;
+}
+interface PopulateThenSortThenLean<T> {
+  populate: jest.Mock<SortThenLean<T>, unknown[]>;
+}
+interface CommentAdminChain {
+  populate: jest.Mock<CommentAdminChain, unknown[]>;
+  sort: jest.Mock<CommentAdminChain, unknown[]>;
+  skip: jest.Mock<CommentAdminChain, unknown[]>;
+  limit: jest.Mock<CommentAdminChain, unknown[]>;
+  lean: jest.Mock<Promise<CommentLike[]>, []>;
+}
+
+// ── Mock model interfaces ────────────────────────────────────────────────────
+interface MockBlogModel {
+  find: jest.Mock<unknown, unknown[]>;
+  findOne: jest.Mock<unknown, unknown[]>;
+  findById: jest.Mock<SelectThenLean<PostLike | null>, unknown[]>;
+  findByIdAndUpdate: jest.Mock<LeanOnly<PostLike | null>, unknown[]>;
+  findByIdAndDelete: jest.Mock<unknown, unknown[]>;
+  create: jest.Mock<unknown, unknown[]>;
+  exists: jest.Mock<Promise<{ _id: Types.ObjectId } | null>, unknown[]>;
+  countDocuments: jest.Mock<unknown, unknown[]>;
+  aggregate: jest.Mock<unknown, unknown[]>;
+  updateOne: jest.Mock<unknown, unknown[]>;
+}
+
+interface MockLikeModel {
+  findOne: jest.Mock<Promise<{ _id: Types.ObjectId } | null>, unknown[]>;
+  create: jest.Mock<Promise<unknown>, unknown[]>;
+  deleteOne: jest.Mock<Promise<unknown>, unknown[]>;
+  exists: jest.Mock<Promise<{ _id: Types.ObjectId } | null>, unknown[]>;
+}
+
+interface MockCommentModel {
+  find: jest.Mock<
+    PopulateThenSortThenLean<CommentLike[]> | CommentAdminChain,
+    unknown[]
+  >;
+  findById: jest.Mock<unknown, unknown[]>;
+  findByIdAndUpdate: jest.Mock<LeanOnly<CommentLike | null>, unknown[]>;
+  findByIdAndDelete: jest.Mock<Promise<CommentLike | null>, unknown[]>;
+  create: jest.Mock<Promise<CommentLike>, unknown[]>;
+  exists: jest.Mock<unknown, unknown[]>;
+  countDocuments: jest.Mock<Promise<number>, unknown[]>;
+}
+
+const lean = <T>(val: T): LeanOnly<T> => ({
+  lean: jest.fn<Promise<T>, []>().mockResolvedValue(val),
+});
+
+const mockId = new Types.ObjectId().toString();
+const mockUserId = new Types.ObjectId().toString();
+
+const mockPost = (overrides: Partial<PostLike> = {}): PostLike => ({
+  _id: new Types.ObjectId(mockId),
+  title: 'تست مقاله',
+  slug: 'test-post',
+  status: BlogStatus.PUBLISHED,
+  likeCount: 0,
+  viewCount: 0,
   ...overrides,
 });
 
-const mockComment = (overrides: Record<string, any> = {}) => ({
-  _id:        new Types.ObjectId(),
-  blog:       new Types.ObjectId(mockId),
-  author:     new Types.ObjectId(mockUserId),
-  content:    'یک کامنت تستی',
+const mockComment = (overrides: Partial<CommentLike> = {}): CommentLike => ({
+  _id: new Types.ObjectId(),
+  blog: new Types.ObjectId(mockId),
+  author: new Types.ObjectId(mockUserId),
+  content: 'یک کامنت تستی',
   isApproved: false,
   ...overrides,
 });
 
 describe('BlogService', () => {
   let service: BlogService;
-  let blogModel:    any;
-  let likeModel:    any;
-  let commentModel: any;
+  let blogModel: MockBlogModel;
+  let likeModel: MockLikeModel;
+  let commentModel: MockCommentModel;
 
   beforeEach(async () => {
     blogModel = {
-      find: jest.fn(), findOne: jest.fn(), findById: jest.fn(),
-      findByIdAndUpdate: jest.fn(), findByIdAndDelete: jest.fn(),
-      create: jest.fn(), exists: jest.fn(), countDocuments: jest.fn(),
-      aggregate: jest.fn(), updateOne: jest.fn(),
+      find: jest.fn<unknown, unknown[]>(),
+      findOne: jest.fn<unknown, unknown[]>(),
+      findById: jest.fn<SelectThenLean<PostLike | null>, unknown[]>(),
+      findByIdAndUpdate: jest.fn<LeanOnly<PostLike | null>, unknown[]>(),
+      findByIdAndDelete: jest.fn<unknown, unknown[]>(),
+      create: jest.fn<unknown, unknown[]>(),
+      exists: jest.fn<Promise<{ _id: Types.ObjectId } | null>, unknown[]>(),
+      countDocuments: jest.fn<unknown, unknown[]>(),
+      aggregate: jest.fn<unknown, unknown[]>(),
+      updateOne: jest.fn<unknown, unknown[]>(),
     };
 
     likeModel = {
-      findOne: jest.fn(),
-      create:  jest.fn(),
-      deleteOne: jest.fn(),
-      exists:  jest.fn(),
+      findOne: jest.fn<Promise<{ _id: Types.ObjectId } | null>, unknown[]>(),
+      create: jest.fn<Promise<unknown>, unknown[]>(),
+      deleteOne: jest.fn<Promise<unknown>, unknown[]>(),
+      exists: jest.fn<Promise<{ _id: Types.ObjectId } | null>, unknown[]>(),
     };
 
     commentModel = {
-      find:              jest.fn(),
-      findById:          jest.fn(),
-      findByIdAndUpdate: jest.fn(),
-      findByIdAndDelete: jest.fn(),
-      create:            jest.fn(),
-      exists:            jest.fn(),
-      countDocuments:    jest.fn(),
+      find: jest.fn<
+        PopulateThenSortThenLean<CommentLike[]> | CommentAdminChain,
+        unknown[]
+      >(),
+      findById: jest.fn<unknown, unknown[]>(),
+      findByIdAndUpdate: jest.fn<LeanOnly<CommentLike | null>, unknown[]>(),
+      findByIdAndDelete: jest.fn<Promise<CommentLike | null>, unknown[]>(),
+      create: jest.fn<Promise<CommentLike>, unknown[]>(),
+      exists: jest.fn<unknown, unknown[]>(),
+      countDocuments: jest.fn<Promise<number>, unknown[]>(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BlogService,
-        { provide: getModelToken(Blog.name),        useValue: blogModel    },
-        { provide: getModelToken(BlogLike.name),    useValue: likeModel    },
+        { provide: getModelToken(Blog.name), useValue: blogModel },
+        { provide: getModelToken(BlogLike.name), useValue: likeModel },
         { provide: getModelToken(BlogComment.name), useValue: commentModel },
       ],
     }).compile();
@@ -82,7 +165,9 @@ describe('BlogService', () => {
     it('creates a like and increments counter when not yet liked', async () => {
       likeModel.findOne.mockResolvedValue(null);
       likeModel.create.mockResolvedValue({});
-      blogModel.findByIdAndUpdate.mockReturnValue(lean(mockPost({ likeCount: 1 })));
+      blogModel.findByIdAndUpdate.mockReturnValue(
+        lean(mockPost({ likeCount: 1 })),
+      );
 
       const result = await service.toggleLike(mockId, mockUserId);
 
@@ -93,7 +178,9 @@ describe('BlogService', () => {
     it('removes like and decrements counter when already liked', async () => {
       likeModel.findOne.mockResolvedValue({ _id: new Types.ObjectId() });
       likeModel.deleteOne.mockResolvedValue({});
-      blogModel.findByIdAndUpdate.mockReturnValue(lean(mockPost({ likeCount: 0 })));
+      blogModel.findByIdAndUpdate.mockReturnValue(
+        lean(mockPost({ likeCount: 0 })),
+      );
 
       const result = await service.toggleLike(mockId, mockUserId);
 
@@ -104,7 +191,9 @@ describe('BlogService', () => {
     it('clamps likeCount to 0 if update returns negative', async () => {
       likeModel.findOne.mockResolvedValue({ _id: new Types.ObjectId() });
       likeModel.deleteOne.mockResolvedValue({});
-      blogModel.findByIdAndUpdate.mockReturnValue(lean(mockPost({ likeCount: -1 })));
+      blogModel.findByIdAndUpdate.mockReturnValue(
+        lean(mockPost({ likeCount: -1 })),
+      );
 
       const result = await service.toggleLike(mockId, mockUserId);
       expect(result.likeCount).toBe(0);
@@ -116,7 +205,9 @@ describe('BlogService', () => {
   describe('getLikeStatus', () => {
     it('returns isLiked:true when user has liked', async () => {
       blogModel.findById.mockReturnValue({
-        select: jest.fn().mockReturnValue(lean(mockPost({ likeCount: 3 }))),
+        select: jest
+          .fn<LeanOnly<PostLike | null>, [string]>()
+          .mockReturnValue(lean(mockPost({ likeCount: 3 }))),
       });
       likeModel.exists.mockResolvedValue({ _id: new Types.ObjectId() });
 
@@ -126,7 +217,9 @@ describe('BlogService', () => {
 
     it('returns isLiked:false when user has not liked', async () => {
       blogModel.findById.mockReturnValue({
-        select: jest.fn().mockReturnValue(lean(mockPost({ likeCount: 5 }))),
+        select: jest
+          .fn<LeanOnly<PostLike | null>, [string]>()
+          .mockReturnValue(lean(mockPost({ likeCount: 5 }))),
       });
       likeModel.exists.mockResolvedValue(null);
 
@@ -136,12 +229,15 @@ describe('BlogService', () => {
 
     it('throws NotFoundException when post not found', async () => {
       blogModel.findById.mockReturnValue({
-        select: jest.fn().mockReturnValue(lean(null)),
+        select: jest
+          .fn<LeanOnly<PostLike | null>, [string]>()
+          .mockReturnValue(lean(null)),
       });
       likeModel.exists.mockResolvedValue(null);
 
-      await expect(service.getLikeStatus(mockId, mockUserId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getLikeStatus(mockId, mockUserId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -162,7 +258,9 @@ describe('BlogService', () => {
 
     it('trims whitespace from comment content', async () => {
       blogModel.exists.mockResolvedValue({ _id: new Types.ObjectId(mockId) });
-      commentModel.create.mockResolvedValue(mockComment({ content: 'تمیز شده' }));
+      commentModel.create.mockResolvedValue(
+        mockComment({ content: 'تمیز شده' }),
+      );
 
       await service.addComment(mockId, mockUserId, '   تمیز شده   ');
 
@@ -174,8 +272,9 @@ describe('BlogService', () => {
     it('throws NotFoundException when post is not published', async () => {
       blogModel.exists.mockResolvedValue(null);
 
-      await expect(service.addComment(mockId, mockUserId, 'تست'))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        service.addComment(mockId, mockUserId, 'تست'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -188,9 +287,13 @@ describe('BlogService', () => {
         mockComment({ isApproved: true, content: 'دوم' }),
       ];
       commentModel.find.mockReturnValue({
-        populate: jest.fn().mockReturnValue({
-          sort: jest.fn().mockReturnValue(lean(approved)),
-        }),
+        populate: jest
+          .fn<SortThenLean<CommentLike[]>, unknown[]>()
+          .mockReturnValue({
+            sort: jest
+              .fn<LeanOnly<CommentLike[]>, [Record<string, number>]>()
+              .mockReturnValue(lean(approved)),
+          }),
       });
 
       const result = await service.getComments(mockId);
@@ -210,14 +313,18 @@ describe('BlogService', () => {
       mockComment({ isApproved: true }),
     ];
 
-    function makeChain(data: any[]) {
-      const chain: any = {
-        populate: jest.fn().mockReturnThis(),
-        sort:     jest.fn().mockReturnThis(),
-        skip:     jest.fn().mockReturnThis(),
-        limit:    jest.fn().mockReturnThis(),
-        lean:     jest.fn().mockResolvedValue(data),
+    function makeChain(data: CommentLike[]): CommentAdminChain {
+      const chain: CommentAdminChain = {
+        populate: jest.fn<CommentAdminChain, unknown[]>(),
+        sort: jest.fn<CommentAdminChain, unknown[]>(),
+        skip: jest.fn<CommentAdminChain, unknown[]>(),
+        limit: jest.fn<CommentAdminChain, unknown[]>(),
+        lean: jest.fn<Promise<CommentLike[]>, []>().mockResolvedValue(data),
       };
+      chain.populate.mockReturnValue(chain);
+      chain.sort.mockReturnValue(chain);
+      chain.skip.mockReturnValue(chain);
+      chain.limit.mockReturnValue(chain);
       return chain;
     }
 
@@ -225,7 +332,7 @@ describe('BlogService', () => {
       commentModel.find.mockReturnValue(makeChain(commentList));
       commentModel.countDocuments
         .mockResolvedValueOnce(commentList.length) // total
-        .mockResolvedValueOnce(1);                 // pendingCount
+        .mockResolvedValueOnce(1); // pendingCount
     });
 
     it('returns paginated comments with pendingCount', async () => {
@@ -279,8 +386,9 @@ describe('BlogService', () => {
 
     it('throws NotFoundException when comment not found', async () => {
       commentModel.findByIdAndUpdate.mockReturnValue(lean(null));
-      await expect(service.approveComment('nonexistent'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.approveComment('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -289,15 +397,18 @@ describe('BlogService', () => {
   describe('deleteComment', () => {
     it('deletes an existing comment', async () => {
       const commentId = new Types.ObjectId().toString();
-      commentModel.findByIdAndDelete.mockResolvedValue(mockComment({ _id: commentId }));
+      commentModel.findByIdAndDelete.mockResolvedValue(
+        mockComment({ _id: commentId }),
+      );
 
       await expect(service.deleteComment(commentId)).resolves.toBeUndefined();
     });
 
     it('throws NotFoundException when comment not found', async () => {
       commentModel.findByIdAndDelete.mockResolvedValue(null);
-      await expect(service.deleteComment('nonexistent'))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.deleteComment('nonexistent')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

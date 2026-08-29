@@ -7,57 +7,77 @@ import { Wishlist } from './entities/wishlist.schema';
 import { Product } from '../product/entities/product.schema';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 
-const userId    = new Types.ObjectId().toString();
+const userId = new Types.ObjectId().toString();
 const productId = new Types.ObjectId().toString();
-const prodId2   = new Types.ObjectId().toString();
+const prodId2 = new Types.ObjectId().toString();
 
 const mockProduct = (id = productId) => ({
-  _id:        { toString: () => id },
-  name:       'سامسونگ A55',
-  slug:       'samsung-a55',
-  thumbnail:  null,
-  minPrice:   10_000_000,
-  maxPrice:   10_000_000,
+  _id: { toString: () => id },
+  name: 'سامسونگ A55',
+  slug: 'samsung-a55',
+  thumbnail: null,
+  minPrice: 10_000_000,
+  maxPrice: 10_000_000,
   totalStock: 5,
-  avgRating:  4.5,
-  specs:      [{ key: 'رم', value: '8GB' }, { key: 'حافظه', value: '128GB' }],
+  avgRating: 4.5,
+  specs: [
+    { key: 'رم', value: '8GB' },
+    { key: 'حافظه', value: '128GB' },
+  ],
 });
 
 const mockWishlist = (ids: string[] = [productId]) => ({
-  userId:     new Types.ObjectId(userId),
+  userId: new Types.ObjectId(userId),
   productIds: ids.map((id) => new Types.ObjectId(id)),
 });
 
+interface MockWishlistModel {
+  findOne: jest.Mock;
+  findOneAndUpdate: jest.Mock;
+  exists: jest.Mock;
+}
+
+interface MockProductModel {
+  exists: jest.Mock;
+  find: jest.Mock;
+}
+
+interface MockRedis {
+  get: jest.Mock;
+  setex: jest.Mock;
+  del: jest.Mock;
+}
+
 describe('WishlistService', () => {
   let service: WishlistService;
-  let wishlistModel: any;
-  let productModel: any;
-  let redis: jest.Mocked<any>;
+  let wishlistModel: MockWishlistModel;
+  let productModel: MockProductModel;
+  let redis: MockRedis;
 
   beforeEach(async () => {
     wishlistModel = {
-      findOne:          jest.fn(),
+      findOne: jest.fn(),
       findOneAndUpdate: jest.fn(),
-      exists:           jest.fn(),
+      exists: jest.fn(),
     };
 
     productModel = {
       exists: jest.fn(),
-      find:   jest.fn(),
+      find: jest.fn(),
     };
 
     redis = {
-      get:   jest.fn().mockResolvedValue(null),
+      get: jest.fn().mockResolvedValue(null),
       setex: jest.fn(),
-      del:   jest.fn(),
+      del: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WishlistService,
         { provide: getModelToken(Wishlist.name), useValue: wishlistModel },
-        { provide: getModelToken(Product.name),  useValue: productModel },
-        { provide: REDIS_CLIENT,                 useValue: redis },
+        { provide: getModelToken(Product.name), useValue: productModel },
+        { provide: REDIS_CLIENT, useValue: redis },
       ],
     }).compile();
 
@@ -89,8 +109,9 @@ describe('WishlistService', () => {
 
     it('throws when product not found', async () => {
       productModel.exists.mockResolvedValue(null);
-      await expect(service.toggle(userId, productId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.toggle(userId, productId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -111,10 +132,9 @@ describe('WishlistService', () => {
       });
       productModel.find.mockReturnValue({
         select: jest.fn().mockReturnValue({
-          lean: jest.fn().mockResolvedValue([
-            mockProduct(productId),
-            mockProduct(prodId2),
-          ]),
+          lean: jest
+            .fn()
+            .mockResolvedValue([mockProduct(productId), mockProduct(prodId2)]),
         }),
       });
 
@@ -169,14 +189,16 @@ describe('WishlistService', () => {
           new Types.ObjectId().toString(),
         ]),
       );
-      await expect(service.addToCompare(userId, productId))
-        .rejects.toThrow(BadRequestException);
+      await expect(service.addToCompare(userId, productId)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws when product not found', async () => {
       productModel.exists.mockResolvedValue(null);
-      await expect(service.addToCompare(userId, productId))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.addToCompare(userId, productId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -198,7 +220,10 @@ describe('WishlistService', () => {
               mockProduct(productId),
               {
                 ...mockProduct(prodId2),
-                specs: [{ key: 'رم', value: '12GB' }, { key: 'باتری', value: '5000mAh' }],
+                specs: [
+                  { key: 'رم', value: '12GB' },
+                  { key: 'باتری', value: '5000mAh' },
+                ],
               },
             ]),
           }),

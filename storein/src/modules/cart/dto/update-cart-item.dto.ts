@@ -4,6 +4,7 @@ export class UpdateCartItemDto {
   @IsString()
   variantId: string;
 
-  @IsNumber() @Min(0)
+  @IsNumber()
+  @Min(0)
   quantity: number;
 }

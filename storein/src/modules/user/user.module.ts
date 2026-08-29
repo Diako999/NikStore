@@ -9,8 +9,8 @@ import { Review, ReviewSchema } from '../review/entities/review.schema';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: User.name,   schema: UserSchema   },
-      { name: Order.name,  schema: OrderSchema  },
+      { name: User.name, schema: UserSchema },
+      { name: Order.name, schema: OrderSchema },
       { name: Review.name, schema: ReviewSchema },
     ]),
   ],

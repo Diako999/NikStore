@@ -1,38 +1,106 @@
-import { BadRequestException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import { User, UserDocument, UserRole } from '../user/entities/user.schema';
-import { Order, OrderDocument, OrderStatus } from '../order/entities/order.schema';
-import { Product, ProductDocument, ProductStatus } from '../product/entities/product.schema';
-import { Transaction, TransactionDocument } from '../payment/entities/transaction.schema';
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+} from '../order/entities/order.schema';
+import {
+  Product,
+  ProductDocument,
+  ProductStatus,
+} from '../product/entities/product.schema';
+import {
+  Transaction,
+  TransactionDocument,
+} from '../payment/entities/transaction.schema';
 import { DateRangeDto } from './dto/date-range.dto';
 
-const CACHE_TTL      = 60 * 5;
-const DASHBOARD_KEY  = 'admin:dashboard';
+const CACHE_TTL = 60 * 5;
+const DASHBOARD_KEY = 'admin:dashboard';
 const REVENUE_PREFIX = 'admin:revenue:';
+
+interface OrderStatusGroup {
+  _id: string;
+  count: number;
+}
+
+interface RevenueTotalGroup {
+  _id: null;
+  total: number;
+}
+
+interface RevenueByDayGroup {
+  _id: { y: number; m: number; d: number };
+  amount: number;
+  count: number;
+}
+
+interface AverageOrderValueGroup {
+  _id: null;
+  avg: number;
+}
+
+interface DashboardStats {
+  users: {
+    total: number;
+    active: number;
+    newThisMonth: number;
+  };
+  orders: Record<string, number> & { total: number };
+  revenue: {
+    allTime: number;
+    thisMonth: number;
+    today: number;
+  };
+  products: {
+    total: number;
+    active: number;
+    lowStock: number;
+  };
+  generatedAt: string;
+}
+
+interface OrderStatsResult {
+  thisMonth: number;
+  today: number;
+  avgOrderValue: number;
+}
 
 @Injectable()
 export class AdminService {
   private readonly logger = new Logger(AdminService.name);
 
   constructor(
-    @InjectModel(User.name)        private userModel:    Model<UserDocument>,
-    @InjectModel(Order.name)       private orderModel:   Model<OrderDocument>,
-    @InjectModel(Product.name)     private productModel: Model<ProductDocument>,
-    @InjectModel(Transaction.name) private txModel:      Model<TransactionDocument>,
-    @Inject(REDIS_CLIENT)          private redis:        Redis,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Transaction.name) private txModel: Model<TransactionDocument>,
+    @Inject(REDIS_CLIENT) private redis: Redis,
   ) {}
 
   // ── Dashboard Overview ────────────────────────────────────────
-  async getDashboard(): Promise<any> {
+  async getDashboard(): Promise<DashboardStats> {
     const cached = await this.redis.get(DASHBOARD_KEY);
-    if (cached) return JSON.parse(cached);
+    if (cached) return JSON.parse(cached) as DashboardStats;
 
-    const now        = new Date();
+    const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     const [
       totalUsers,
@@ -50,27 +118,31 @@ export class AdminService {
       this.userModel.countDocuments({ isActive: true }),
       this.userModel.countDocuments({ createdAt: { $gte: monthStart } }),
 
-      this.orderModel.aggregate([
+      this.orderModel.aggregate<OrderStatusGroup>([
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
 
-      this.orderModel.aggregate([
-        { $match: { status: { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] } } },
-        { $group: { _id: null, total: { $sum: '$total' } } },
-      ]),
-      this.orderModel.aggregate([
+      this.orderModel.aggregate<RevenueTotalGroup>([
         {
           $match: {
-            status:    { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
+            status: { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
+          },
+        },
+        { $group: { _id: null, total: { $sum: '$total' } } },
+      ]),
+      this.orderModel.aggregate<RevenueTotalGroup>([
+        {
+          $match: {
+            status: { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
             createdAt: { $gte: monthStart },
           },
         },
         { $group: { _id: null, total: { $sum: '$total' } } },
       ]),
-      this.orderModel.aggregate([
+      this.orderModel.aggregate<RevenueTotalGroup>([
         {
           $match: {
-            status:    { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
+            status: { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
             createdAt: { $gte: todayStart },
           },
         },
@@ -79,16 +151,19 @@ export class AdminService {
 
       this.productModel.countDocuments(),
       this.productModel.countDocuments({ status: ProductStatus.ACTIVE }),
-      this.productModel.countDocuments({ totalStock: { $lte: 5 }, status: ProductStatus.ACTIVE }),
+      this.productModel.countDocuments({
+        totalStock: { $lte: 5 },
+        status: ProductStatus.ACTIVE,
+      }),
     ]);
 
     const orders: Record<string, number> = {};
-    ordersByStatus.forEach((s: any) => (orders[s._id] = s.count));
+    ordersByStatus.forEach((s) => (orders[s._id] = s.count));
 
     const dashboard = {
       users: {
-        total:        totalUsers,
-        active:       activeUsers,
+        total: totalUsers,
+        active: activeUsers,
         newThisMonth: newUsersThisMonth,
       },
       orders: {
@@ -96,13 +171,13 @@ export class AdminService {
         total: Object.values(orders).reduce((a, b) => a + b, 0),
       },
       revenue: {
-        allTime:   revenueAll[0]?.total   ?? 0,
+        allTime: revenueAll[0]?.total ?? 0,
         thisMonth: revenueMonth[0]?.total ?? 0,
-        today:     revenueToday[0]?.total ?? 0,
+        today: revenueToday[0]?.total ?? 0,
       },
       products: {
-        total:    totalProducts,
-        active:   activeProducts,
+        total: totalProducts,
+        active: activeProducts,
         lowStock: lowStockCount,
       },
       generatedAt: new Date().toISOString(),
@@ -118,64 +193,72 @@ export class AdminService {
     byDay: { date: string; amount: number }[];
   }> {
     const from = dto.from ? new Date(dto.from) : this.daysAgo(30);
-    const to   = dto.to   ? new Date(dto.to)   : new Date();
+    const to = dto.to ? new Date(dto.to) : new Date();
 
     const cacheKey = `${REVENUE_PREFIX}${from.toISOString()}:${to.toISOString()}`;
-    const cached   = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached);
+    const cached = await this.redis.get(cacheKey);
+    if (cached)
+      return JSON.parse(cached) as {
+        total: number;
+        byDay: { date: string; amount: number }[];
+      };
 
-    const result = await this.orderModel.aggregate([
+    const result = await this.orderModel.aggregate<RevenueByDayGroup>([
       {
         $match: {
           // سفارشات پرداخت‌شده: همه وضعیت‌ها به‌جز pending و cancelled
-          status:    { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
+          status: { $nin: [OrderStatus.PENDING, OrderStatus.CANCELLED] },
           createdAt: { $gte: from, $lte: to },
         },
       },
       {
         $group: {
           _id: {
-            y: { $year:        '$createdAt' },
-            m: { $month:       '$createdAt' },
-            d: { $dayOfMonth:  '$createdAt' },
+            y: { $year: '$createdAt' },
+            m: { $month: '$createdAt' },
+            d: { $dayOfMonth: '$createdAt' },
           },
           amount: { $sum: '$total' },
-          count:  { $sum: 1 },
+          count: { $sum: 1 },
         },
       },
       { $sort: { '_id.y': 1, '_id.m': 1, '_id.d': 1 } },
     ]);
 
-    const byDay = result.map((r: any) => ({
-      date:   `${r._id.y}-${String(r._id.m).padStart(2, '0')}-${String(r._id.d).padStart(2, '0')}`,
+    const byDay = result.map((r) => ({
+      date: `${r._id.y}-${String(r._id.m).padStart(2, '0')}-${String(r._id.d).padStart(2, '0')}`,
       amount: r.amount,
-      count:  r.count,
+      count: r.count,
     }));
 
     const total = byDay.reduce((s, d) => s + d.amount, 0);
-    const data  = { total, byDay };
+    const data = { total, byDay };
 
     await this.redis.setex(cacheKey, CACHE_TTL, JSON.stringify(data));
     return data;
   }
 
   // ── Order Stats ───────────────────────────────────────────────
-  async getOrderStats(): Promise<any> {
-    const now        = new Date();
+  async getOrderStats(): Promise<OrderStatsResult> {
+    const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
 
     const [monthly, today, avgValue] = await Promise.all([
       this.orderModel.countDocuments({ createdAt: { $gte: monthStart } }),
       this.orderModel.countDocuments({ createdAt: { $gte: todayStart } }),
-      this.orderModel.aggregate([
+      this.orderModel.aggregate<AverageOrderValueGroup>([
         { $match: { status: OrderStatus.DELIVERED } },
         { $group: { _id: null, avg: { $avg: '$total' } } },
       ]),
     ]);
 
     return {
-      thisMonth:     monthly,
+      thisMonth: monthly,
       today,
       avgOrderValue: Math.round(avgValue[0]?.avg ?? 0),
     };
@@ -219,9 +302,10 @@ export class AdminService {
     if (!Object.values(UserRole).includes(role as UserRole))
       throw new BadRequestException(`نقش نامعتبر: ${role}`);
 
-    const isAdmin = role === UserRole.ADMIN;
+    const validRole = role as UserRole;
+    const isAdmin = validRole === UserRole.ADMIN;
     const user = await this.userModel
-      .findByIdAndUpdate(userId, { role, isAdmin }, { new: true })
+      .findByIdAndUpdate(userId, { role: validRole, isAdmin }, { new: true })
       .select('-__v')
       .lean<UserDocument>();
 
@@ -230,7 +314,10 @@ export class AdminService {
     return user;
   }
 
-  async setPermissions(userId: string, permissions: string[]): Promise<UserDocument> {
+  async setPermissions(
+    userId: string,
+    permissions: string[],
+  ): Promise<UserDocument> {
     if (!Types.ObjectId.isValid(userId))
       throw new NotFoundException('کاربر یافت نشد');
     const user = await this.userModel
@@ -272,12 +359,12 @@ export class AdminService {
 
   // ── Health Check ──────────────────────────────────────────────
   async healthCheck(): Promise<{
-    status:  'ok' | 'degraded';
-    db:      string;
-    redis:   string;
-    uptime:  number;
+    status: 'ok' | 'degraded';
+    db: string;
+    redis: string;
+    uptime: number;
   }> {
-    let dbStatus    = 'ok';
+    let dbStatus = 'ok';
     let redisStatus = 'ok';
 
     try {
@@ -297,8 +384,8 @@ export class AdminService {
 
     return {
       status,
-      db:     dbStatus,
-      redis:  redisStatus,
+      db: dbStatus,
+      redis: redisStatus,
       uptime: Math.floor(process.uptime()),
     };
   }

@@ -5,8 +5,8 @@ import { Variant, VariantSchema } from './variant.schema';
 export type ProductDocument = Product & Document;
 
 export enum ProductStatus {
-  DRAFT    = 'draft',
-  ACTIVE   = 'active',
+  DRAFT = 'draft',
+  ACTIVE = 'active',
   INACTIVE = 'inactive',
 }
 
@@ -109,7 +109,7 @@ ProductSchema.index(
     default_language: 'none',
     weights: { name: 10, tags: 5, shortDescription: 3, description: 1 },
     name: 'product_text_search',
-  }
+  },
 );
 ProductSchema.index({ category: 1, status: 1, minPrice: 1 });
 ProductSchema.index({ status: 1, totalStock: 1 });

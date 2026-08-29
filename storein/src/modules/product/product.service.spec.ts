@@ -9,11 +9,14 @@ import { Color } from '../color/entities/color.schema';
 import { Brand } from '../brand/entities/brand.schema';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 import { DiscountsService } from '../../discounts/discounts.service';
-import { UploadService }    from '../upload/upload.service';
+import { UploadService } from '../upload/upload.service';
 
 const mockLogger = {
   setContext: jest.fn().mockReturnThis(),
-  log: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
 };
 
 const mockUploadService = {
@@ -21,17 +24,37 @@ const mockUploadService = {
 };
 
 const mockDiscountsService = {
-  create:                   jest.fn(),
-  calculateDiscountedPrice: jest.fn().mockResolvedValue({ finalPrice: 0, discountAmount: 0, discountPercentage: 0, activeDiscount: null }),
-  getActiveDiscounts:       jest.fn().mockResolvedValue([]),
-  invalidateCache:          jest.fn(),
+  create: jest.fn(),
+  calculateDiscountedPrice: jest.fn().mockResolvedValue({
+    finalPrice: 0,
+    discountAmount: 0,
+    discountPercentage: 0,
+    activeDiscount: null,
+  }),
+  getActiveDiscounts: jest.fn().mockResolvedValue([]),
+  invalidateCache: jest.fn(),
 };
 
-const catId  = new Types.ObjectId().toString();
+const catId = new Types.ObjectId().toString();
 const prodId = new Types.ObjectId().toString();
-const varId  = new Types.ObjectId();
+const varId = new Types.ObjectId();
 
-const mockVariant = (overrides = {}) => ({
+// ── Typed fixtures ───────────────────────────────────────────────
+interface ProductVariantLike {
+  _id: Types.ObjectId;
+  sku: string;
+  price: number;
+  comparePrice: number | null;
+  stock: number;
+  isActive: boolean;
+  attributes: unknown[];
+  images?: string[];
+  costPrice?: number | null;
+}
+
+const mockVariant = (
+  overrides: Partial<ProductVariantLike> = {},
+): ProductVariantLike => ({
   _id: varId,
   sku: 'SKU-001',
   price: 10_000_000,
@@ -42,7 +65,30 @@ const mockVariant = (overrides = {}) => ({
   ...overrides,
 });
 
-const mockProduct = (overrides: Record<string, any> = {}) => ({
+interface ProductLike {
+  _id: Types.ObjectId;
+  name: string;
+  slug: string;
+  category: Types.ObjectId;
+  status: ProductStatus | string;
+  variants: ProductVariantLike[];
+  minPrice: number;
+  maxPrice: number;
+  totalStock: number;
+  images: string[];
+  specs: unknown[];
+  tags: unknown[];
+}
+
+interface ProductDocLike extends ProductLike {
+  save: () => Promise<boolean>;
+  toObject: () => ProductLike;
+  markModified: (path: string) => void;
+}
+
+const mockProduct = (
+  overrides: Partial<ProductDocLike> = {},
+): ProductDocLike => ({
   _id: new Types.ObjectId(prodId),
   name: 'سامسونگ گلکسی A55',
   slug: 'samsung-galaxy-a55',
@@ -61,51 +107,170 @@ const mockProduct = (overrides: Record<string, any> = {}) => ({
   ...overrides,
 });
 
+// ── Mongoose chain mock helpers (typed) ──────────────────────────
+interface LeanChain<T> {
+  lean: jest.Mock<Promise<T>, [unknown?]>;
+}
+
+interface SelectLeanChain<T> {
+  select: jest.Mock<LeanChain<T>, [unknown?]>;
+}
+
+interface SkipLimitChain<T> {
+  limit: jest.Mock<LeanChain<T>, [number?]>;
+}
+
+interface SortChain<T> {
+  skip: jest.Mock<SkipLimitChain<T>, [number?]>;
+}
+
+interface SelectSortChain<T> {
+  sort: jest.Mock<SortChain<T>, [unknown?]>;
+  populate: jest.Mock<LeanChain<T>, [unknown?]>;
+}
+
+interface FindChain<T> {
+  select: jest.Mock<SelectSortChain<T>, [unknown?]>;
+}
+
+interface ExecChainShape<T> {
+  exec: jest.Mock<Promise<T>, []>;
+}
+
+const lean = <T>(v: T): LeanChain<T> => ({
+  lean: jest.fn<Promise<T>, [unknown?]>().mockResolvedValue(v),
+});
+
+const selectLean = <T>(v: T): SelectLeanChain<T> => ({
+  select: jest.fn<LeanChain<T>, [unknown?]>().mockReturnValue(lean(v)),
+});
+
+const execResolve = <T>(v: T): ExecChainShape<T> => ({
+  exec: jest.fn<Promise<T>, []>().mockResolvedValue(v),
+});
+
+const findChain = <T>(v: T): FindChain<T> => {
+  const leanResult = lean(v);
+  const skipLimit: SkipLimitChain<T> = {
+    limit: jest.fn<LeanChain<T>, [number?]>().mockReturnValue(leanResult),
+  };
+  const sortChain: SortChain<T> = {
+    skip: jest.fn<SkipLimitChain<T>, [number?]>().mockReturnValue(skipLimit),
+  };
+  const selectSort: SelectSortChain<T> = {
+    sort: jest.fn<SortChain<T>, [unknown?]>().mockReturnValue(sortChain),
+    populate: jest.fn<LeanChain<T>, [unknown?]>().mockReturnValue(leanResult),
+  };
+  return {
+    select: jest
+      .fn<SelectSortChain<T>, [unknown?]>()
+      .mockReturnValue(selectSort),
+  };
+};
+
+type SlugCheckResult = { _id: Types.ObjectId } | null;
+
+interface CreateVariantDocLike {
+  sku?: string;
+  price?: number;
+  stock?: number;
+  images?: string[];
+  costPrice?: number;
+}
+
+interface CreateDocLike {
+  name?: string;
+  slug?: string;
+  status?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  totalStock?: number;
+  variants: CreateVariantDocLike[];
+}
+
+interface MockProductModel {
+  find: jest.Mock<
+    FindChain<ProductLike[]> | ExecChainShape<ProductDocLike[]>,
+    [unknown?]
+  >;
+  findOne: jest.Mock<LeanChain<SlugCheckResult>, [unknown?]>;
+  findById: jest.Mock<
+    | Promise<ProductDocLike | null>
+    | SelectLeanChain<ProductDocLike | null>
+    | LeanChain<ProductDocLike | null>,
+    [string]
+  >;
+  findByIdAndUpdate: jest.Mock<SelectLeanChain<ProductLike>, unknown[]>;
+  findByIdAndDelete: jest.Mock<Promise<null>, [string]>;
+  countDocuments: jest.Mock<Promise<number>, [unknown?]>;
+  create: jest.Mock<Promise<ProductDocLike>, [CreateDocLike]>;
+}
+
 describe('ProductService', () => {
   let service: ProductService;
-  let model: any;
-
-  const lean = (v: any) => ({ lean: jest.fn().mockResolvedValue(v) });
-  const execChain = (v: any) => ({
-    select: jest.fn().mockReturnValue({
-      sort: jest.fn().mockReturnValue({
-        skip: jest.fn().mockReturnValue({
-          limit: jest.fn().mockReturnValue(lean(v)),
-        }),
-      }),
-      populate: jest.fn().mockReturnValue(lean(v)),
-    }),
-  });
+  let model: MockProductModel;
 
   beforeEach(async () => {
     model = {
-      find:              jest.fn().mockReturnValue(execChain([])),
-      findOne:           jest.fn().mockReturnValue(execChain(null)),
-      findById:          jest.fn(),
-      findByIdAndUpdate: jest.fn(),
-      findByIdAndDelete: jest.fn(),
-      countDocuments:    jest.fn().mockResolvedValue(0),
-      create:            jest.fn(),
+      find: jest.fn<
+        FindChain<ProductLike[]> | ExecChainShape<ProductDocLike[]>,
+        [unknown?]
+      >(),
+      findOne: jest.fn<LeanChain<SlugCheckResult>, [unknown?]>(),
+      findById: jest.fn<
+        | Promise<ProductDocLike | null>
+        | SelectLeanChain<ProductDocLike | null>
+        | LeanChain<ProductDocLike | null>,
+        [string]
+      >(),
+      findByIdAndUpdate: jest.fn<SelectLeanChain<ProductLike>, unknown[]>(),
+      findByIdAndDelete: jest.fn<Promise<null>, [string]>(),
+      countDocuments: jest
+        .fn<Promise<number>, [unknown?]>()
+        .mockResolvedValue(0),
+      create: jest.fn<Promise<ProductDocLike>, [CreateDocLike]>(),
     };
+    model.find.mockReturnValue(findChain<ProductLike[]>([]));
+    model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
 
-    const catModel   = {
-      findOne:  jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) }),
-      find:     jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }) }),
+    const catModel = {
+      findOne: jest.fn().mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      }),
+      find: jest.fn().mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
+      }),
       distinct: jest.fn().mockResolvedValue([]),
     };
-    const colorModel  = { findOne: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) }) };
-    const brandModel          = { find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }) }) };
+    const colorModel = {
+      findOne: jest.fn().mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      }),
+    };
+    const brandModel = {
+      find: jest.fn().mockReturnValue({
+        sort: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue([]) }),
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductService,
-        { provide: getModelToken(Product.name),          useValue: model },
-        { provide: getModelToken(Category.name),         useValue: catModel },
-        { provide: getModelToken(Color.name),            useValue: colorModel },
-        { provide: getModelToken(Brand.name),            useValue: brandModel },
-        { provide: AppLoggerService,                     useValue: mockLogger },
-        { provide: DiscountsService,                     useValue: mockDiscountsService },
-        { provide: UploadService,                        useValue: mockUploadService },
+        { provide: getModelToken(Product.name), useValue: model },
+        { provide: getModelToken(Category.name), useValue: catModel },
+        { provide: getModelToken(Color.name), useValue: colorModel },
+        { provide: getModelToken(Brand.name), useValue: brandModel },
+        { provide: AppLoggerService, useValue: mockLogger },
+        { provide: DiscountsService, useValue: mockDiscountsService },
+        { provide: UploadService, useValue: mockUploadService },
       ],
     }).compile();
 
@@ -115,13 +280,13 @@ describe('ProductService', () => {
 
   describe('create', () => {
     it('creates product and calculates denormalized fields', async () => {
-      model.findOne.mockReturnValue(lean(null));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
       model.create.mockResolvedValue({
         ...mockProduct(),
         toObject: () => mockProduct(),
       });
 
-      const res = await service.create({
+      await service.create({
         name: 'سامسونگ گلکسی A55',
         category: catId,
         variants: [{ sku: 'SKU-001', price: 10_000_000, stock: 5 }],
@@ -139,7 +304,9 @@ describe('ProductService', () => {
       model.findById.mockResolvedValue(prod);
 
       await service.addVariant(prodId, {
-        sku: 'SKU-002', price: 12_000_000, stock: 3,
+        sku: 'SKU-002',
+        price: 12_000_000,
+        stock: 3,
       });
 
       expect(prod.variants.length).toBe(1);
@@ -187,23 +354,26 @@ describe('ProductService', () => {
   });
 
   describe('remove', () => {
-    const selectLean = (v: any) => ({
-      select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(v) }),
-    });
+    const removeSelectLean = (v: ProductDocLike | null) =>
+      selectLean<ProductDocLike | null>(v);
 
     it('throws NotFoundException when product not found', async () => {
-      model.findById.mockReturnValue(selectLean(null));
+      model.findById.mockReturnValue(removeSelectLean(null));
       await expect(service.remove(prodId)).rejects.toThrow(NotFoundException);
       expect(model.findByIdAndDelete).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException for invalid id', async () => {
-      await expect(service.remove('not-valid-id')).rejects.toThrow(BadRequestException);
+      await expect(service.remove('not-valid-id')).rejects.toThrow(
+        BadRequestException,
+      );
       expect(model.findById).not.toHaveBeenCalled();
     });
 
     it('deletes product from DB when found', async () => {
-      model.findById.mockReturnValue(selectLean(mockProduct({ images: [] })));
+      model.findById.mockReturnValue(
+        removeSelectLean(mockProduct({ images: [] })),
+      );
       model.findByIdAndDelete.mockResolvedValue(null);
 
       await service.remove(prodId);
@@ -216,7 +386,7 @@ describe('ProductService', () => {
         '/uploads/products/img1.webp',
         '/uploads/products/img2.webp',
       ];
-      model.findById.mockReturnValue(selectLean(mockProduct({ images })));
+      model.findById.mockReturnValue(removeSelectLean(mockProduct({ images })));
       model.findByIdAndDelete.mockResolvedValue(null);
 
       await service.remove(prodId);
@@ -225,12 +395,18 @@ describe('ProductService', () => {
       await Promise.resolve();
 
       expect(mockUploadService.deleteFile).toHaveBeenCalledTimes(2);
-      expect(mockUploadService.deleteFile).toHaveBeenCalledWith('products/img1.webp');
-      expect(mockUploadService.deleteFile).toHaveBeenCalledWith('products/img2.webp');
+      expect(mockUploadService.deleteFile).toHaveBeenCalledWith(
+        'products/img1.webp',
+      );
+      expect(mockUploadService.deleteFile).toHaveBeenCalledWith(
+        'products/img2.webp',
+      );
     });
 
     it('skips deleteFile when product has no images', async () => {
-      model.findById.mockReturnValue(selectLean(mockProduct({ images: [] })));
+      model.findById.mockReturnValue(
+        removeSelectLean(mockProduct({ images: [] })),
+      );
       model.findByIdAndDelete.mockResolvedValue(null);
 
       await service.remove(prodId);
@@ -240,22 +416,34 @@ describe('ProductService', () => {
     });
 
     it('logs warn and continues when deleteFile rejects (fire-and-forget)', async () => {
-      model.findById.mockReturnValue(selectLean(mockProduct({ images: ['/uploads/products/bad.webp'] })));
+      model.findById.mockReturnValue(
+        removeSelectLean(
+          mockProduct({ images: ['/uploads/products/bad.webp'] }),
+        ),
+      );
       model.findByIdAndDelete.mockResolvedValue(null);
-      mockUploadService.deleteFile.mockRejectedValueOnce(new Error('disk full'));
+      mockUploadService.deleteFile.mockRejectedValueOnce(
+        new Error('disk full'),
+      );
 
       await service.remove(prodId);
       await Promise.resolve();
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
         'Failed to delete product image',
-        expect.objectContaining({ key: 'products/bad.webp', error: 'disk full' }),
+        expect.objectContaining({
+          key: 'products/bad.webp',
+          error: 'disk full',
+        }),
       );
     });
 
     it('ignores image URLs that are not under /uploads/', async () => {
-      const images = ['https://external.cdn.com/img.jpg', '/uploads/products/local.webp'];
-      model.findById.mockReturnValue(selectLean(mockProduct({ images })));
+      const images = [
+        'https://external.cdn.com/img.jpg',
+        '/uploads/products/local.webp',
+      ];
+      model.findById.mockReturnValue(removeSelectLean(mockProduct({ images })));
       model.findByIdAndDelete.mockResolvedValue(null);
 
       await service.remove(prodId);
@@ -263,27 +451,32 @@ describe('ProductService', () => {
 
       // Only the local /uploads/ image should trigger a deleteFile call
       expect(mockUploadService.deleteFile).toHaveBeenCalledTimes(1);
-      expect(mockUploadService.deleteFile).toHaveBeenCalledWith('products/local.webp');
+      expect(mockUploadService.deleteFile).toHaveBeenCalledWith(
+        'products/local.webp',
+      );
     });
 
     it('logs product removal', async () => {
-      model.findById.mockReturnValue(selectLean(mockProduct({ images: [] })));
+      model.findById.mockReturnValue(
+        removeSelectLean(mockProduct({ images: [] })),
+      );
       model.findByIdAndDelete.mockResolvedValue(null);
 
       await service.remove(prodId);
 
-      expect(mockLogger.log).toHaveBeenCalledWith('Product removed', expect.objectContaining({ productId: prodId }));
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        'Product removed',
+        expect.objectContaining({ productId: prodId }),
+      );
     });
   });
 
   describe('update', () => {
     it('updates product and returns updated doc', async () => {
       const existing = mockProduct();
-      const updated  = mockProduct({ name: 'سامسونگ A55 جدید' });
+      const updated = mockProduct({ name: 'سامسونگ A55 جدید' });
       model.findById.mockResolvedValue(existing);
-      model.findByIdAndUpdate.mockReturnValue({
-        select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(updated) }),
-      });
+      model.findByIdAndUpdate.mockReturnValue(selectLean<ProductLike>(updated));
 
       const result = await service.update(prodId, { name: 'سامسونگ A55 جدید' });
       expect(result.name).toBe('سامسونگ A55 جدید');
@@ -291,7 +484,9 @@ describe('ProductService', () => {
 
     it('throws NotFoundException when product not found', async () => {
       model.findById.mockResolvedValue(null);
-      await expect(service.update(prodId, { name: 'x' })).rejects.toThrow(NotFoundException);
+      await expect(service.update(prodId, { name: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -300,7 +495,9 @@ describe('ProductService', () => {
       const prod = mockProduct();
       model.findById.mockResolvedValue(prod);
 
-      await service.updateVariant(prodId, varId.toString(), { price: 15_000_000 });
+      await service.updateVariant(prodId, varId.toString(), {
+        price: 15_000_000,
+      });
 
       expect(prod.variants[0].price).toBe(15_000_000);
       expect(prod.save).toHaveBeenCalled();
@@ -310,7 +507,7 @@ describe('ProductService', () => {
       const varId2 = new Types.ObjectId();
       const prod = mockProduct({
         variants: [
-          mockVariant({ _id: varId,  sku: 'SKU-001' }),
+          mockVariant({ _id: varId, sku: 'SKU-001' }),
           mockVariant({ _id: varId2, sku: 'SKU-002' }),
         ],
       });
@@ -328,9 +525,12 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 10_000_000, comparePrice: 0 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
-      const result = await service.bulkDiscount({ productIds: [prodId], discountPct: 20 });
+      const result = await service.bulkDiscount({
+        productIds: [prodId],
+        discountPct: 20,
+      });
 
       expect(result.updated).toBe(1);
       expect(prod.variants[0].comparePrice).toBe(10_000_000);
@@ -346,7 +546,7 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 7_500_000, comparePrice: 10_000_000 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 19 });
 
@@ -357,12 +557,22 @@ describe('ProductService', () => {
     it('applies same discount across multiple variants correctly', async () => {
       const prod = mockProduct({
         variants: [
-          mockVariant({ _id: new Types.ObjectId(), sku: 'A', price: 5_000_000, comparePrice: 0 }),
-          mockVariant({ _id: new Types.ObjectId(), sku: 'B', price: 8_000_000, comparePrice: 0 }),
+          mockVariant({
+            _id: new Types.ObjectId(),
+            sku: 'A',
+            price: 5_000_000,
+            comparePrice: 0,
+          }),
+          mockVariant({
+            _id: new Types.ObjectId(),
+            sku: 'B',
+            price: 8_000_000,
+            comparePrice: 0,
+          }),
         ],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 10 });
 
@@ -377,7 +587,7 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 8_000_000, comparePrice: 10_000_000 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 0 });
 
@@ -391,7 +601,7 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 5_000_000, comparePrice: 0 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 0 });
 
@@ -400,11 +610,22 @@ describe('ProductService', () => {
     });
 
     it('updates multiple products and returns correct updated count', async () => {
-      const prod1 = mockProduct({ variants: [mockVariant({ price: 1_000_000, comparePrice: 0 })], markModified: jest.fn() });
-      const prod2 = mockProduct({ _id: new Types.ObjectId(), variants: [mockVariant({ price: 2_000_000, comparePrice: 0 })], save: jest.fn().mockResolvedValue(true), markModified: jest.fn() });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod1, prod2]) });
+      const prod1 = mockProduct({
+        variants: [mockVariant({ price: 1_000_000, comparePrice: 0 })],
+        markModified: jest.fn(),
+      });
+      const prod2 = mockProduct({
+        _id: new Types.ObjectId(),
+        variants: [mockVariant({ price: 2_000_000, comparePrice: 0 })],
+        save: jest.fn().mockResolvedValue(true),
+        markModified: jest.fn(),
+      });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod1, prod2]));
 
-      const result = await service.bulkDiscount({ productIds: [prodId, prod2._id.toString()], discountPct: 30 });
+      const result = await service.bulkDiscount({
+        productIds: [prodId, prod2._id.toString()],
+        discountPct: 30,
+      });
 
       expect(result.updated).toBe(2);
       expect(prod1.save).toHaveBeenCalled();
@@ -416,7 +637,7 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 10_000_000, comparePrice: 0 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 99 });
 
@@ -430,23 +651,31 @@ describe('ProductService', () => {
         variants: [mockVariant({ price: 8_000_000, comparePrice: 10_000_000 })],
         markModified: jest.fn(),
       });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       await service.bulkDiscount({ productIds: [prodId], discountPct: 0 });
 
-      expect(mockLogger.warn).toHaveBeenCalledWith('BulkDiscount: removing discount', expect.any(Object));
-      expect(mockLogger.log).toHaveBeenCalledWith('BulkDiscount: done', expect.objectContaining({ updated: 1, pct: 0 }));
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        'BulkDiscount: removing discount',
+        expect.any(Object),
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        'BulkDiscount: done',
+        expect.objectContaining({ updated: 1, pct: 0 }),
+      );
     });
   });
 
   describe('bulkDiscount — timed mode', () => {
     const startDate = '2026-07-01T00:00:00.000Z';
-    const endDate   = '2026-07-15T23:59:59.000Z';
+    const endDate = '2026-07-15T23:59:59.000Z';
 
     beforeEach(() => jest.clearAllMocks());
 
     it('delegates to DiscountsService when startDate+endDate provided', async () => {
-      mockDiscountsService.create.mockResolvedValue({ _id: new Types.ObjectId() });
+      mockDiscountsService.create.mockResolvedValue({
+        _id: new Types.ObjectId(),
+      });
 
       const result = await service.bulkDiscount({
         productIds: [prodId],
@@ -458,9 +687,9 @@ describe('ProductService', () => {
       expect(mockDiscountsService.create).toHaveBeenCalledWith(
         expect.objectContaining({
           discountType: 'percentage',
-          value:        25,
-          targetType:   'products',
-          targetIds:    [prodId],
+          value: 25,
+          targetType: 'products',
+          targetIds: [prodId],
           startDate,
           endDate,
         }),
@@ -469,15 +698,24 @@ describe('ProductService', () => {
     });
 
     it('does not query or modify products in timed mode', async () => {
-      mockDiscountsService.create.mockResolvedValue({ _id: new Types.ObjectId() });
+      mockDiscountsService.create.mockResolvedValue({
+        _id: new Types.ObjectId(),
+      });
 
-      await service.bulkDiscount({ productIds: [prodId], discountPct: 20, startDate, endDate });
+      await service.bulkDiscount({
+        productIds: [prodId],
+        discountPct: 20,
+        startDate,
+        endDate,
+      });
 
       expect(model.find).not.toHaveBeenCalled();
     });
 
     it('uses custom title when provided', async () => {
-      mockDiscountsService.create.mockResolvedValue({ _id: new Types.ObjectId() });
+      mockDiscountsService.create.mockResolvedValue({
+        _id: new Types.ObjectId(),
+      });
 
       await service.bulkDiscount({
         productIds: [prodId],
@@ -493,9 +731,16 @@ describe('ProductService', () => {
     });
 
     it('auto-generates title from pct when title is not provided', async () => {
-      mockDiscountsService.create.mockResolvedValue({ _id: new Types.ObjectId() });
+      mockDiscountsService.create.mockResolvedValue({
+        _id: new Types.ObjectId(),
+      });
 
-      await service.bulkDiscount({ productIds: [prodId], discountPct: 15, startDate, endDate });
+      await service.bulkDiscount({
+        productIds: [prodId],
+        discountPct: 15,
+        startDate,
+        endDate,
+      });
 
       expect(mockDiscountsService.create).toHaveBeenCalledWith(
         expect.objectContaining({ title: 'تخفیف گروهی 15٪' }),
@@ -505,10 +750,10 @@ describe('ProductService', () => {
     it('throws BadRequestException when endDate is before startDate', async () => {
       await expect(
         service.bulkDiscount({
-          productIds:  [prodId],
+          productIds: [prodId],
           discountPct: 10,
-          startDate:   '2026-07-15T00:00:00.000Z',
-          endDate:     '2026-07-01T00:00:00.000Z',
+          startDate: '2026-07-15T00:00:00.000Z',
+          endDate: '2026-07-01T00:00:00.000Z',
         }),
       ).rejects.toThrow(BadRequestException);
 
@@ -516,11 +761,14 @@ describe('ProductService', () => {
     });
 
     it('falls back to permanent mode when only startDate is given (no endDate)', async () => {
-      const prod = mockProduct({ variants: [mockVariant()], markModified: jest.fn() });
-      model.find.mockReturnValue({ exec: jest.fn().mockResolvedValue([prod]) });
+      const prod = mockProduct({
+        variants: [mockVariant()],
+        markModified: jest.fn(),
+      });
+      model.find.mockReturnValue(execResolve<ProductDocLike[]>([prod]));
 
       const result = await service.bulkDiscount({
-        productIds:  [prodId],
+        productIds: [prodId],
         discountPct: 10,
         startDate,
       });
@@ -549,43 +797,57 @@ describe('ProductService', () => {
   describe('findAll — sort', () => {
     it('sorts by viewCount desc when sort=mostViewed', async () => {
       await service.findAll({ sort: 'mostViewed' });
-      const sortCall = model.find().select().sort.mock.calls[0][0];
+      const sortCall = (model.find() as FindChain<ProductLike[]>).select().sort
+        .mock.calls[0][0];
       expect(sortCall).toEqual({ viewCount: -1, createdAt: -1 });
     });
 
     it('defaults to newest sort when no sort param', async () => {
       await service.findAll({});
-      const sortCall = model.find().select().sort.mock.calls[0][0];
+      const sortCall = (model.find() as FindChain<ProductLike[]>).select().sort
+        .mock.calls[0][0];
       expect(sortCall).toEqual({ createdAt: -1 });
     });
 
     it('sorts by soldCount when sort=bestseller', async () => {
       await service.findAll({ sort: 'bestseller' });
-      const sortCall = model.find().select().sort.mock.calls[0][0];
+      const sortCall = (model.find() as FindChain<ProductLike[]>).select().sort
+        .mock.calls[0][0];
       expect(sortCall).toEqual({ soldCount: -1 });
     });
   });
 
   describe('variant images', () => {
     it('passes variant images through to the model on create', async () => {
-      const variantImages = ['https://cdn.example.com/v1.jpg', 'https://cdn.example.com/v2.jpg'];
-      model.findOne.mockReturnValue(lean(null));
+      const variantImages = [
+        'https://cdn.example.com/v1.jpg',
+        'https://cdn.example.com/v2.jpg',
+      ];
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
       model.create.mockResolvedValue({
         ...mockProduct({ variants: [mockVariant({ images: variantImages })] }),
-        toObject: () => mockProduct({ variants: [mockVariant({ images: variantImages })] }),
+        toObject: () =>
+          mockProduct({ variants: [mockVariant({ images: variantImages })] }),
       });
 
       await service.create({
         name: 'محصول با عکس تنوع',
         category: catId,
-        variants: [{ sku: 'SKU-001', price: 10_000_000, stock: 5, images: variantImages }],
+        variants: [
+          {
+            sku: 'SKU-001',
+            price: 10_000_000,
+            stock: 5,
+            images: variantImages,
+          },
+        ],
       });
 
       expect(model.create).toHaveBeenCalledWith(
         expect.objectContaining({
           variants: expect.arrayContaining([
             expect.objectContaining({ images: variantImages }),
-          ]),
+          ]) as unknown,
         }),
       );
     });
@@ -596,7 +858,10 @@ describe('ProductService', () => {
       const variantImages = ['https://cdn.example.com/v-img.jpg'];
 
       await service.addVariant(prodId, {
-        sku: 'SKU-IMG', price: 10_000_000, stock: 2, images: variantImages,
+        sku: 'SKU-IMG',
+        price: 10_000_000,
+        stock: 2,
+        images: variantImages,
       });
 
       expect(prod.variants[0]).toMatchObject({ images: variantImages });
@@ -604,7 +869,7 @@ describe('ProductService', () => {
     });
 
     it('defaults to empty array when variant has no images', async () => {
-      model.findOne.mockReturnValue(lean(null));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
       model.create.mockResolvedValue({
         ...mockProduct(),
         toObject: () => mockProduct(),
@@ -625,23 +890,26 @@ describe('ProductService', () => {
 
   describe('costPrice', () => {
     it('persists costPrice through create', async () => {
-      model.findOne.mockReturnValue(lean(null));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
       model.create.mockResolvedValue({
         ...mockProduct({ variants: [mockVariant({ costPrice: 8_000_000 })] }),
-        toObject: () => mockProduct({ variants: [mockVariant({ costPrice: 8_000_000 })] }),
+        toObject: () =>
+          mockProduct({ variants: [mockVariant({ costPrice: 8_000_000 })] }),
       });
 
       await service.create({
         name: 'محصول با قیمت خرید',
         category: catId,
-        variants: [{ sku: 'SKU-001', price: 10_000_000, stock: 5, costPrice: 8_000_000 }],
+        variants: [
+          { sku: 'SKU-001', price: 10_000_000, stock: 5, costPrice: 8_000_000 },
+        ],
       });
 
       expect(model.create).toHaveBeenCalledWith(
         expect.objectContaining({
           variants: expect.arrayContaining([
             expect.objectContaining({ costPrice: 8_000_000 }),
-          ]),
+          ]) as unknown,
         }),
       );
     });
@@ -651,7 +919,10 @@ describe('ProductService', () => {
       model.findById.mockResolvedValue(prod);
 
       await service.addVariant(prodId, {
-        sku: 'SKU-002', price: 12_000_000, stock: 3, costPrice: 9_000_000,
+        sku: 'SKU-002',
+        price: 12_000_000,
+        stock: 3,
+        costPrice: 9_000_000,
       });
 
       expect(prod.variants[0]).toMatchObject({ costPrice: 9_000_000 });
@@ -662,9 +933,13 @@ describe('ProductService', () => {
         slug: 'test-product',
         variants: [mockVariant({ sku: 'SKU-123', costPrice: 7_500_000 })],
       });
-      model.findById.mockReturnValue(lean(src));
-      model.findOne.mockReturnValue(lean(null));
-      model.create.mockResolvedValue({ ...src, _id: new Types.ObjectId(), toObject: () => src });
+      model.findById.mockReturnValue(lean<ProductDocLike | null>(src));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
+      model.create.mockResolvedValue({
+        ...src,
+        _id: new Types.ObjectId(),
+        toObject: () => src,
+      });
 
       await service.duplicate(prodId);
 
@@ -673,7 +948,7 @@ describe('ProductService', () => {
     });
 
     it('allows null costPrice (field is optional)', async () => {
-      model.findOne.mockReturnValue(lean(null));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
       model.create.mockResolvedValue({
         ...mockProduct(),
         toObject: () => mockProduct(),
@@ -692,11 +967,18 @@ describe('ProductService', () => {
 
   describe('duplicate', () => {
     it('uses original slug (no -copy suffix) when no collision', async () => {
-      const src = mockProduct({ slug: 'rayban-aviator', variants: [mockVariant()] });
-      model.findById.mockReturnValue(lean(src));
+      const src = mockProduct({
+        slug: 'rayban-aviator',
+        variants: [mockVariant()],
+      });
+      model.findById.mockReturnValue(lean<ProductDocLike | null>(src));
       // uniqueSlug: first findOne returns null → no collision
-      model.findOne.mockReturnValue(lean(null));
-      model.create.mockResolvedValue({ ...src, _id: new Types.ObjectId(), toObject: () => src });
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
+      model.create.mockResolvedValue({
+        ...src,
+        _id: new Types.ObjectId(),
+        toObject: () => src,
+      });
 
       await service.duplicate(prodId);
 
@@ -705,13 +987,22 @@ describe('ProductService', () => {
     });
 
     it('appends -1 when original slug is taken', async () => {
-      const src = mockProduct({ slug: 'rayban-aviator', variants: [mockVariant()] });
-      model.findById.mockReturnValue(lean(src));
+      const src = mockProduct({
+        slug: 'rayban-aviator',
+        variants: [mockVariant()],
+      });
+      model.findById.mockReturnValue(lean<ProductDocLike | null>(src));
       // first findOne (slug='rayban-aviator') → collision, second (slug='rayban-aviator-1') → free
       model.findOne
-        .mockReturnValueOnce(lean({ _id: new Types.ObjectId() }))
-        .mockReturnValue(lean(null));
-      model.create.mockResolvedValue({ ...src, _id: new Types.ObjectId(), toObject: () => src });
+        .mockReturnValueOnce(
+          lean<SlugCheckResult>({ _id: new Types.ObjectId() }),
+        )
+        .mockReturnValue(lean<SlugCheckResult>(null));
+      model.create.mockResolvedValue({
+        ...src,
+        _id: new Types.ObjectId(),
+        toObject: () => src,
+      });
 
       await service.duplicate(prodId);
 
@@ -720,10 +1011,17 @@ describe('ProductService', () => {
     });
 
     it('sets status to draft and clears variant SKUs', async () => {
-      const src = mockProduct({ slug: 'rayban-aviator', variants: [mockVariant({ sku: 'SKU-123' })] });
-      model.findById.mockReturnValue(lean(src));
-      model.findOne.mockReturnValue(lean(null));
-      model.create.mockResolvedValue({ ...src, _id: new Types.ObjectId(), toObject: () => src });
+      const src = mockProduct({
+        slug: 'rayban-aviator',
+        variants: [mockVariant({ sku: 'SKU-123' })],
+      });
+      model.findById.mockReturnValue(lean<ProductDocLike | null>(src));
+      model.findOne.mockReturnValue(lean<SlugCheckResult>(null));
+      model.create.mockResolvedValue({
+        ...src,
+        _id: new Types.ObjectId(),
+        toObject: () => src,
+      });
 
       await service.duplicate(prodId);
 
@@ -733,8 +1031,10 @@ describe('ProductService', () => {
     });
 
     it('throws NotFoundException for unknown id', async () => {
-      model.findById.mockReturnValue(lean(null));
-      await expect(service.duplicate(prodId)).rejects.toThrow(NotFoundException);
+      model.findById.mockReturnValue(lean<ProductDocLike | null>(null));
+      await expect(service.duplicate(prodId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

@@ -5,7 +5,9 @@ import { ColorService } from './color.service';
 import { ColorController } from './color.controller';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Color.name, schema: ColorSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: Color.name, schema: ColorSchema }]),
+  ],
   controllers: [ColorController],
   providers: [ColorService],
   exports: [ColorService],

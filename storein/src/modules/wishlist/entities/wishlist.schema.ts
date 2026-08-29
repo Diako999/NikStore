@@ -6,8 +6,11 @@ export type WishlistDocument = Wishlist & Document;
 @Schema({ timestamps: true })
 export class Wishlist {
   @Prop({
-    type: Types.ObjectId, ref: 'User',
-    required: true, unique: true, index: true,
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
   })
   userId: Types.ObjectId;
 

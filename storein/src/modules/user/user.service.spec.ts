@@ -4,8 +4,19 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { UserService } from './user.service';
 import { User } from './entities/user.schema';
+import { Address } from './entities/address.schema';
+import { CreateAddressDto } from './dto/create-address.dto';
 import { Order } from '../order/entities/order.schema';
 import { Review } from '../review/entities/review.schema';
+
+type MockAddress = Pick<Address, '_id' | 'isDefault'> & Partial<Address>;
+
+interface MockUserModel {
+  findById: jest.Mock;
+  findByIdAndUpdate: jest.Mock;
+  find: jest.Mock;
+  countDocuments: jest.Mock;
+}
 
 const addrId = new Types.ObjectId();
 const userId = new Types.ObjectId().toString();
@@ -15,20 +26,20 @@ const mockUser = () => ({
   phone: '09121234567',
   isActive: true,
   isAdmin: false,
-  addresses: [] as any[],
+  addresses: [] as MockAddress[],
   save: jest.fn().mockResolvedValue(true),
   toObject: jest.fn().mockReturnThis(),
 });
 
 describe('UserService', () => {
   let service: UserService;
-  let model: any;
+  let model: MockUserModel;
 
   beforeEach(async () => {
     model = {
-      findById:          jest.fn(),
+      findById: jest.fn(),
       findByIdAndUpdate: jest.fn(),
-      find:              jest.fn().mockReturnValue({
+      find: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
@@ -47,7 +58,7 @@ describe('UserService', () => {
     };
 
     const reviewModel = {
-      find:           jest.fn().mockReturnValue({
+      find: jest.fn().mockReturnValue({
         select: jest.fn().mockReturnValue({
           sort: jest.fn().mockReturnValue({
             skip: jest.fn().mockReturnValue({
@@ -66,8 +77,8 @@ describe('UserService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { provide: getModelToken(User.name),   useValue: model },
-        { provide: getModelToken(Order.name),  useValue: orderModel },
+        { provide: getModelToken(User.name), useValue: model },
+        { provide: getModelToken(Order.name), useValue: orderModel },
         { provide: getModelToken(Review.name), useValue: reviewModel },
       ],
     }).compile();
@@ -78,14 +89,24 @@ describe('UserService', () => {
 
   describe('getProfile', () => {
     it('returns user', async () => {
-      model.findById.mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(mockUser()) }) });
+      model.findById.mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(mockUser()) }),
+      });
       const res = await service.getProfile(userId);
       expect(res.phone).toBe('09121234567');
     });
 
     it('throws if user not found', async () => {
-      model.findById.mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) });
-      await expect(service.getProfile(userId)).rejects.toThrow(NotFoundException);
+      model.findById.mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      });
+      await expect(service.getProfile(userId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -95,9 +116,14 @@ describe('UserService', () => {
       model.findById.mockResolvedValue(user);
 
       await service.addAddress(userId, {
-        title: 'خانه', province: 'تهران', city: 'تهران',
-        street: 'خ آزادی', detail: 'پ۱', postalCode: '1234567890',
-        recipientName: 'علی رضایی', recipientPhone: '09121234567',
+        title: 'خانه',
+        province: 'تهران',
+        city: 'تهران',
+        street: 'خ آزادی',
+        detail: 'پ۱',
+        postalCode: '1234567890',
+        recipientName: 'علی رضایی',
+        recipientPhone: '09121234567',
       });
 
       expect(user.addresses[0].isDefault).toBe(true);
@@ -106,11 +132,14 @@ describe('UserService', () => {
 
     it('throws if address limit reached', async () => {
       const user = mockUser();
-      user.addresses = Array(10).fill({ _id: new Types.ObjectId(), isDefault: false });
+      user.addresses = Array<MockAddress>(10).fill({
+        _id: new Types.ObjectId(),
+        isDefault: false,
+      });
       model.findById.mockResolvedValue(user);
 
       await expect(
-        service.addAddress(userId, {} as any),
+        service.addAddress(userId, {} as CreateAddressDto),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -120,7 +149,7 @@ describe('UserService', () => {
       const user = mockUser();
       const a1 = { _id: addrId, isDefault: true };
       const a2 = { _id: new Types.ObjectId(), isDefault: false };
-      user.addresses = [a1, a2] as any;
+      user.addresses = [a1, a2];
       model.findById.mockResolvedValue(user);
 
       await service.removeAddress(userId, addrId.toString());
@@ -130,7 +159,12 @@ describe('UserService', () => {
 
   describe('toggleBlock', () => {
     it('toggles user active status and returns isBlocked', async () => {
-      const user = { ...mockUser(), isActive: true, save: jest.fn().mockResolvedValue(undefined), toObject: jest.fn().mockReturnThis() };
+      const user = {
+        ...mockUser(),
+        isActive: true,
+        save: jest.fn().mockResolvedValue(undefined),
+        toObject: jest.fn().mockReturnThis(),
+      };
       model.findById.mockResolvedValue(user);
 
       const result = await service.toggleBlock(userId);
@@ -143,7 +177,9 @@ describe('UserService', () => {
     it('returns updated user', async () => {
       const updated = { ...mockUser(), firstName: 'علی' };
       model.findByIdAndUpdate.mockReturnValue({
-        select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(updated) }),
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(updated) }),
       });
       const result = await service.updateProfile(userId, { firstName: 'علی' });
       expect(result.firstName).toBe('علی');
@@ -151,9 +187,13 @@ describe('UserService', () => {
 
     it('throws NotFoundException when user not found', async () => {
       model.findByIdAndUpdate.mockReturnValue({
-        select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
       });
-      await expect(service.updateProfile(userId, {})).rejects.toThrow(NotFoundException);
+      await expect(service.updateProfile(userId, {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -161,10 +201,12 @@ describe('UserService', () => {
     it('updates address fields', async () => {
       const user = mockUser();
       const addr = { _id: addrId, isDefault: false, city: 'تهران' };
-      user.addresses = [addr] as any;
+      user.addresses = [addr];
       model.findById.mockResolvedValue(user);
 
-      await service.updateAddress(userId, addrId.toString(), { city: 'مشهد' } as any);
+      await service.updateAddress(userId, addrId.toString(), {
+        city: 'مشهد',
+      });
       expect(addr.city).toBe('مشهد');
       expect(user.save).toHaveBeenCalled();
     });
@@ -181,9 +223,9 @@ describe('UserService', () => {
   describe('setDefaultAddress', () => {
     it('sets only target address as default', async () => {
       const user = mockUser();
-      const a1 = { _id: addrId,                    isDefault: false };
-      const a2 = { _id: new Types.ObjectId(), isDefault: true  };
-      user.addresses = [a1, a2] as any;
+      const a1 = { _id: addrId, isDefault: false };
+      const a2 = { _id: new Types.ObjectId(), isDefault: true };
+      user.addresses = [a1, a2];
       model.findById.mockResolvedValue(user);
 
       await service.setDefaultAddress(userId, addrId.toString());
@@ -194,7 +236,11 @@ describe('UserService', () => {
 
   describe('findById', () => {
     it('returns user with order stats', async () => {
-      model.findById.mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(mockUser()) }) });
+      model.findById.mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(mockUser()) }),
+      });
 
       const result = await service.findById(userId);
       expect(result.ordersCount).toBe(2);
@@ -202,7 +248,11 @@ describe('UserService', () => {
     });
 
     it('throws NotFoundException when user not found', async () => {
-      model.findById.mockReturnValue({ select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }) });
+      model.findById.mockReturnValue({
+        select: jest
+          .fn()
+          .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      });
       await expect(service.findById(userId)).rejects.toThrow(NotFoundException);
     });
   });

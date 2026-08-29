@@ -15,30 +15,40 @@ describe('JwtRefreshGuard', () => {
     });
 
     it('throws UnauthorizedException (not TokenExpiredError) when JWT is expired', () => {
-      const tokenExpiredError = Object.assign(new Error('jwt expired'), { name: 'TokenExpiredError' });
-      expect(() => guard.handleRequest(tokenExpiredError, null, null))
-        .toThrow(UnauthorizedException);
+      const tokenExpiredError = Object.assign(new Error('jwt expired'), {
+        name: 'TokenExpiredError',
+      });
+      expect(() => guard.handleRequest(tokenExpiredError, null, null)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException (not JsonWebTokenError) when JWT signature is invalid', () => {
-      const jwtError = Object.assign(new Error('invalid signature'), { name: 'JsonWebTokenError' });
-      expect(() => guard.handleRequest(jwtError, null, null))
-        .toThrow(UnauthorizedException);
+      const jwtError = Object.assign(new Error('invalid signature'), {
+        name: 'JsonWebTokenError',
+      });
+      expect(() => guard.handleRequest(jwtError, null, null)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException when cookie is absent (user=null, err=null)', () => {
-      expect(() => guard.handleRequest(null, null, null))
-        .toThrow(UnauthorizedException);
+      expect(() => guard.handleRequest(null, null, null)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('throws UnauthorizedException when cookie is absent (info carries reason)', () => {
       const info = { name: 'Error', message: 'No auth token' };
-      expect(() => guard.handleRequest(null, null, info))
-        .toThrow(UnauthorizedException);
+      expect(() => guard.handleRequest(null, null, info)).toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('does NOT re-throw the raw JWT error (must always wrap in UnauthorizedException)', () => {
-      const rawError = Object.assign(new Error('jwt expired'), { name: 'TokenExpiredError' });
+      const rawError = Object.assign(new Error('jwt expired'), {
+        name: 'TokenExpiredError',
+      });
       try {
         guard.handleRequest(rawError, null, null);
         fail('Expected UnauthorizedException to be thrown');

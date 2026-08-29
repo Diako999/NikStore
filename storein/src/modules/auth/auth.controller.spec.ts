@@ -1,32 +1,52 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
+import type { Request, Response } from 'express';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import type { UserDocument } from '../user/entities/user.schema';
 import { UserRole } from '../user/entities/user.schema';
+import type { JwtRefreshPayload } from './interfaces/jwt-payload.interface';
 
 const mockService = {
-  sendOtp:          jest.fn(),
-  verifyOtp:        jest.fn(),
-  adminLogin:       jest.fn(),
+  sendOtp: jest.fn(),
+  verifyOtp: jest.fn(),
+  adminLogin: jest.fn(),
   setAdminPassword: jest.fn(),
-  changePassword:   jest.fn(),
-  refreshTokens:    jest.fn(),
-  logout:           jest.fn(),
-  logoutAll:        jest.fn(),
+  changePassword: jest.fn(),
+  refreshTokens: jest.fn(),
+  logout: jest.fn(),
+  logoutAll: jest.fn(),
 };
 
-const makeReq = (overrides = {}) => ({
-  headers: { 'user-agent': 'jest', authorization: 'Bearer tok' },
-  ip: '127.0.0.1',
-  user: { sub: 'uid1', refreshToken: 'rtok' },
-  cookies: { refresh_token: 'rtok' },
-  ...overrides,
-});
+const makeReq = (
+  overrides: Record<string, unknown> = {},
+): Request & { user: JwtRefreshPayload } =>
+  ({
+    headers: { 'user-agent': 'jest', authorization: 'Bearer tok' },
+    ip: '127.0.0.1',
+    user: { sub: 'uid1', refreshToken: 'rtok' },
+    cookies: { refresh_token: 'rtok' },
+    ...overrides,
+  }) as unknown as Request & { user: JwtRefreshPayload };
 
-const makeRes = () => ({
+interface MockResponse {
+  cookie: jest.Mock;
+  clearCookie: jest.Mock;
+}
+
+const makeRes = (): MockResponse => ({
   cookie: jest.fn(),
   clearCookie: jest.fn(),
 });
+
+const asRes = (res: MockResponse): Response => res as unknown as Response;
+
+const makeUser = (overrides: Record<string, unknown> = {}): UserDocument =>
+  ({ _id: 'uid1', ...overrides }) as unknown as UserDocument;
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -50,109 +70,173 @@ describe('AuthController', () => {
 
   it('sendOtp propagates BadRequestException on rate limit', async () => {
     mockService.sendOtp.mockRejectedValue(new BadRequestException());
-    await expect(controller.sendOtp({ phone: '09121234567' })).rejects.toThrow(BadRequestException);
+    await expect(controller.sendOtp({ phone: '09121234567' })).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('verifyOtp passes user-agent and ip from request', async () => {
-    mockService.verifyOtp.mockResolvedValue({ accessToken: 'at', refreshToken: 'rt', isNewUser: false });
-    const req = makeReq() as any;
-    const res = makeRes() as any;
-    await controller.verifyOtp({ phone: '09121234567', code: '123456' }, req, res);
+    mockService.verifyOtp.mockResolvedValue({
+      accessToken: 'at',
+      refreshToken: 'rt',
+      isNewUser: false,
+    });
+    const req = makeReq();
+    const res = makeRes();
+    await controller.verifyOtp(
+      { phone: '09121234567', code: '123456' },
+      req,
+      asRes(res),
+    );
     expect(mockService.verifyOtp).toHaveBeenCalledWith(
       { phone: '09121234567', code: '123456' },
       { userAgent: 'jest', ip: '127.0.0.1' },
     );
-    expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'rt', expect.any(Object));
+    expect(res.cookie).toHaveBeenCalledWith(
+      'refresh_token',
+      'rt',
+      expect.any(Object),
+    );
   });
 
   it('verifyOtp propagates UnauthorizedException on bad code', async () => {
     mockService.verifyOtp.mockRejectedValue(new UnauthorizedException());
     await expect(
-      controller.verifyOtp({ phone: '09121234567', code: 'wrong' }, makeReq() as any, makeRes() as any),
+      controller.verifyOtp(
+        { phone: '09121234567', code: 'wrong' },
+        makeReq(),
+        asRes(makeRes()),
+      ),
     ).rejects.toThrow(UnauthorizedException);
   });
 
   it('refresh delegates refreshToken from cookie', async () => {
-    mockService.refreshTokens.mockResolvedValue({ accessToken: 'at2', refreshToken: 'rt2' });
-    const req = makeReq() as any;
-    const res = makeRes() as any;
-    await controller.refresh(req, res);
-    expect(mockService.refreshTokens).toHaveBeenCalledWith('uid1', 'rtok', expect.any(Object));
-    expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'rt2', expect.any(Object));
+    mockService.refreshTokens.mockResolvedValue({
+      accessToken: 'at2',
+      refreshToken: 'rt2',
+    });
+    const req = makeReq();
+    const res = makeRes();
+    await controller.refresh(req, asRes(res));
+    expect(mockService.refreshTokens).toHaveBeenCalledWith(
+      'uid1',
+      'rtok',
+      expect.any(Object),
+    );
+    expect(res.cookie).toHaveBeenCalledWith(
+      'refresh_token',
+      'rt2',
+      expect.any(Object),
+    );
   });
 
   it('logout reads cookie and clears it', async () => {
     mockService.logout.mockResolvedValue({ message: 'ok' });
-    const user = { _id: 'uid1' } as any;
-    const res = makeRes() as any;
-    await controller.logout(user, makeReq() as any, res);
+    const user = makeUser();
+    const res = makeRes();
+    await controller.logout(user, makeReq(), asRes(res));
     expect(mockService.logout).toHaveBeenCalledWith('uid1', 'rtok');
-    expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', expect.any(Object));
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'refresh_token',
+      expect.any(Object),
+    );
   });
 
   describe('cookie SameSite attributes (Railway cross-origin fix)', () => {
     const originalEnv = process.env.NODE_ENV;
-    afterEach(() => { process.env.NODE_ENV = originalEnv; });
+    afterEach(() => {
+      process.env.NODE_ENV = originalEnv;
+    });
 
     it('sets sameSite=none and secure=true in production (cross-origin Railway deployment)', async () => {
       process.env.NODE_ENV = 'production';
       mockService.verifyOtp.mockResolvedValue({
-        accessToken: 'at', refreshToken: 'rt', isNewUser: false,
+        accessToken: 'at',
+        refreshToken: 'rt',
+        isNewUser: false,
       });
-      const res = makeRes() as any;
-      await controller.verifyOtp({ phone: '09121234567', code: '123456' }, makeReq() as any, res);
-      expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'rt', expect.objectContaining({
-        sameSite: 'none',
-        secure:   true,
-        httpOnly: true,
-      }));
+      const res = makeRes();
+      await controller.verifyOtp(
+        { phone: '09121234567', code: '123456' },
+        makeReq(),
+        asRes(res),
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'rt',
+        expect.objectContaining({
+          sameSite: 'none',
+          secure: true,
+          httpOnly: true,
+        }),
+      );
     });
 
     it('sets sameSite=lax and secure=false in development (same-origin local setup)', async () => {
       process.env.NODE_ENV = 'development';
       mockService.verifyOtp.mockResolvedValue({
-        accessToken: 'at', refreshToken: 'rt', isNewUser: false,
+        accessToken: 'at',
+        refreshToken: 'rt',
+        isNewUser: false,
       });
-      const res = makeRes() as any;
-      await controller.verifyOtp({ phone: '09121234567', code: '123456' }, makeReq() as any, res);
-      expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'rt', expect.objectContaining({
-        sameSite: 'lax',
-        secure:   false,
-        httpOnly: true,
-      }));
+      const res = makeRes();
+      await controller.verifyOtp(
+        { phone: '09121234567', code: '123456' },
+        makeReq(),
+        asRes(res),
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'rt',
+        expect.objectContaining({
+          sameSite: 'lax',
+          secure: false,
+          httpOnly: true,
+        }),
+      );
     });
 
     it('clearCookie uses matching sameSite/secure attributes', async () => {
       process.env.NODE_ENV = 'production';
       mockService.logout.mockResolvedValue({ message: 'ok' });
-      const res = makeRes() as any;
-      await controller.logout({ _id: 'uid1' } as any, makeReq() as any, res);
-      expect(res.clearCookie).toHaveBeenCalledWith('refresh_token', expect.objectContaining({
-        sameSite: 'none',
-        secure:   true,
-      }));
+      const res = makeRes();
+      await controller.logout(makeUser(), makeReq(), asRes(res));
+      expect(res.clearCookie).toHaveBeenCalledWith(
+        'refresh_token',
+        expect.objectContaining({
+          sameSite: 'none',
+          secure: true,
+        }),
+      );
     });
   });
 
   it('logoutAll delegates userId', async () => {
     mockService.logoutAll.mockResolvedValue({ message: 'ok' });
-    const user = { _id: 'uid1' } as any;
+    const user = makeUser();
     await controller.logoutAll(user);
     expect(mockService.logoutAll).toHaveBeenCalledWith('uid1');
   });
 
   describe('adminLogin', () => {
     it('returns accessToken and sets refresh cookie', async () => {
-      mockService.adminLogin.mockResolvedValue({ accessToken: 'at', refreshToken: 'rt' });
-      const req = makeReq() as any;
-      const res = makeRes() as any;
+      mockService.adminLogin.mockResolvedValue({
+        accessToken: 'at',
+        refreshToken: 'rt',
+      });
+      const req = makeReq();
+      const res = makeRes();
       const result = await controller.adminLogin(
         { phone: '09121234567', password: 'secret123' },
         req,
-        res,
+        asRes(res),
       );
       expect(result).toEqual({ accessToken: 'at' });
-      expect(res.cookie).toHaveBeenCalledWith('refresh_token', 'rt', expect.any(Object));
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'rt',
+        expect.any(Object),
+      );
       expect(mockService.adminLogin).toHaveBeenCalledWith(
         { phone: '09121234567', password: 'secret123' },
         { userAgent: 'jest', ip: '127.0.0.1' },
@@ -164,8 +248,8 @@ describe('AuthController', () => {
       await expect(
         controller.adminLogin(
           { phone: '09121234567', password: 'wrong' },
-          makeReq() as any,
-          makeRes() as any,
+          makeReq(),
+          asRes(makeRes()),
         ),
       ).rejects.toThrow(UnauthorizedException);
     });
@@ -174,21 +258,34 @@ describe('AuthController', () => {
   describe('adminSetup', () => {
     const originalEnv = process.env.SEED_SECRET;
 
-    beforeEach(() => { process.env.SEED_SECRET = 'test-secret'; });
-    afterEach(() =>  { process.env.SEED_SECRET = originalEnv; });
+    beforeEach(() => {
+      process.env.SEED_SECRET = 'test-secret';
+    });
+    afterEach(() => {
+      process.env.SEED_SECRET = originalEnv;
+    });
 
     it('sets admin password when secret matches', async () => {
       mockService.setAdminPassword.mockResolvedValue(undefined);
       const result = await controller.adminSetup({
-        phone: '09121234567', password: 'newpass1', secret: 'test-secret',
+        phone: '09121234567',
+        password: 'newpass1',
+        secret: 'test-secret',
       });
       expect(result).toEqual({ message: 'رمز عبور مدیر با موفقیت تنظیم شد' });
-      expect(mockService.setAdminPassword).toHaveBeenCalledWith('09121234567', 'newpass1');
+      expect(mockService.setAdminPassword).toHaveBeenCalledWith(
+        '09121234567',
+        'newpass1',
+      );
     });
 
     it('throws when secret is wrong', async () => {
       await expect(
-        controller.adminSetup({ phone: '09121234567', password: 'p', secret: 'bad-secret' }),
+        controller.adminSetup({
+          phone: '09121234567',
+          password: 'p',
+          secret: 'bad-secret',
+        }),
       ).rejects.toThrow();
       expect(mockService.setAdminPassword).not.toHaveBeenCalled();
     });
@@ -196,9 +293,21 @@ describe('AuthController', () => {
 
   describe('changePassword', () => {
     const dto = { currentPassword: 'OldPass#1', newPassword: 'NewPass#2' };
-    const adminUser  = { _id: 'uid1', isAdmin: true,  role: UserRole.ADMIN   } as any;
-    const managerUser = { _id: 'uid2', isAdmin: false, role: UserRole.MANAGER } as any;
-    const regularUser = { _id: 'uid3', isAdmin: false, role: UserRole.USER   } as any;
+    const adminUser = makeUser({
+      _id: 'uid1',
+      isAdmin: true,
+      role: UserRole.ADMIN,
+    });
+    const managerUser = makeUser({
+      _id: 'uid2',
+      isAdmin: false,
+      role: UserRole.MANAGER,
+    });
+    const regularUser = makeUser({
+      _id: 'uid3',
+      isAdmin: false,
+      role: UserRole.USER,
+    });
 
     it('returns success message when admin changes password', async () => {
       mockService.changePassword.mockResolvedValue(undefined);
@@ -208,27 +317,31 @@ describe('AuthController', () => {
     });
 
     it('throws ForbiddenException when manager tries to change password', async () => {
-      await expect(controller.changePassword(managerUser, dto))
-        .rejects.toThrow(ForbiddenException);
+      await expect(controller.changePassword(managerUser, dto)).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(mockService.changePassword).not.toHaveBeenCalled();
     });
 
     it('throws ForbiddenException when regular user tries to change password', async () => {
-      await expect(controller.changePassword(regularUser, dto))
-        .rejects.toThrow(ForbiddenException);
+      await expect(controller.changePassword(regularUser, dto)).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(mockService.changePassword).not.toHaveBeenCalled();
     });
 
     it('propagates UnauthorizedException from service on wrong current password', async () => {
       mockService.changePassword.mockRejectedValue(new UnauthorizedException());
-      await expect(controller.changePassword(adminUser, dto))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(controller.changePassword(adminUser, dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('propagates BadRequestException from service on same password', async () => {
       mockService.changePassword.mockRejectedValue(new BadRequestException());
-      await expect(controller.changePassword(adminUser, dto))
-        .rejects.toThrow(BadRequestException);
+      await expect(controller.changePassword(adminUser, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

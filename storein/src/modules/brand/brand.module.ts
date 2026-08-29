@@ -5,7 +5,9 @@ import { BrandService } from './brand.service';
 import { BrandController } from './brand.controller';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Brand.name, schema: BrandSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: Brand.name, schema: BrandSchema }]),
+  ],
   controllers: [BrandController],
   providers: [BrandService],
   exports: [BrandService, MongooseModule],

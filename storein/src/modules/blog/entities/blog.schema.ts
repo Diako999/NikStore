@@ -4,9 +4,9 @@ import { HydratedDocument, Types } from 'mongoose';
 export type BlogDocument = HydratedDocument<Blog>;
 
 export enum BlogStatus {
-  DRAFT     = 'draft',
+  DRAFT = 'draft',
   PUBLISHED = 'published',
-  ARCHIVED  = 'archived',
+  ARCHIVED = 'archived',
 }
 
 @Schema({ timestamps: true })
@@ -14,7 +14,13 @@ export class Blog {
   @Prop({ required: true, trim: true, maxlength: 200 })
   title: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
+  @Prop({
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true,
+  })
   slug: string;
 
   @Prop({ required: true })

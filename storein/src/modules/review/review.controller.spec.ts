@@ -1,23 +1,30 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
 import { ReviewController } from './review.controller';
 import { ReviewService } from './review.service';
 import { ReviewStatus } from './entities/review.schema';
+import type { UserDocument } from '../user/entities/user.schema';
 
 const mockService = {
   getProductReviews: jest.fn(),
-  create:            jest.fn(),
-  getMyReviews:      jest.fn(),
-  toggleHelpful:     jest.fn(),
-  adminFindAll:      jest.fn(),
-  updateStatus:      jest.fn(),
-  remove:            jest.fn(),
+  create: jest.fn(),
+  getMyReviews: jest.fn(),
+  toggleHelpful: jest.fn(),
+  adminFindAll: jest.fn(),
+  updateStatus: jest.fn(),
+  remove: jest.fn(),
 };
 
-const userId   = new Types.ObjectId().toString();
+const userId = new Types.ObjectId().toString();
 const reviewId = new Types.ObjectId().toString();
-const mockUser = { _id: { toString: () => userId } } as any;
+const mockUser = {
+  _id: { toString: () => userId },
+} as unknown as UserDocument;
 
 describe('ReviewController', () => {
   let controller: ReviewController;
@@ -35,27 +42,41 @@ describe('ReviewController', () => {
   describe('getProductReviews', () => {
     it('returns reviews with stats', async () => {
       mockService.getProductReviews.mockResolvedValue({
-        items: [], total: 0, totalPages: 0,
+        items: [],
+        total: 0,
+        totalPages: 0,
         stats: { avgRating: 0, distribution: {} },
       });
-      const result = await controller.getProductReviews({ productId: userId } as any);
+      const result = await controller.getProductReviews({
+        productId: userId,
+      });
       expect(result.total).toBe(0);
     });
   });
 
   describe('create', () => {
-    const dto = { productId: userId, rating: 5, title: 'عالی', body: 'خیلی خوب بود واقعاً' };
+    const dto = {
+      productId: userId,
+      rating: 5,
+      title: 'عالی',
+      body: 'خیلی خوب بود واقعاً',
+    };
 
     it('creates review successfully', async () => {
-      mockService.create.mockResolvedValue({ rating: 5, status: ReviewStatus.PENDING });
-      const result = await controller.create(mockUser, dto as any);
+      mockService.create.mockResolvedValue({
+        rating: 5,
+        status: ReviewStatus.PENDING,
+      });
+      const result = await controller.create(mockUser, dto);
       expect(result.status).toBe(ReviewStatus.PENDING);
       expect(mockService.create).toHaveBeenCalledWith(userId, dto);
     });
 
     it('propagates ConflictException on duplicate review', async () => {
       mockService.create.mockRejectedValue(new ConflictException());
-      await expect(controller.create(mockUser, dto as any)).rejects.toThrow(ConflictException);
+      await expect(controller.create(mockUser, dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -77,24 +98,38 @@ describe('ReviewController', () => {
 
     it('propagates NotFoundException when review not found', async () => {
       mockService.toggleHelpful.mockRejectedValue(new NotFoundException());
-      await expect(controller.toggleHelpful(mockUser, reviewId)).rejects.toThrow(NotFoundException);
+      await expect(
+        controller.toggleHelpful(mockUser, reviewId),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('adminFindAll', () => {
     it('returns all reviews with pendingCount', async () => {
-      mockService.adminFindAll.mockResolvedValue({ items: [], total: 0, pendingCount: 5 });
-      const result = await controller.adminFindAll({ status: ReviewStatus.PENDING } as any);
+      mockService.adminFindAll.mockResolvedValue({
+        items: [],
+        total: 0,
+        pendingCount: 5,
+      });
+      const result = await controller.adminFindAll({
+        status: ReviewStatus.PENDING,
+      });
       expect(result.pendingCount).toBe(5);
     });
   });
 
   describe('updateStatus', () => {
     it('approves review', async () => {
-      mockService.updateStatus.mockResolvedValue({ status: ReviewStatus.APPROVED });
-      const result = await controller.updateStatus(reviewId, { status: ReviewStatus.APPROVED });
+      mockService.updateStatus.mockResolvedValue({
+        status: ReviewStatus.APPROVED,
+      });
+      const result = await controller.updateStatus(reviewId, {
+        status: ReviewStatus.APPROVED,
+      });
       expect(result.status).toBe(ReviewStatus.APPROVED);
-      expect(mockService.updateStatus).toHaveBeenCalledWith(reviewId, { status: ReviewStatus.APPROVED });
+      expect(mockService.updateStatus).toHaveBeenCalledWith(reviewId, {
+        status: ReviewStatus.APPROVED,
+      });
     });
 
     it('propagates BadRequestException when review not in pending', async () => {
@@ -114,7 +149,9 @@ describe('ReviewController', () => {
 
     it('propagates NotFoundException when review not found', async () => {
       mockService.remove.mockRejectedValue(new NotFoundException());
-      await expect(controller.remove(reviewId)).rejects.toThrow(NotFoundException);
+      await expect(controller.remove(reviewId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

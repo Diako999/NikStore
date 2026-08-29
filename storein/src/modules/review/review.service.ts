@@ -11,8 +11,12 @@ import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import { Review, ReviewDocument, ReviewStatus } from './entities/review.schema';
 import { Product, ProductDocument } from '../product/entities/product.schema';
-import { Order, OrderDocument, OrderStatus } from '../order/entities/order.schema';
-import { User, UserDocument }       from '../user/entities/user.schema';
+import {
+  Order,
+  OrderDocument,
+  OrderStatus,
+} from '../order/entities/order.schema';
+import { User, UserDocument } from '../user/entities/user.schema';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewStatusDto } from './dto/update-review-status.dto';
 import { ReviewQueryDto } from './dto/review-query.dto';
@@ -21,14 +25,16 @@ import { AppLoggerService } from '../../common/logger/app-logger.service';
 
 const helpfulKey = (reviewId: string) => `review:helpful:${reviewId}`;
 
+type WithTimestamps = { createdAt: Date; updatedAt: Date };
+
 @Injectable()
 export class ReviewService {
   constructor(
-    @InjectModel(Review.name)   private reviewModel: Model<ReviewDocument>,
-    @InjectModel(Product.name)  private productModel: Model<ProductDocument>,
-    @InjectModel(Order.name)    private orderModel: Model<OrderDocument>,
-    @InjectModel(User.name)     private userModel: Model<UserDocument>,
-    @Inject(REDIS_CLIENT)       private redis: Redis,
+    @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @Inject(REDIS_CLIENT) private redis: Redis,
     private readonly gateway: NotificationsGateway,
     private readonly logger: AppLoggerService,
   ) {
@@ -37,48 +43,59 @@ export class ReviewService {
 
   async create(userId: string, dto: CreateReviewDto): Promise<ReviewDocument> {
     // Find any delivered order containing this product for this user
-    const order = await this.orderModel.findOne({
-      userId:            new Types.ObjectId(userId),
-      'items.productId': new Types.ObjectId(dto.productId),
-      status:            OrderStatus.DELIVERED,
-    }).lean<OrderDocument>();
+    const order = await this.orderModel
+      .findOne({
+        userId: new Types.ObjectId(userId),
+        'items.productId': new Types.ObjectId(dto.productId),
+        status: OrderStatus.DELIVERED,
+      })
+      .lean<OrderDocument>();
 
-    const existing = await this.reviewModel.findOne({
-      userId:    new Types.ObjectId(userId),
-      productId: new Types.ObjectId(dto.productId),
-    }).lean();
+    const existing = await this.reviewModel
+      .findOne({
+        userId: new Types.ObjectId(userId),
+        productId: new Types.ObjectId(dto.productId),
+      })
+      .lean();
 
     if (existing)
       throw new ConflictException('شما قبلاً برای این محصول نظر ثبت کرده‌اید');
 
     const review = await this.reviewModel.create({
       ...dto,
-      userId:             new Types.ObjectId(userId),
-      productId:          new Types.ObjectId(dto.productId),
-      orderId:            order?._id ?? null,
+      userId: new Types.ObjectId(userId),
+      productId: new Types.ObjectId(dto.productId),
+      orderId: order?._id ?? null,
       isVerifiedPurchase: !!order,
-      status:             ReviewStatus.PENDING,
+      status: ReviewStatus.PENDING,
     });
 
     // Fire-and-forget: fetch names for notification without blocking response
     Promise.all([
       this.productModel.findById(dto.productId).select('name').lean(),
       this.userModel.findById(userId).select('firstName').lean<UserDocument>(),
-    ]).then(([product, user]) => {
-      this.gateway.emitNewReview({
-        reviewId:    (review._id as any).toString(),
-        productName: (product as any)?.name ?? 'محصول',
-        rating:      review.rating,
-        userName:    (user as UserDocument)?.firstName?.trim() || 'کاربر',
-        createdAt:   (review as any).createdAt?.toISOString() ?? new Date().toISOString(),
+    ])
+      .then(([product, user]) => {
+        this.gateway.emitNewReview({
+          reviewId: review._id.toString(),
+          productName: product?.name ?? 'محصول',
+          rating: review.rating,
+          userName: (user as UserDocument)?.firstName?.trim() || 'کاربر',
+          createdAt:
+            (
+              review as ReviewDocument & WithTimestamps
+            ).createdAt?.toISOString() ?? new Date().toISOString(),
+        });
+      })
+      .catch(() => {
+        /* silent — notification is non-critical */
       });
-    }).catch(() => { /* silent — notification is non-critical */ });
 
     this.logger.log('Review created', {
-      reviewId:           (review._id as any).toString(),
+      reviewId: review._id.toString(),
       userId,
-      productId:          dto.productId,
-      rating:             dto.rating,
+      productId: dto.productId,
+      rating: dto.rating,
       isVerifiedPurchase: !!order,
     });
 
@@ -91,18 +108,24 @@ export class ReviewService {
     totalPages: number;
     stats: { avgRating: number; distribution: Record<number, number> };
   }> {
-    const { productId, rating, page = 1, limit = 10, sortBy = 'createdAt' } = query;
+    const {
+      productId,
+      rating,
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+    } = query;
 
     const filter: Record<string, any> = { status: ReviewStatus.APPROVED };
     if (productId) filter.productId = new Types.ObjectId(productId);
-    if (rating)    filter.rating    = rating;
+    if (rating) filter.rating = rating;
 
     const skip = (page - 1) * limit;
 
     const sortMap: Record<string, Record<string, 1 | -1>> = {
       createdAt: { createdAt: -1 },
-      rating:    { rating: -1, createdAt: -1 },
-      helpful:   { helpfulCount: -1, createdAt: -1 },
+      rating: { rating: -1, createdAt: -1 },
+      helpful: { helpfulCount: -1, createdAt: -1 },
     };
 
     const [reviews, total] = await Promise.all([
@@ -118,7 +141,7 @@ export class ReviewService {
     ]);
 
     for (const r of reviews) {
-      const count = await this.redis.scard(helpfulKey((r._id as any).toString()));
+      const count = await this.redis.scard(helpfulKey(r._id.toString()));
       r.helpfulCount = count;
     }
 
@@ -126,26 +149,41 @@ export class ReviewService {
       ? { productId: new Types.ObjectId(productId) }
       : {};
 
-    const dist = await this.reviewModel.aggregate([
+    const dist = await this.reviewModel.aggregate<{
+      _id: number;
+      count: number;
+    }>([
       { $match: { ...distBase, status: ReviewStatus.APPROVED } },
       { $group: { _id: '$rating', count: { $sum: 1 } } },
     ]);
 
-    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const distribution: Record<number, number> = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
     dist.forEach((d) => (distribution[d._id] = d.count));
 
     const total5 = Object.values(distribution).reduce((a, b) => a + b, 0);
-    const sum5   = Object.entries(distribution).reduce(
-      (a, [k, v]) => a + Number(k) * v, 0,
+    const sum5 = Object.entries(distribution).reduce(
+      (a, [k, v]) => a + Number(k) * v,
+      0,
     );
     const avgRating = total5 ? Math.round((sum5 / total5) * 10) / 10 : 0;
 
-    return { items: reviews, total, totalPages: Math.ceil(total / limit), stats: { avgRating, distribution } };
+    return {
+      items: reviews,
+      total,
+      totalPages: Math.ceil(total / limit),
+      stats: { avgRating, distribution },
+    };
   }
 
   async getMyReviews(userId: string, page = 1, limit = 10) {
     const filter = { userId: new Types.ObjectId(userId) };
-    const skip   = (page - 1) * limit;
+    const skip = (page - 1) * limit;
 
     const [reviews, total] = await Promise.all([
       this.reviewModel
@@ -162,14 +200,17 @@ export class ReviewService {
     return { reviews, total, totalPages: Math.ceil(total / limit) };
   }
 
-  async toggleHelpful(userId: string, reviewId: string): Promise<{ helpful: boolean; count: number }> {
+  async toggleHelpful(
+    userId: string,
+    reviewId: string,
+  ): Promise<{ helpful: boolean; count: number }> {
     if (!Types.ObjectId.isValid(reviewId))
       throw new BadRequestException('شناسه معتبر نیست');
 
     const review = await this.reviewModel.findById(reviewId).lean();
     if (!review) throw new NotFoundException('نظر یافت نشد');
 
-    const key     = helpfulKey(reviewId);
+    const key = helpfulKey(reviewId);
     const already = await this.redis.sismember(key, userId);
 
     if (already) {
@@ -184,11 +225,14 @@ export class ReviewService {
   }
 
   async adminFindAll(query: ReviewQueryDto): Promise<{
-    items: ReviewDocument[]; total: number; totalPages: number; pendingCount: number;
+    items: ReviewDocument[];
+    total: number;
+    totalPages: number;
+    pendingCount: number;
   }> {
     const { status, productId, page = 1, limit = 10 } = query;
     const filter: Record<string, any> = {};
-    if (status)    filter.status    = status;
+    if (status) filter.status = status;
     if (productId) filter.productId = new Types.ObjectId(productId);
 
     const skip = (page - 1) * limit;
@@ -233,7 +277,7 @@ export class ReviewService {
 
     this.logger.log('Review status updated', {
       reviewId,
-      status:    dto.status,
+      status: dto.status,
       productId: review.productId.toString(),
     });
 
@@ -253,23 +297,27 @@ export class ReviewService {
   }
 
   private async recalcProductRating(productId: string): Promise<void> {
-    const result = await this.reviewModel.aggregate([
+    const result = await this.reviewModel.aggregate<{
+      _id: null;
+      avgRating: number;
+      reviewCount: number;
+    }>([
       {
         $match: {
           productId: new Types.ObjectId(productId),
-          status:    ReviewStatus.APPROVED,
+          status: ReviewStatus.APPROVED,
         },
       },
       {
         $group: {
-          _id:         null,
-          avgRating:   { $avg: '$rating' },
+          _id: null,
+          avgRating: { $avg: '$rating' },
           reviewCount: { $sum: 1 },
         },
       },
     ]);
 
-    const avgRating   = result[0] ? Math.round(result[0].avgRating * 10) / 10 : 0;
+    const avgRating = result[0] ? Math.round(result[0].avgRating * 10) / 10 : 0;
     const reviewCount = result[0]?.reviewCount ?? 0;
 
     await this.productModel.findByIdAndUpdate(productId, {

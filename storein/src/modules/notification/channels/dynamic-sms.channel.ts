@@ -20,10 +20,14 @@ export class DynamicSmsChannel extends SmsNotificationChannel {
     try {
       const s = await this.settingsService.findSettings();
       const isKavenegar = s.sms?.provider === 'kavenegar';
-      this.logger.debug(`[DynamicSmsChannel] active: ${isKavenegar ? 'kavenegar' : 'mock'}`);
+      this.logger.debug(
+        `[DynamicSmsChannel] active: ${isKavenegar ? 'kavenegar' : 'mock'}`,
+      );
       return isKavenegar ? this.kavenegar : this.mock;
     } catch {
-      this.logger.warn('[DynamicSmsChannel] settings error — falling back to mock');
+      this.logger.warn(
+        '[DynamicSmsChannel] settings error — falling back to mock',
+      );
       return this.mock;
     }
   }

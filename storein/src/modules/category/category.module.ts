@@ -9,7 +9,7 @@ import { Product, ProductSchema } from '../product/entities/product.schema';
   imports: [
     MongooseModule.forFeature([
       { name: Category.name, schema: CategorySchema },
-      { name: Product.name,  schema: ProductSchema  },
+      { name: Product.name, schema: ProductSchema },
     ]),
   ],
   controllers: [CategoryController],

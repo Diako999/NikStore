@@ -16,7 +16,7 @@ import { Cart, CartItem, CartSummary } from './cart.interface';
 import { DiscountsService } from '../../discounts/discounts.service';
 
 const CART_TTL = 60 * 60 * 24 * 7;
-const cartKey  = (uid: string) => `cart:${uid}`;
+const cartKey = (uid: string) => `cart:${uid}`;
 
 @Injectable()
 export class CartService {
@@ -24,7 +24,7 @@ export class CartService {
 
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @Inject(REDIS_CLIENT)      private redis: Redis,
+    @Inject(REDIS_CLIENT) private redis: Redis,
     private readonly discountsService: DiscountsService,
   ) {}
 
@@ -32,15 +32,13 @@ export class CartService {
     const cart = await this.loadCart(userId);
 
     if (cart.items.length) {
-      const ids      = [...new Set(cart.items.map((i) => i.productId))];
+      const ids = [...new Set(cart.items.map((i) => i.productId))];
       const products = await this.productModel
         .find({ _id: { $in: ids.map((id) => new Types.ObjectId(id)) } })
         .select('variants')
         .lean<ProductDocument[]>();
 
-      const productMap = new Map(
-        products.map((p) => [(p._id as any).toString(), p]),
-      );
+      const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
       cart.items = cart.items.filter((item) => {
         const product = productMap.get(item.productId);
@@ -74,7 +72,7 @@ export class CartService {
     if (!variant || !variant.isActive)
       throw new NotFoundException('ویریانت یافت نشد');
 
-    const cart     = await this.loadCart(userId);
+    const cart = await this.loadCart(userId);
     const existing = cart.items.find(
       (i) => i.productId === dto.productId && i.variantId === dto.variantId,
     );
@@ -85,45 +83,45 @@ export class CartService {
         `موجودی کافی نیست. حداکثر ${variant.stock} عدد`,
       );
 
-    let price        = variant.price;
+    let price = variant.price;
     let comparePrice = variant.comparePrice ?? null;
 
     // Apply system discount on top of the base price
-    const categoryId = (product.category as any)?.toString() ?? '';
-    const brandId    = (product.brand as any)?.toString() ?? '';
+    const categoryId = product.category?.toString() ?? '';
+    const brandId = product.brand?.toString() ?? '';
 
     const priceInfo = await this.discountsService.calculateDiscountedPrice({
       originalPrice: variant.price,
-      productId:     dto.productId,
+      productId: dto.productId,
       categoryId,
       brandId,
     });
     if (priceInfo.discountAmount > 0) {
-      comparePrice = price;                // original price → shown as strikethrough
-      price        = priceInfo.finalPrice; // discounted price → final price
+      comparePrice = price; // original price → shown as strikethrough
+      price = priceInfo.finalPrice; // discounted price → final price
       this.logger.log(
         `Discount applied: product=${dto.productId} ` +
-        `original=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
+          `original=${comparePrice} discounted=${price} (${priceInfo.discountPercentage}%)`,
       );
     }
 
     if (existing) {
-      existing.quantity     = newQty;
-      existing.price        = price;
+      existing.quantity = newQty;
+      existing.price = price;
       existing.comparePrice = comparePrice;
     } else {
       const item: CartItem = {
-        productId:    dto.productId,
-        variantId:    dto.variantId,
-        sku:          variant.sku,
-        name:         product.name,
-        slug:         product.slug,
-        thumbnail:    product.thumbnail ?? null,
+        productId: dto.productId,
+        variantId: dto.variantId,
+        sku: variant.sku,
+        name: product.name,
+        slug: product.slug,
+        thumbnail: product.thumbnail ?? null,
         price,
         comparePrice,
-        quantity:     dto.quantity,
-        stock:        variant.stock,
-        attributes:   variant.attributes ?? [],
+        quantity: dto.quantity,
+        stock: variant.stock,
+        attributes: variant.attributes ?? [],
       };
       cart.items.push(item);
     }
@@ -139,7 +137,7 @@ export class CartService {
     dto: UpdateCartItemDto,
   ): Promise<CartSummary> {
     const cart = await this.loadCart(userId);
-    const idx  = cart.items.findIndex(
+    const idx = cart.items.findIndex(
       (i) => i.productId === productId && i.variantId === dto.variantId,
     );
     if (idx === -1) throw new NotFoundException('آیتم در سبد یافت نشد');
@@ -165,7 +163,7 @@ export class CartService {
     variantId: string,
   ): Promise<CartSummary> {
     const cart = await this.loadCart(userId);
-    const idx  = cart.items.findIndex(
+    const idx = cart.items.findIndex(
       (i) => i.productId === productId && i.variantId === variantId,
     );
     if (idx === -1) throw new NotFoundException('آیتم در سبد یافت نشد');
@@ -195,9 +193,9 @@ export class CartService {
   }
 
   private buildSummary(cart: Cart): CartSummary {
-    const subtotal   = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
+    const subtotal = cart.items.reduce((s, i) => s + i.price * i.quantity, 0);
     const totalItems = cart.items.reduce((s, i) => s + i.quantity, 0);
-    const savings    = cart.items.reduce((s, i) => {
+    const savings = cart.items.reduce((s, i) => {
       const diff = (i.comparePrice ?? i.price) - i.price;
       return s + diff * i.quantity;
     }, 0);

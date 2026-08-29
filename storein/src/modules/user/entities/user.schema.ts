@@ -3,9 +3,9 @@ import { Document } from 'mongoose';
 import { Address, AddressSchema } from './address.schema';
 
 export enum UserRole {
-  USER      = 'user',
-  MANAGER   = 'manager',
-  ADMIN     = 'admin',
+  USER = 'user',
+  MANAGER = 'manager',
+  ADMIN = 'admin',
 }
 
 export type UserDocument = User & Document;

@@ -1,42 +1,69 @@
-import { IsEnum, IsMongoId, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsMongoId,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.schema';
 
 export class ProductQueryDto {
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   category?: string;
 
-  @IsOptional() @IsMongoId()
+  @IsOptional()
+  @IsMongoId()
   brand?: string;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   minPrice?: number;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
   maxPrice?: number;
 
-  @IsOptional() @Transform(({ value }) => value === 'true')
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
   inStock?: boolean;
 
-  @IsOptional() @Transform(({ value }) => value === 'true')
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
   hasDiscount?: boolean;
 
-  @IsOptional() @IsEnum(ProductStatus)
+  @IsOptional()
+  @IsEnum(ProductStatus)
   status?: ProductStatus;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   sort?: string;
 
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   search?: string;
 
   // Comma-separated tag filters (stored in product.tags)
-  @IsOptional() @IsString()
+  @IsOptional()
+  @IsString()
   gender?: string;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
   page?: number = 1;
 
-  @IsOptional() @Type(() => Number) @IsNumber() @Min(1)
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(1)
   limit?: number = 20;
 }

@@ -5,16 +5,18 @@ export type NotificationDocument = Notification & Document;
 
 export enum NotificationType {
   ORDER_UPDATE = 'order_update',
-  PAYMENT      = 'payment',
-  PROMO        = 'promo',
-  SYSTEM       = 'system',
+  PAYMENT = 'payment',
+  PROMO = 'promo',
+  SYSTEM = 'system',
 }
 
 @Schema({ timestamps: true })
 export class Notification {
   @Prop({
-    type: Types.ObjectId, ref: 'User',
-    required: true, index: true,
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
   })
   userId: Types.ObjectId;
 

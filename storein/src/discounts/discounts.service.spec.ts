@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Types } from 'mongoose';
 import { DiscountsService } from './discounts.service';
@@ -10,73 +10,127 @@ import { AppLoggerService } from '../common/logger/app-logger.service';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { EVENTS } from '../modules/notification/notification.listener';
 
-const MOCK_REDIS = {
-  get:    jest.fn().mockResolvedValue(null),
-  set:    jest.fn().mockResolvedValue('OK'),
-  del:    jest.fn().mockResolvedValue(1),
+interface MockDiscountModel {
+  create: jest.Mock;
+  findOne: jest.Mock;
+  findById: jest.Mock;
+  findByIdAndUpdate: jest.Mock;
+  find: jest.Mock;
+  countDocuments: jest.Mock;
+  updateOne: jest.Mock;
+}
+
+interface MockUsageModel {
+  create: jest.Mock;
+  countDocuments: jest.Mock;
+}
+
+interface MockRedis {
+  get: jest.Mock;
+  set: jest.Mock;
+  del: jest.Mock;
+}
+
+interface MockLogger {
+  setContext: jest.Mock;
+  log: jest.Mock;
+  warn: jest.Mock;
+  error: jest.Mock;
+  debug: jest.Mock;
+}
+
+interface MockEventEmitter {
+  emit: jest.Mock;
+}
+
+interface MockDiscountDoc {
+  _id: Types.ObjectId;
+  title: string;
+  discountType: 'percentage' | 'fixed';
+  value: number;
+  code: string | null;
+  endDate: Date | null;
+  targetType: string;
+  targetIds: Types.ObjectId[];
+  isActive: boolean;
+  usageCount: number;
+  toObject: () => Record<string, unknown>;
+}
+
+const MOCK_REDIS: MockRedis = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue('OK'),
+  del: jest.fn().mockResolvedValue(1),
 };
 
-const MOCK_LOGGER = {
+const MOCK_LOGGER: MockLogger = {
   setContext: jest.fn(),
-  log:        jest.fn(),
-  warn:       jest.fn(),
-  error:      jest.fn(),
-  debug:      jest.fn(),
+  log: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
 };
 
-function makeDiscount(overrides: any = {}) {
+function makeDiscount(
+  overrides: Partial<Omit<MockDiscountDoc, 'toObject'>> = {},
+): MockDiscountDoc {
   const id = new Types.ObjectId();
-  const doc = {
-    _id:          id,
-    title:        'تخفیف ویژه',
+  const base: Omit<MockDiscountDoc, 'toObject'> = {
+    _id: id,
+    title: 'تخفیف ویژه',
     discountType: 'percentage',
-    value:        20,
-    code:         null,
-    endDate:      null,
-    targetType:   'all',
-    targetIds:    [],
-    isActive:     true,
-    usageCount:   0,
+    value: 20,
+    code: null,
+    endDate: null,
+    targetType: 'all',
+    targetIds: [],
+    isActive: true,
+    usageCount: 0,
     ...overrides,
-    toObject: function () { return { ...this }; },
   };
-  return doc;
+  return {
+    ...base,
+    toObject: () => ({ ...base }),
+  };
 }
 
 describe('DiscountsService — discount created notification', () => {
   let service: DiscountsService;
-  let discountModel: any;
-  let eventEmitter: jest.Mocked<EventEmitter2>;
+  let discountModel: MockDiscountModel;
+  let eventEmitter: MockEventEmitter;
 
   beforeEach(async () => {
     discountModel = {
-      create:          jest.fn(),
-      findOne:         jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
-      findById:        jest.fn(),
+      create: jest.fn(),
+      findOne: jest
+        .fn()
+        .mockReturnValue({ lean: jest.fn().mockResolvedValue(null) }),
+      findById: jest.fn(),
       findByIdAndUpdate: jest.fn(),
-      find:            jest.fn(),
-      countDocuments:  jest.fn(),
-      updateOne:       jest.fn().mockResolvedValue({}),
+      find: jest.fn(),
+      countDocuments: jest.fn(),
+      updateOne: jest.fn().mockResolvedValue({}),
     };
 
-    const usageModel = {
-      create:         jest.fn(),
+    const usageModel: MockUsageModel = {
+      create: jest.fn(),
       countDocuments: jest.fn().mockResolvedValue(0),
     };
+
+    eventEmitter = { emit: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DiscountsService,
-        { provide: getModelToken(Discount.name),      useValue: discountModel },
+        { provide: getModelToken(Discount.name), useValue: discountModel },
         { provide: getModelToken(DiscountUsage.name), useValue: usageModel },
-        { provide: REDIS_CLIENT,                      useValue: MOCK_REDIS },
-        { provide: AppLoggerService,                  useValue: MOCK_LOGGER },
-        { provide: EventEmitter2,                     useValue: { emit: jest.fn() } },
+        { provide: REDIS_CLIENT, useValue: MOCK_REDIS },
+        { provide: AppLoggerService, useValue: MOCK_LOGGER },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
-    service      = module.get(DiscountsService);
-    eventEmitter = module.get(EventEmitter2) as any;
+    service = module.get(DiscountsService);
     jest.clearAllMocks();
   });
 
@@ -87,15 +141,18 @@ describe('DiscountsService — discount created notification', () => {
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
-      title: 'تخفیف ویژه', discountType: 'percentage', value: 20,
-      targetType: 'all', targetIds: [],
-    } as any);
+      title: 'تخفیف ویژه',
+      discountType: 'percentage',
+      value: 20,
+      targetType: 'all',
+      targetIds: [],
+    });
 
     expect(eventEmitter.emit).toHaveBeenCalledWith(
       EVENTS.DISCOUNT_CREATED,
       expect.objectContaining({
-        isCoupon:      false,
-        code:          null,
+        isCoupon: false,
+        code: null,
       }),
     );
   });
@@ -105,10 +162,13 @@ describe('DiscountsService — discount created notification', () => {
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
-      title: 'کد تخفیف', code: 'SAVE20',
-      discountType: 'percentage', value: 20,
-      targetType: 'all', targetIds: [],
-    } as any);
+      title: 'کد تخفیف',
+      code: 'SAVE20',
+      discountType: 'percentage',
+      value: 20,
+      targetType: 'all',
+      targetIds: [],
+    });
 
     expect(eventEmitter.emit).toHaveBeenCalledWith(
       EVENTS.DISCOUNT_CREATED,
@@ -122,10 +182,14 @@ describe('DiscountsService — discount created notification', () => {
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
-      title: 'تخفیف موقت', discountType: 'percentage', value: 15,
-      targetType: 'all', targetIds: [],
-      startDate: '2026-07-01', endDate: '2026-08-01',
-    } as any);
+      title: 'تخفیف موقت',
+      discountType: 'percentage',
+      value: 15,
+      targetType: 'all',
+      targetIds: [],
+      startDate: '2026-07-01',
+      endDate: '2026-08-01',
+    });
 
     expect(eventEmitter.emit).toHaveBeenCalledWith(
       EVENTS.DISCOUNT_CREATED,
@@ -139,9 +203,12 @@ describe('DiscountsService — discount created notification', () => {
     discountModel.create.mockResolvedValue(doc);
 
     await service.create({
-      title: 'تخفیف', discountType: 'percentage', value: 10,
-      targetType: 'all', targetIds: [],
-    } as any);
+      title: 'تخفیف',
+      discountType: 'percentage',
+      value: 10,
+      targetType: 'all',
+      targetIds: [],
+    });
 
     expect(eventEmitter.emit).toHaveBeenCalledWith(
       EVENTS.DISCOUNT_CREATED,
@@ -152,25 +219,38 @@ describe('DiscountsService — discount created notification', () => {
   // ── create — guard checks ──────────────────────────────────────
 
   it('throws BadRequestException when endDate is before startDate', async () => {
-    await expect(service.create({
-      title: 'تخفیف', discountType: 'percentage', value: 10,
-      targetType: 'all', targetIds: [],
-      startDate: '2026-08-01', endDate: '2026-07-01',
-    } as any)).rejects.toThrow(BadRequestException);
+    await expect(
+      service.create({
+        title: 'تخفیف',
+        discountType: 'percentage',
+        value: 10,
+        targetType: 'all',
+        targetIds: [],
+        startDate: '2026-08-01',
+        endDate: '2026-07-01',
+      }),
+    ).rejects.toThrow(BadRequestException);
 
     expect(eventEmitter.emit).not.toHaveBeenCalled();
   });
 
   it('throws ConflictException when code already exists', async () => {
     discountModel.findOne.mockReturnValue({
-      lean: jest.fn().mockResolvedValue({ _id: new Types.ObjectId(), code: 'DUP' }),
+      lean: jest
+        .fn()
+        .mockResolvedValue({ _id: new Types.ObjectId(), code: 'DUP' }),
     });
 
-    await expect(service.create({
-      title: 'تخفیف', code: 'DUP',
-      discountType: 'percentage', value: 10,
-      targetType: 'all', targetIds: [],
-    } as any)).rejects.toThrow(ConflictException);
+    await expect(
+      service.create({
+        title: 'تخفیف',
+        code: 'DUP',
+        discountType: 'percentage',
+        value: 10,
+        targetType: 'all',
+        targetIds: [],
+      }),
+    ).rejects.toThrow(ConflictException);
 
     expect(eventEmitter.emit).not.toHaveBeenCalled();
   });
@@ -178,10 +258,15 @@ describe('DiscountsService — discount created notification', () => {
   it('does NOT emit event when creation throws', async () => {
     discountModel.create.mockRejectedValue(new Error('db error'));
 
-    await expect(service.create({
-      title: 'تخفیف', discountType: 'percentage', value: 10,
-      targetType: 'all', targetIds: [],
-    } as any)).rejects.toThrow('db error');
+    await expect(
+      service.create({
+        title: 'تخفیف',
+        discountType: 'percentage',
+        value: 10,
+        targetType: 'all',
+        targetIds: [],
+      }),
+    ).rejects.toThrow('db error');
 
     expect(eventEmitter.emit).not.toHaveBeenCalled();
   });

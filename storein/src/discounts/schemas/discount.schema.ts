@@ -27,11 +27,11 @@ export class Discount {
   // ── Coupon (optional) ────────────────────────────────────────
   // null = auto-apply; string = user must enter at checkout
   @Prop({
-    type:      String,
+    type: String,
     uppercase: true,
-    trim:      true,
-    sparse:    true,
-    default:   null,
+    trim: true,
+    sparse: true,
+    default: null,
   })
   code?: string | null;
 
@@ -46,7 +46,10 @@ export class Discount {
   endDate: Date | null;
 
   // ── Target ───────────────────────────────────────────────────
-  @Prop({ required: true, enum: ['all', 'products', 'categories', 'brands', 'brand_category'] })
+  @Prop({
+    required: true,
+    enum: ['all', 'products', 'categories', 'brands', 'brand_category'],
+  })
   targetType: 'all' | 'products' | 'categories' | 'brands' | 'brand_category';
 
   @Prop({ type: [{ type: Types.ObjectId }], default: [] })

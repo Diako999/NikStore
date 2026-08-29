@@ -1,6 +1,13 @@
 import {
-  Body, Controller, Delete, Get, Param, Patch, Post,
-  Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -19,18 +26,21 @@ export class UserController {
   // ── Profile ───────────────────────────────────────────────────
   @Get('me')
   getProfile(@CurrentUser() user: UserDocument) {
-    return this.userService.getProfile((user._id as any).toString());
+    return this.userService.getProfile(user._id.toString());
   }
 
   @Patch('me')
-  updateProfile(@CurrentUser() user: UserDocument, @Body() dto: UpdateProfileDto) {
-    return this.userService.updateProfile((user._id as any).toString(), dto);
+  updateProfile(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.userService.updateProfile(user._id.toString(), dto);
   }
 
   // ── Addresses ─────────────────────────────────────────────────
   @Post('me/addresses')
   addAddress(@CurrentUser() user: UserDocument, @Body() dto: CreateAddressDto) {
-    return this.userService.addAddress((user._id as any).toString(), dto);
+    return this.userService.addAddress(user._id.toString(), dto);
   }
 
   @Patch('me/addresses/:addressId')
@@ -39,28 +49,34 @@ export class UserController {
     @Param('addressId') addressId: string,
     @Body() dto: UpdateAddressDto,
   ) {
-    return this.userService.updateAddress((user._id as any).toString(), addressId, dto);
+    return this.userService.updateAddress(user._id.toString(), addressId, dto);
   }
 
   @Delete('me/addresses/:addressId')
-  removeAddress(@CurrentUser() user: UserDocument, @Param('addressId') addressId: string) {
-    return this.userService.removeAddress((user._id as any).toString(), addressId);
+  removeAddress(
+    @CurrentUser() user: UserDocument,
+    @Param('addressId') addressId: string,
+  ) {
+    return this.userService.removeAddress(user._id.toString(), addressId);
   }
 
   @Patch('me/addresses/:addressId/default')
-  setDefault(@CurrentUser() user: UserDocument, @Param('addressId') addressId: string) {
-    return this.userService.setDefaultAddress((user._id as any).toString(), addressId);
+  setDefault(
+    @CurrentUser() user: UserDocument,
+    @Param('addressId') addressId: string,
+  ) {
+    return this.userService.setDefaultAddress(user._id.toString(), addressId);
   }
 
   // ── Admin ─────────────────────────────────────────────────────
   @UseGuards(AdminGuard)
   @Get()
   findAll(
-    @Query('page')      page      = 1,
-    @Query('limit')     limit     = 20,
-    @Query('search')    search?: string,
+    @Query('page') page = 1,
+    @Query('limit') limit = 20,
+    @Query('search') search?: string,
     @Query('isBlocked') isBlocked?: string,
-    @Query('role')      role?: string,
+    @Query('role') role?: string,
   ) {
     return this.userService.findAll(+page, +limit, search, isBlocked, role);
   }
@@ -75,7 +91,7 @@ export class UserController {
   @Get(':id/reviews')
   getUserReviews(
     @Param('id') id: string,
-    @Query('page')  page  = 1,
+    @Query('page') page = 1,
     @Query('limit') limit = 10,
   ) {
     return this.userService.getUserReviews(id, +page, +limit);

@@ -1,15 +1,24 @@
 import {
-  Body, Controller, Delete, Get, Param, Patch,
-  Post, Query, Req, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
-import { BlogService }       from './blog.service';
-import { CreateBlogDto }     from './dto/create-blog.dto';
-import { UpdateBlogDto }     from './dto/update-blog.dto';
-import { BlogQueryDto }      from './dto/blog-query.dto';
-import { CreateCommentDto }  from './dto/create-comment.dto';
-import { JwtAuthGuard }      from '../auth/guards/jwt-auth.guard';
-import { AdminGuard }        from '../../common/guards/admin.guard';
-import { Public }            from '../../common/decorators/public.decorator';
+import { BlogService } from './blog.service';
+import { CreateBlogDto } from './dto/create-blog.dto';
+import { UpdateBlogDto } from './dto/update-blog.dto';
+import { BlogQueryDto } from './dto/blog-query.dto';
+import { CreateCommentDto } from './dto/create-comment.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import { Public } from '../../common/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { UserDocument } from '../user/entities/user.schema';
 
 @Controller('blog')
 @UseGuards(JwtAuthGuard)
@@ -38,13 +47,13 @@ export class BlogController {
   // ── Likes ─────────────────────────────────────────────────────
 
   @Post(':id/like')
-  toggleLike(@Param('id') id: string, @Req() req: any) {
-    return this.blogService.toggleLike(id, req.user._id);
+  toggleLike(@Param('id') id: string, @CurrentUser() user: UserDocument) {
+    return this.blogService.toggleLike(id, user._id.toString());
   }
 
   @Get(':id/like-status')
-  getLikeStatus(@Param('id') id: string, @Req() req: any) {
-    return this.blogService.getLikeStatus(id, req.user._id);
+  getLikeStatus(@Param('id') id: string, @CurrentUser() user: UserDocument) {
+    return this.blogService.getLikeStatus(id, user._id.toString());
   }
 
   // ── Comments ──────────────────────────────────────────────────
@@ -59,9 +68,9 @@ export class BlogController {
   addComment(
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
-    @Req() req: any,
+    @CurrentUser() user: UserDocument,
   ) {
-    return this.blogService.addComment(id, req.user._id, dto.content);
+    return this.blogService.addComment(id, user._id.toString(), dto.content);
   }
 
   // ── Admin: comment moderation ─────────────────────────────────
@@ -75,14 +84,14 @@ export class BlogController {
   @Get('comments')
   @UseGuards(AdminGuard)
   getAllComments(
-    @Query('page')   page?:   string,
-    @Query('limit')  limit?:  string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('status') status?: string,
     @Query('search') search?: string,
   ) {
     return this.blogService.getAllCommentsAdmin({
-      page:   page  ? +page  : 1,
-      limit:  limit ? +limit : 20,
+      page: page ? +page : 1,
+      limit: limit ? +limit : 20,
       status,
       search,
     });
@@ -115,8 +124,8 @@ export class BlogController {
 
   @Post()
   @UseGuards(AdminGuard)
-  create(@Body() dto: CreateBlogDto, @Req() req: any) {
-    return this.blogService.create(dto, req.user._id);
+  create(@Body() dto: CreateBlogDto, @CurrentUser() user: UserDocument) {
+    return this.blogService.create(dto, user._id.toString());
   }
 
   @Patch(':id')

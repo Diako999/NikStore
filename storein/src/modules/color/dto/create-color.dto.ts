@@ -1,15 +1,26 @@
-import { IsString, IsBoolean, IsOptional, IsNumber, Matches, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsNumber,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateColorDto {
-  @IsString() @MaxLength(50)
+  @IsString()
+  @MaxLength(50)
   name: string;
 
-  @IsString() @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'hex باید فرمت #RRGGBB داشته باشد' })
+  @IsString()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'hex باید فرمت #RRGGBB داشته باشد' })
   hex: string;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   isActive?: boolean;
 
-  @IsOptional() @IsNumber()
+  @IsOptional()
+  @IsNumber()
   sortOrder?: number;
 }

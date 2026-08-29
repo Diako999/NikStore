@@ -6,9 +6,9 @@ import { Order, OrderSchema } from './entities/order.schema';
 import { CartModule } from '../cart/cart.module';
 import { ProductModule } from '../product/product.module';
 import { UserModule } from '../user/user.module';
-import { AppLoggerService }  from '../../common/logger/app-logger.service';
-import { GatewayModule }     from '../../common/gateway/gateway.module';
-import { DiscountsModule }   from '../../discounts/discounts.module';
+import { AppLoggerService } from '../../common/logger/app-logger.service';
+import { GatewayModule } from '../../common/gateway/gateway.module';
+import { DiscountsModule } from '../../discounts/discounts.module';
 
 @Module({
   imports: [

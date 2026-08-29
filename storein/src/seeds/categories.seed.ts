@@ -5,21 +5,40 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/storein';
+const MONGODB_URI =
+  process.env.MONGODB_URI ?? 'mongodb://localhost:27017/storein';
 
 const CategorySchema = new mongoose.Schema(
   {
-    name:        { type: String, required: true, trim: true },
-    slug:        { type: String, required: true, unique: true, lowercase: true, trim: true },
-    parent:      { type: mongoose.Schema.Types.ObjectId, ref: 'Category', default: null },
-    ancestors:   { type: [mongoose.Schema.Types.ObjectId], ref: 'Category', default: [] },
-    depth:       { type: Number, default: 0 },
+    name: { type: String, required: true, trim: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
+    },
+    ancestors: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: 'Category',
+      default: [],
+    },
+    depth: { type: Number, default: 0 },
     description: { type: String, trim: true },
-    icon:        { type: String },
-    image:       { type: String },
-    sortOrder:   { type: Number, default: 0 },
-    gender:      { type: String, enum: ['', 'men', 'women', 'kids', 'unisex'], default: '' },
-    isActive:    { type: Boolean, default: true },
+    icon: { type: String },
+    image: { type: String },
+    sortOrder: { type: Number, default: 0 },
+    gender: {
+      type: String,
+      enum: ['', 'men', 'women', 'kids', 'unisex'],
+      default: '',
+    },
+    isActive: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
@@ -34,7 +53,10 @@ interface GenderNode {
 
 const taxonomy: GenderNode[] = [
   {
-    name: 'زنانه', slug: 'women', gender: 'women', sortOrder: 1,
+    name: 'زنانه',
+    slug: 'women',
+    gender: 'women',
+    sortOrder: 1,
     children: [
       { name: 'شومیز', slug: 'women-blouse', sortOrder: 1 },
       { name: 'پیراهن', slug: 'women-dress', sortOrder: 2 },
@@ -45,7 +67,10 @@ const taxonomy: GenderNode[] = [
     ],
   },
   {
-    name: 'مردانه', slug: 'men', gender: 'men', sortOrder: 2,
+    name: 'مردانه',
+    slug: 'men',
+    gender: 'men',
+    sortOrder: 2,
     children: [
       { name: 'پیراهن', slug: 'men-shirt', sortOrder: 1 },
       { name: 'شلوار', slug: 'men-pants', sortOrder: 2 },
@@ -54,7 +79,10 @@ const taxonomy: GenderNode[] = [
     ],
   },
   {
-    name: 'بچگانه', slug: 'kids', gender: 'kids', sortOrder: 3,
+    name: 'بچگانه',
+    slug: 'kids',
+    gender: 'kids',
+    sortOrder: 3,
     children: [
       { name: 'تیشرت', slug: 'kids-tshirt', sortOrder: 1 },
       { name: 'شلوار', slug: 'kids-pants', sortOrder: 2 },
@@ -80,35 +108,39 @@ async function seed() {
       skipped++;
     } else {
       parent = await CategoryModel.create({
-        name:      node.name,
-        slug:      node.slug,
-        parent:    null,
+        name: node.name,
+        slug: node.slug,
+        parent: null,
         ancestors: [],
-        depth:     0,
-        gender:    node.gender,
+        depth: 0,
+        gender: node.gender,
         sortOrder: node.sortOrder,
-        isActive:  true,
+        isActive: true,
       });
-      console.log(`  ✓  Created: "${node.name}" (top-level, gender=${node.gender})`);
+      console.log(
+        `  ✓  Created: "${node.name}" (top-level, gender=${node.gender})`,
+      );
       created++;
     }
 
     for (const child of node.children) {
       const exists = await CategoryModel.findOne({ slug: child.slug });
       if (exists) {
-        console.log(`      ⏭  Skipped: "${child.name}" under "${node.name}" (slug already exists)`);
+        console.log(
+          `      ⏭  Skipped: "${child.name}" under "${node.name}" (slug already exists)`,
+        );
         skipped++;
         continue;
       }
       await CategoryModel.create({
-        name:      child.name,
-        slug:      child.slug,
-        parent:    parent._id,
+        name: child.name,
+        slug: child.slug,
+        parent: parent._id,
         ancestors: [parent._id],
-        depth:     1,
-        gender:    node.gender,
+        depth: 1,
+        gender: node.gender,
         sortOrder: child.sortOrder,
-        isActive:  true,
+        isActive: true,
       });
       console.log(`      ✓  Created: "${child.name}" under "${node.name}"`);
       created++;
@@ -119,7 +151,7 @@ async function seed() {
   await mongoose.disconnect();
 }
 
-seed().catch((err) => {
+seed().catch((err: Error) => {
   console.error('Seed failed:', err.message);
   process.exit(1);
 });

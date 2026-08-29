@@ -1,8 +1,8 @@
 export interface ChannelPayload {
   userId: string;
-  title:  string;
-  body:   string;
-  data?:  Record<string, any>;
+  title: string;
+  body: string;
+  data?: Record<string, any>;
 }
 
 export abstract class SmsNotificationChannel {

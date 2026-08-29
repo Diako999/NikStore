@@ -5,7 +5,9 @@ import { PopupService } from './popup.service';
 import { PopupController } from './popup.controller';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Popup.name, schema: PopupSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: Popup.name, schema: PopupSchema }]),
+  ],
   controllers: [PopupController],
   providers: [PopupService],
   exports: [PopupService],

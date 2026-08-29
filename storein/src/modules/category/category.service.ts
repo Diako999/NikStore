@@ -12,13 +12,26 @@ import { Product, ProductDocument } from '../product/entities/product.schema';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
+interface CategoryWithCount extends CategoryDocument {
+  productsCount: number;
+}
+
+interface CategoryTreeNode extends CategoryWithCount {
+  children: CategoryTreeNode[];
+}
+
+interface CategoryRootWithStock extends CategoryDocument {
+  totalStock: number;
+  productsCount: number;
+}
+
 @Injectable()
 export class CategoryService {
   private readonly logger = new Logger(CategoryService.name);
 
   constructor(
     @InjectModel(Category.name) private catModel: Model<CategoryDocument>,
-    @InjectModel(Product.name)  private productModel: Model<ProductDocument>,
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
   ) {}
 
   // ── Helpers ───────────────────────────────────────────────────
@@ -26,23 +39,28 @@ export class CategoryService {
     return slugify(name, { lower: true, strict: true, locale: 'fa' });
   }
 
-  private async resolveUniqueSlug(base: string, excludeId?: string): Promise<string> {
+  private async resolveUniqueSlug(
+    base: string,
+    excludeId?: string,
+  ): Promise<string> {
     let slug = base;
     let counter = 1;
     while (true) {
-      const exists = await this.catModel.findOne({
-        slug,
-        ...(excludeId && { _id: { $ne: excludeId } }),
-      }).lean();
+      const exists = await this.catModel
+        .findOne({
+          slug,
+          ...(excludeId && { _id: { $ne: excludeId } }),
+        })
+        .lean();
       if (!exists) return slug;
       slug = `${base}-${counter++}`;
     }
   }
 
   private buildTree(
-    cats: CategoryDocument[],
+    cats: CategoryWithCount[],
     parentId: string | null = null,
-  ): any[] {
+  ): CategoryTreeNode[] {
     return cats
       .filter((c) => {
         const p = c.parent?.toString() ?? null;
@@ -51,12 +69,12 @@ export class CategoryService {
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .map((c) => ({
         ...c,
-        children: this.buildTree(cats, (c._id as any).toString()),
+        children: this.buildTree(cats, c._id.toString()),
       }));
   }
 
   // ── Public ────────────────────────────────────────────────────
-  async getTree(): Promise<any[]> {
+  async getTree(): Promise<CategoryTreeNode[]> {
     const [cats, counts] = await Promise.all([
       this.catModel
         .find({ isActive: true })
@@ -68,11 +86,11 @@ export class CategoryService {
       ]),
     ]);
     const countMap = new Map(counts.map((c) => [c._id, c.count]));
-    const catsWithCount = cats.map((c) => ({
+    const catsWithCount: CategoryWithCount[] = cats.map((c) => ({
       ...c,
-      productsCount: countMap.get((c._id as any).toString()) ?? 0,
+      productsCount: countMap.get(c._id.toString()) ?? 0,
     }));
-    return this.buildTree(catsWithCount as any);
+    return this.buildTree(catsWithCount);
   }
 
   async getRoots(): Promise<CategoryDocument[]> {
@@ -83,7 +101,7 @@ export class CategoryService {
       .lean<CategoryDocument[]>();
   }
 
-  async getRootsWithStock(): Promise<any[]> {
+  async getRootsWithStock(): Promise<CategoryRootWithStock[]> {
     this.logger.log('Fetching root categories with stock aggregation');
 
     const [allCats, productAgg] = await Promise.all([
@@ -92,26 +110,32 @@ export class CategoryService {
         .select('_id name slug image icon sortOrder depth ancestors parent')
         .sort({ sortOrder: 1 })
         .lean<CategoryDocument[]>(),
-      this.productModel.aggregate<{ _id: string; totalStock: number; productsCount: number }>([
+      this.productModel.aggregate<{
+        _id: string;
+        totalStock: number;
+        productsCount: number;
+      }>([
         { $match: { status: 'active' } },
         { $unwind: { path: '$variants', preserveNullAndEmptyArrays: false } },
         {
           $group: {
-            _id:          { $toString: '$category' },
-            totalStock:   { $sum: '$variants.stock' },
-            productIds:   { $addToSet: '$_id' },
+            _id: { $toString: '$category' },
+            totalStock: { $sum: '$variants.stock' },
+            productIds: { $addToSet: '$_id' },
           },
         },
-        { $project: { totalStock: 1, productsCount: { $size: '$productIds' } } },
+        {
+          $project: { totalStock: 1, productsCount: { $size: '$productIds' } },
+        },
       ]),
     ]);
 
     // Map every category ID to its root ID (ancestors[0] for children, self for roots)
     const catToRoot = new Map<string, string>();
-    const roots: any[] = [];
+    const roots: CategoryRootWithStock[] = [];
 
     for (const cat of allCats) {
-      const id = (cat._id as any).toString();
+      const id = cat._id.toString();
       if (cat.depth === 0) {
         catToRoot.set(id, id);
         roots.push({ ...cat, totalStock: 0, productsCount: 0 });
@@ -121,29 +145,34 @@ export class CategoryService {
     }
 
     // Roll-up product stats from each leaf category to its root
-    const rootStats = new Map<string, { totalStock: number; productsCount: number }>(
-      roots.map((r) => [(r._id as any).toString(), { totalStock: 0, productsCount: 0 }]),
+    const rootStats = new Map<
+      string,
+      { totalStock: number; productsCount: number }
+    >(
+      roots.map((r) => [r._id.toString(), { totalStock: 0, productsCount: 0 }]),
     );
 
     for (const ps of productAgg) {
       const rootId = catToRoot.get(ps._id);
       if (rootId && rootStats.has(rootId)) {
         const s = rootStats.get(rootId)!;
-        s.totalStock    += ps.totalStock;
+        s.totalStock += ps.totalStock;
         s.productsCount += ps.productsCount;
       }
     }
 
     const result = roots.map((r) => ({
       ...r,
-      ...rootStats.get((r._id as any).toString()),
+      ...rootStats.get(r._id.toString())!,
     }));
 
     this.logger.log(`Returned ${result.length} root categories`);
     return result;
   }
 
-  async getBySlug(slug: string): Promise<{ category: CategoryDocument; children: CategoryDocument[] }> {
+  async getBySlug(
+    slug: string,
+  ): Promise<{ category: CategoryDocument; children: CategoryDocument[] }> {
     const category = await this.catModel
       .findOne({ slug, isActive: true })
       .select('-__v')
@@ -173,7 +202,7 @@ export class CategoryService {
   }
 
   // ── Admin CRUD ────────────────────────────────────────────────
-  async findAll(): Promise<any[]> {
+  async findAll(): Promise<CategoryWithCount[]> {
     const [cats, counts] = await Promise.all([
       this.catModel
         .find()
@@ -188,14 +217,17 @@ export class CategoryService {
     const countMap = new Map(counts.map((c) => [c._id, c.count]));
     return cats.map((c) => ({
       ...c,
-      productsCount: countMap.get((c._id as any).toString()) ?? 0,
+      productsCount: countMap.get(c._id.toString()) ?? 0,
     }));
   }
 
   async findById(id: string): Promise<CategoryDocument> {
     if (!Types.ObjectId.isValid(id))
       throw new BadRequestException('شناسه معتبر نیست');
-    const cat = await this.catModel.findById(id).select('-__v').lean<CategoryDocument>();
+    const cat = await this.catModel
+      .findById(id)
+      .select('-__v')
+      .lean<CategoryDocument>();
     if (!cat) throw new NotFoundException('دسته‌بندی یافت نشد');
     return cat;
   }
@@ -205,13 +237,17 @@ export class CategoryService {
     let depth = 0;
 
     if (dto.parent) {
-      const parent = await this.catModel.findById(dto.parent).lean<CategoryDocument>();
+      const parent = await this.catModel
+        .findById(dto.parent)
+        .lean<CategoryDocument>();
       if (!parent) throw new NotFoundException('دسته‌بندی والد یافت نشد');
       ancestors = [...parent.ancestors, new Types.ObjectId(dto.parent)];
       depth = parent.depth + 1;
     }
 
-    const baseSlug = dto.slug ? this.makeSlug(dto.slug) : this.makeSlug(dto.name);
+    const baseSlug = dto.slug
+      ? this.makeSlug(dto.slug)
+      : this.makeSlug(dto.name);
     const slug = await this.resolveUniqueSlug(baseSlug);
 
     const cat = await this.catModel.create({
@@ -238,26 +274,34 @@ export class CategoryService {
         throw new BadRequestException('دسته‌بندی نمی‌تواند والد خودش باشد');
 
       const subtreeIds = (await this.getSubtree(id)).map((c) =>
-        (c._id as any).toString(),
+        c._id.toString(),
       );
       if (subtreeIds.includes(dto.parent))
-        throw new BadRequestException('والد نمی‌تواند زیرمجموعه دسته جاری باشد');
+        throw new BadRequestException(
+          'والد نمی‌تواند زیرمجموعه دسته جاری باشد',
+        );
     }
 
     // Recalculate ancestors if parent changed
-    const updateData: Partial<CategoryDocument> = { ...dto } as any;
+    const { parent: dtoParent, ...updateFields } = dto;
+    const updateData: Partial<CategoryDocument> = { ...updateFields };
 
-    if (dto.parent !== undefined) {
-      if (dto.parent === null || dto.parent === '') {
+    if (dtoParent !== undefined) {
+      if (dtoParent === null || dtoParent === '') {
         updateData.ancestors = [];
         updateData.depth = 0;
         updateData.parent = null;
       } else {
-        const parent = await this.catModel.findById(dto.parent).lean<CategoryDocument>();
+        const parent = await this.catModel
+          .findById(dtoParent)
+          .lean<CategoryDocument>();
         if (!parent) throw new NotFoundException('دسته‌بندی والد یافت نشد');
-        updateData.ancestors = [...parent.ancestors, new Types.ObjectId(dto.parent)];
+        updateData.ancestors = [
+          ...parent.ancestors,
+          new Types.ObjectId(dtoParent),
+        ];
         updateData.depth = parent.depth + 1;
-        updateData.parent = new Types.ObjectId(dto.parent) as any;
+        updateData.parent = new Types.ObjectId(dtoParent);
       }
     }
 
@@ -269,7 +313,11 @@ export class CategoryService {
     }
 
     const updated = await this.catModel
-      .findByIdAndUpdate(id, { $set: updateData }, { new: true, runValidators: true })
+      .findByIdAndUpdate(
+        id,
+        { $set: updateData },
+        { new: true, runValidators: true },
+      )
       .select('-__v')
       .lean<CategoryDocument>();
 
@@ -280,7 +328,9 @@ export class CategoryService {
     if (!Types.ObjectId.isValid(id))
       throw new BadRequestException('شناسه معتبر نیست');
 
-    const hasChildren = await this.catModel.exists({ parent: new Types.ObjectId(id) });
+    const hasChildren = await this.catModel.exists({
+      parent: new Types.ObjectId(id),
+    });
     if (hasChildren)
       throw new BadRequestException('ابتدا زیردسته‌ها را حذف کنید');
 

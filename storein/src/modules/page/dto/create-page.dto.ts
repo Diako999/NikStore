@@ -1,6 +1,12 @@
 import {
-  IsString, IsNotEmpty, IsOptional, MaxLength,
-  IsIn, IsNumber, Min, Matches,
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  MaxLength,
+  IsIn,
+  IsNumber,
+  Min,
+  Matches,
 } from 'class-validator';
 
 export class CreatePageDto {
@@ -12,7 +18,9 @@ export class CreatePageDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(200)
-  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, { message: 'slug باید فقط حروف کوچک انگلیسی، اعداد و خط تیره داشته باشد' })
+  @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+    message: 'slug باید فقط حروف کوچک انگلیسی، اعداد و خط تیره داشته باشد',
+  })
   slug: string;
 
   @IsString()

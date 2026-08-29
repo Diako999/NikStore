@@ -5,9 +5,13 @@ import {
   PayloadTooLargeException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import sharp = require('sharp');
+import sharp from 'sharp';
 import { randomUUID } from 'crypto';
-import { StorageProvider, StorageResult, UploadFolder } from './storage/storage-provider.abstract';
+import {
+  StorageProvider,
+  StorageResult,
+  UploadFolder,
+} from './storage/storage-provider.abstract';
 
 const ALLOWED_MIMES = new Set([
   'image/jpeg',
@@ -17,20 +21,20 @@ const ALLOWED_MIMES = new Set([
 ]);
 
 const MAX_DIMENSION = 1920;
-const THUMB_SIZE    = 300;
+const THUMB_SIZE = 300;
 
 export interface UploadResult {
-  original:  StorageResult;
+  original: StorageResult;
   thumbnail: StorageResult | null;
 }
 
 @Injectable()
 export class UploadService {
-  private readonly logger      = new Logger(UploadService.name);
+  private readonly logger = new Logger(UploadService.name);
   private readonly maxFileSize: number;
 
   constructor(
-    private storage:       StorageProvider,
+    private storage: StorageProvider,
     private configService: ConfigService,
   ) {
     this.maxFileSize = this.configService.get<number>('upload.maxFileSize')!;
@@ -38,8 +42,8 @@ export class UploadService {
 
   // ── Single image upload ───────────────────────────────────────
   async uploadImage(
-    file:           Express.Multer.File,
-    folder:         UploadFolder,
+    file: Express.Multer.File,
+    folder: UploadFolder,
     generateThumb = true,
   ): Promise<UploadResult> {
     this.validate(file);
@@ -48,7 +52,7 @@ export class UploadService {
 
     const originalBuffer = await sharp(file.buffer)
       .resize(MAX_DIMENSION, MAX_DIMENSION, {
-        fit:                'inside',
+        fit: 'inside',
         withoutEnlargement: true,
       })
       .webp({ quality: 85 })
@@ -56,9 +60,9 @@ export class UploadService {
 
     const originalResult = await this.storage.save(
       {
-        buffer:   originalBuffer,
+        buffer: originalBuffer,
         mimeType: 'image/webp',
-        size:     originalBuffer.length,
+        size: originalBuffer.length,
         filename: `${id}.webp`,
       },
       folder,
@@ -73,9 +77,9 @@ export class UploadService {
 
       thumbnailResult = await this.storage.save(
         {
-          buffer:   thumbBuffer,
+          buffer: thumbBuffer,
           mimeType: 'image/webp',
-          size:     thumbBuffer.length,
+          size: thumbBuffer.length,
           filename: `${id}_thumb.webp`,
         },
         folder,
@@ -88,8 +92,8 @@ export class UploadService {
 
   // ── Multiple images ───────────────────────────────────────────
   async uploadImages(
-    files:          Express.Multer.File[],
-    folder:         UploadFolder,
+    files: Express.Multer.File[],
+    folder: UploadFolder,
     generateThumb = true,
   ): Promise<UploadResult[]> {
     if (!files?.length)

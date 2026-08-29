@@ -4,7 +4,7 @@ import { HydratedDocument } from 'mongoose';
 export type PageDocument = HydratedDocument<Page>;
 
 export enum PageStatus {
-  DRAFT     = 'draft',
+  DRAFT = 'draft',
   PUBLISHED = 'published',
 }
 
@@ -13,7 +13,13 @@ export class Page {
   @Prop({ required: true, trim: true, maxlength: 200 })
   title: string;
 
-  @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
+  @Prop({
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    index: true,
+  })
   slug: string;
 
   @Prop({ required: true, default: '' })

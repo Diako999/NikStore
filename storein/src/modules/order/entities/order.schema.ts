@@ -4,21 +4,21 @@ import { Document, Types } from 'mongoose';
 export type OrderDocument = Order & Document;
 
 export enum OrderStatus {
-  PENDING    = 'pending',
-  CONFIRMED  = 'confirmed',
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
   PROCESSING = 'processing',
-  SHIPPED    = 'shipped',
-  DELIVERED  = 'delivered',
-  CANCELLED  = 'cancelled',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
 }
 
 export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]:    [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
-  [OrderStatus.CONFIRMED]:  [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+  [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+  [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
   [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]:    [OrderStatus.DELIVERED],
-  [OrderStatus.DELIVERED]:  [],
-  [OrderStatus.CANCELLED]:  [],
+  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+  [OrderStatus.DELIVERED]: [],
+  [OrderStatus.CANCELLED]: [],
 };
 
 @Schema({ _id: false })
@@ -26,7 +26,8 @@ class OrderItemAttribute {
   @Prop() key: string;
   @Prop() value: string;
 }
-const OrderItemAttributeSchema = SchemaFactory.createForClass(OrderItemAttribute);
+const OrderItemAttributeSchema =
+  SchemaFactory.createForClass(OrderItemAttribute);
 
 @Schema({ _id: false })
 class OrderItem {
@@ -34,13 +35,13 @@ class OrderItem {
   productId: Types.ObjectId;
 
   @Prop({ required: true }) variantId: string;
-  @Prop({ default: '' })    sku: string;
+  @Prop({ default: '' }) sku: string;
   @Prop({ required: true }) name: string;
-  @Prop()                   thumbnail: string;
+  @Prop() thumbnail: string;
 
-  @Prop({ required: true })                     price: number;
-  @Prop({ default: null, type: Number })        comparePrice: number | null;
-  @Prop({ required: true, min: 1 })             quantity: number;
+  @Prop({ required: true }) price: number;
+  @Prop({ default: null, type: Number }) comparePrice: number | null;
+  @Prop({ required: true, min: 1 }) quantity: number;
 
   @Prop({ type: [OrderItemAttributeSchema], default: [] })
   attributes: OrderItemAttribute[];
@@ -74,7 +75,7 @@ export class Order {
   shippingAddress: ShippingAddress;
 
   @Prop({ required: true, min: 0 }) subtotal: number;
-  @Prop({ default: 0 })             discount: number;
+  @Prop({ default: 0 }) discount: number;
   @Prop({ required: true, min: 0 }) total: number;
 
   @Prop({ enum: OrderStatus, default: OrderStatus.PENDING, index: true })

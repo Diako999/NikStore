@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
+import Redis from 'ioredis';
 import { RedisModule, REDIS_CLIENT } from './redis.module';
 import redisConfig from '../config/redis.config';
 
@@ -15,7 +16,7 @@ describe('RedisModule', () => {
       ],
     }).compile();
 
-    const redisClient = module.get(REDIS_CLIENT);
+    const redisClient = module.get<Redis>(REDIS_CLIENT);
     expect(redisClient).toBeDefined();
   });
 });

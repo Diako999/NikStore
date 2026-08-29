@@ -1,4 +1,10 @@
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class AdminSmsDto {
   @IsOptional()
@@ -7,7 +13,7 @@ export class AdminSmsDto {
   phone?: string;
 
   @IsString()
-  @MinLength(2,   { message: 'متن پیامک حداقل ۲ کاراکتر است' })
+  @MinLength(2, { message: 'متن پیامک حداقل ۲ کاراکتر است' })
   @MaxLength(500, { message: 'متن پیامک حداکثر ۵۰۰ کاراکتر است' })
   message: string;
 }

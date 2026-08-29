@@ -4,17 +4,20 @@ import { Types } from 'mongoose';
 import { PaymentController } from './payment.controller';
 import { PaymentService } from './payment.service';
 import { PaymentMethod } from './entities/transaction.schema';
+import type { UserDocument } from '../user/entities/user.schema';
 
 const mockService = {
-  getBalance:      jest.fn(),
+  getBalance: jest.fn(),
   getTransactions: jest.fn(),
-  topupWallet:     jest.fn(),
-  payOrder:        jest.fn(),
-  verifyPayment:   jest.fn(),
+  topupWallet: jest.fn(),
+  payOrder: jest.fn(),
+  verifyPayment: jest.fn(),
 };
 
-const userId   = new Types.ObjectId().toString();
-const mockUser = { _id: { toString: () => userId } } as any;
+const userId = new Types.ObjectId().toString();
+const mockUser = {
+  _id: { toString: () => userId },
+} as unknown as UserDocument;
 
 describe('PaymentController', () => {
   let controller: PaymentController;
@@ -40,7 +43,10 @@ describe('PaymentController', () => {
 
   describe('getTransactions', () => {
     it('returns paginated transactions', async () => {
-      mockService.getTransactions.mockResolvedValue({ transactions: [], total: 0 });
+      mockService.getTransactions.mockResolvedValue({
+        transactions: [],
+        total: 0,
+      });
       const result = await controller.getTransactions(mockUser, 1, 20);
       expect(mockService.getTransactions).toHaveBeenCalledWith(userId, 1, 20);
       expect(result.total).toBe(0);
@@ -50,11 +56,16 @@ describe('PaymentController', () => {
   describe('topupWallet', () => {
     it('returns gatewayUrl and authority', async () => {
       mockService.topupWallet.mockResolvedValue({
-        gatewayUrl: 'http://gw/pay', authority: 'AUTH-001',
+        gatewayUrl: 'http://gw/pay',
+        authority: 'AUTH-001',
       });
-      const result = await controller.topupWallet(mockUser, { amount: 50_000_000 });
+      const result = await controller.topupWallet(mockUser, {
+        amount: 50_000_000,
+      });
       expect(result.authority).toBe('AUTH-001');
-      expect(mockService.topupWallet).toHaveBeenCalledWith(userId, { amount: 50_000_000 });
+      expect(mockService.topupWallet).toHaveBeenCalledWith(userId, {
+        amount: 50_000_000,
+      });
     });
   });
 
@@ -64,17 +75,21 @@ describe('PaymentController', () => {
     it('wallet pay: returns success true', async () => {
       mockService.payOrder.mockResolvedValue({ success: true });
       const result = await controller.payOrder(mockUser, {
-        orderId, method: PaymentMethod.WALLET,
+        orderId,
+        method: PaymentMethod.WALLET,
       });
       expect(result.success).toBe(true);
     });
 
     it('gateway pay: returns gatewayUrl', async () => {
       mockService.payOrder.mockResolvedValue({
-        success: false, gatewayUrl: 'http://gw', authority: 'AUTH-002',
+        success: false,
+        gatewayUrl: 'http://gw',
+        authority: 'AUTH-002',
       });
       const result = await controller.payOrder(mockUser, {
-        orderId, method: PaymentMethod.GATEWAY,
+        orderId,
+        method: PaymentMethod.GATEWAY,
       });
       expect(result.gatewayUrl).toBe('http://gw');
     });
@@ -82,14 +97,20 @@ describe('PaymentController', () => {
     it('propagates BadRequestException when order not payable', async () => {
       mockService.payOrder.mockRejectedValue(new BadRequestException());
       await expect(
-        controller.payOrder(mockUser, { orderId, method: PaymentMethod.WALLET }),
+        controller.payOrder(mockUser, {
+          orderId,
+          method: PaymentMethod.WALLET,
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('propagates NotFoundException when order not found', async () => {
       mockService.payOrder.mockRejectedValue(new NotFoundException());
       await expect(
-        controller.payOrder(mockUser, { orderId, method: PaymentMethod.WALLET }),
+        controller.payOrder(mockUser, {
+          orderId,
+          method: PaymentMethod.WALLET,
+        }),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -97,18 +118,27 @@ describe('PaymentController', () => {
   describe('verifyPayment', () => {
     it('returns success on valid verify', async () => {
       mockService.verifyPayment.mockResolvedValue({
-        success: true, refId: 'REF-001', message: 'پرداخت موفق',
+        success: true,
+        refId: 'REF-001',
+        message: 'پرداخت موفق',
       });
-      const result = await controller.verifyPayment({ authority: 'AUTH-001', status: 'OK' });
+      const result = await controller.verifyPayment({
+        authority: 'AUTH-001',
+        status: 'OK',
+      });
       expect(result.success).toBe(true);
       expect(result.refId).toBe('REF-001');
     });
 
     it('returns failure when user cancelled', async () => {
       mockService.verifyPayment.mockResolvedValue({
-        success: false, message: 'پرداخت توسط کاربر لغو شد',
+        success: false,
+        message: 'پرداخت توسط کاربر لغو شد',
       });
-      const result = await controller.verifyPayment({ authority: 'AUTH-001', status: 'NOK' });
+      const result = await controller.verifyPayment({
+        authority: 'AUTH-001',
+        status: 'NOK',
+      });
       expect(result.success).toBe(false);
     });
 

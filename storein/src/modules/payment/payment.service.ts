@@ -8,8 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { Model, Types } from 'mongoose';
 import { Wallet, WalletDocument } from './entities/wallet.schema';
 import {
-  Transaction, TransactionDocument,
-  TransactionStatus, TransactionType,
+  Transaction,
+  TransactionDocument,
+  TransactionStatus,
+  TransactionType,
   PaymentMethod,
 } from './entities/transaction.schema';
 import { User, UserDocument } from '../user/entities/user.schema';
@@ -30,9 +32,9 @@ export class PaymentService {
   private readonly defaultCallback: string;
 
   constructor(
-    @InjectModel(Wallet.name)      private walletModel: Model<WalletDocument>,
+    @InjectModel(Wallet.name) private walletModel: Model<WalletDocument>,
     @InjectModel(Transaction.name) private txModel: Model<TransactionDocument>,
-    @InjectModel(User.name)        private userModel: Model<UserDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private gateway: PaymentGateway,
     private orderService: OrderService,
     private eventEmitter: EventEmitter2,
@@ -40,7 +42,9 @@ export class PaymentService {
     private readonly logger: AppLoggerService,
   ) {
     this.logger.setContext('PaymentService');
-    this.defaultCallback = this.configService.get<string>('app.paymentCallbackUrl')!;
+    this.defaultCallback = this.configService.get<string>(
+      'app.paymentCallbackUrl',
+    )!;
   }
 
   // ── Wallet ────────────────────────────────────────────────────
@@ -51,7 +55,7 @@ export class PaymentService {
       { $setOnInsert: { userId: oid, balance: 0, isActive: true } },
       { upsert: true, new: true },
     );
-    return wallet!;
+    return wallet;
   }
 
   async getBalance(userId: string): Promise<{ balance: number }> {
@@ -60,10 +64,12 @@ export class PaymentService {
   }
 
   async getTransactions(
-    userId: string, page = 1, limit = 20,
+    userId: string,
+    page = 1,
+    limit = 20,
   ): Promise<{ transactions: TransactionDocument[]; total: number }> {
     const filter = { userId: new Types.ObjectId(userId) };
-    const skip   = (page - 1) * limit;
+    const skip = (page - 1) * limit;
     const [transactions, total] = await Promise.all([
       this.txModel
         .find(filter)
@@ -77,24 +83,30 @@ export class PaymentService {
   }
 
   // ── Top-up Wallet via Gateway ─────────────────────────────────
-  async topupWallet(userId: string, dto: TopupWalletDto): Promise<{
-    gatewayUrl: string; authority: string;
+  async topupWallet(
+    userId: string,
+    dto: TopupWalletDto,
+  ): Promise<{
+    gatewayUrl: string;
+    authority: string;
   }> {
     const callbackUrl = dto.callbackUrl ?? this.defaultCallback;
     const { authority, gatewayUrl } = await this.gateway.create(
-      dto.amount, 'شارژ کیف پول', callbackUrl,
+      dto.amount,
+      'شارژ کیف پول',
+      callbackUrl,
     );
 
     await this.txModel.create({
-      userId:        new Types.ObjectId(userId),
-      type:          TransactionType.CREDIT,
-      amount:        dto.amount,
-      method:        PaymentMethod.GATEWAY,
-      status:        TransactionStatus.PENDING,
-      description:   'شارژ کیف پول',
+      userId: new Types.ObjectId(userId),
+      type: TransactionType.CREDIT,
+      amount: dto.amount,
+      method: PaymentMethod.GATEWAY,
+      status: TransactionStatus.PENDING,
+      description: 'شارژ کیف پول',
       authority,
       gatewayUrl,
-      walletAmount:  0,
+      walletAmount: 0,
       gatewayAmount: dto.amount,
     });
 
@@ -102,7 +114,10 @@ export class PaymentService {
   }
 
   // ── Pay Order ─────────────────────────────────────────────────
-  async payOrder(userId: string, dto: PayOrderDto): Promise<{
+  async payOrder(
+    userId: string,
+    dto: PayOrderDto,
+  ): Promise<{
     success: boolean;
     gatewayUrl?: string;
     authority?: string;
@@ -115,8 +130,8 @@ export class PaymentService {
     this.logger.log('Payment initiated', {
       orderId: dto.orderId,
       userId,
-      method:  dto.method,
-      amount:  order.total,
+      method: dto.method,
+      amount: order.total,
     });
 
     const callbackUrl = dto.callbackUrl ?? this.defaultCallback;
@@ -124,27 +139,31 @@ export class PaymentService {
     // ── Wallet only ──────────────────────────────────────────────
     if (dto.method === PaymentMethod.WALLET) {
       await this.debitWallet(userId, order.total, dto.orderId, 'پرداخت سفارش');
-      await this.orderService.updateStatus(dto.orderId, { status: OrderStatus.CONFIRMED });
+      await this.orderService.updateStatus(dto.orderId, {
+        status: OrderStatus.CONFIRMED,
+      });
       return { success: true };
     }
 
     // ── Gateway only ─────────────────────────────────────────────
     if (dto.method === PaymentMethod.GATEWAY) {
       const { authority, gatewayUrl } = await this.gateway.create(
-        order.total, `پرداخت سفارش ${order.orderNumber}`, callbackUrl,
+        order.total,
+        `پرداخت سفارش ${order.orderNumber}`,
+        callbackUrl,
       );
 
       await this.txModel.create({
-        userId:        new Types.ObjectId(userId),
-        orderId:       new Types.ObjectId(dto.orderId),
-        type:          TransactionType.DEBIT,
-        amount:        order.total,
-        method:        PaymentMethod.GATEWAY,
-        status:        TransactionStatus.PENDING,
-        description:   `پرداخت سفارش ${order.orderNumber}`,
+        userId: new Types.ObjectId(userId),
+        orderId: new Types.ObjectId(dto.orderId),
+        type: TransactionType.DEBIT,
+        amount: order.total,
+        method: PaymentMethod.GATEWAY,
+        status: TransactionStatus.PENDING,
+        description: `پرداخت سفارش ${order.orderNumber}`,
         authority,
         gatewayUrl,
-        walletAmount:  0,
+        walletAmount: 0,
         gatewayAmount: order.total,
       });
 
@@ -153,7 +172,7 @@ export class PaymentService {
 
     // ── Mixed (wallet + gateway) ──────────────────────────────────
     if (dto.method === PaymentMethod.MIXED) {
-      const walletAmt  = dto.walletAmount ?? 0;
+      const walletAmt = dto.walletAmount ?? 0;
       const gatewayAmt = order.total - walletAmt;
 
       if (walletAmt <= 0 || gatewayAmt <= 0)
@@ -166,20 +185,22 @@ export class PaymentService {
         );
 
       const { authority, gatewayUrl } = await this.gateway.create(
-        gatewayAmt, `پرداخت سفارش ${order.orderNumber}`, callbackUrl,
+        gatewayAmt,
+        `پرداخت سفارش ${order.orderNumber}`,
+        callbackUrl,
       );
 
       await this.txModel.create({
-        userId:        new Types.ObjectId(userId),
-        orderId:       new Types.ObjectId(dto.orderId),
-        type:          TransactionType.DEBIT,
-        amount:        order.total,
-        method:        PaymentMethod.MIXED,
-        status:        TransactionStatus.PENDING,
-        description:   `پرداخت سفارش ${order.orderNumber}`,
+        userId: new Types.ObjectId(userId),
+        orderId: new Types.ObjectId(dto.orderId),
+        type: TransactionType.DEBIT,
+        amount: order.total,
+        method: PaymentMethod.MIXED,
+        status: TransactionStatus.PENDING,
+        description: `پرداخت سفارش ${order.orderNumber}`,
         authority,
         gatewayUrl,
-        walletAmount:  walletAmt,
+        walletAmount: walletAmt,
         gatewayAmount: gatewayAmt,
       });
 
@@ -190,8 +211,13 @@ export class PaymentService {
   }
 
   // ── Verify Gateway Payment ────────────────────────────────────
-  async verifyPayment(authority: string, statusParam: string): Promise<{
-    success: boolean; refId?: string; message: string;
+  async verifyPayment(
+    authority: string,
+    statusParam: string,
+  ): Promise<{
+    success: boolean;
+    refId?: string;
+    message: string;
   }> {
     const tx = await this.txModel.findOne({ authority });
     if (!tx) throw new NotFoundException('تراکنش یافت نشد');
@@ -216,7 +242,7 @@ export class PaymentService {
 
       this.logger.warn('Payment verification failed', {
         authority,
-        txId:   (tx._id as any).toString(),
+        txId: tx._id.toString(),
         userId: tx.userId.toString(),
         amount: tx.amount,
         reason: result.message,
@@ -229,16 +255,19 @@ export class PaymentService {
       if (failedUser) {
         this.eventEmitter.emit(EVENTS.PAYMENT_FAILED, {
           userId: tx.userId.toString(),
-          phone:  failedUser.phone,
+          phone: failedUser.phone,
         });
       }
 
-      return { success: false, message: result.message ?? 'تایید پرداخت ناموفق بود' };
+      return {
+        success: false,
+        message: result.message ?? 'تایید پرداخت ناموفق بود',
+      };
     }
 
     await this.txModel.findByIdAndUpdate(tx._id, {
       status: TransactionStatus.SUCCESS,
-      refId:  result.refId,
+      refId: result.refId,
     });
 
     const successUser = await this.userModel
@@ -252,10 +281,10 @@ export class PaymentService {
 
       if (successUser) {
         const event: PaymentSuccessEvent = {
-          userId:  tx.userId.toString(),
-          phone:   successUser.phone,
-          amount:  tx.amount,
-          refId:   result.refId!,
+          userId: tx.userId.toString(),
+          phone: successUser.phone,
+          amount: tx.amount,
+          refId: result.refId!,
           isTopup: true,
         };
         this.eventEmitter.emit(EVENTS.PAYMENT_SUCCESS, event);
@@ -267,8 +296,10 @@ export class PaymentService {
     // Mixed: debit wallet portion first
     if (tx.method === PaymentMethod.MIXED && tx.walletAmount > 0) {
       await this.debitWallet(
-        tx.userId.toString(), tx.walletAmount,
-        tx.orderId.toString(), 'پرداخت ترکیبی سفارش — سهم کیف پول',
+        tx.userId.toString(),
+        tx.walletAmount,
+        tx.orderId.toString(),
+        'پرداخت ترکیبی سفارش — سهم کیف پول',
       );
     }
 
@@ -278,11 +309,11 @@ export class PaymentService {
 
     if (successUser) {
       const event: PaymentSuccessEvent = {
-        userId:  tx.userId.toString(),
-        phone:   successUser.phone,
+        userId: tx.userId.toString(),
+        phone: successUser.phone,
         orderId: tx.orderId.toString(),
-        amount:  tx.amount,
-        refId:   result.refId!,
+        amount: tx.amount,
+        refId: result.refId!,
         isTopup: false,
       };
       this.eventEmitter.emit(EVENTS.PAYMENT_SUCCESS, event);
@@ -290,11 +321,11 @@ export class PaymentService {
 
     this.logger.log('Payment verified successfully', {
       authority,
-      refId:   result.refId,
-      txId:    (tx._id as any).toString(),
-      userId:  tx.userId.toString(),
+      refId: result.refId,
+      txId: tx._id.toString(),
+      userId: tx.userId.toString(),
       orderId: tx.orderId?.toString(),
-      amount:  tx.amount,
+      amount: tx.amount,
     });
 
     return { success: true, refId: result.refId, message: 'پرداخت موفق' };
@@ -302,25 +333,29 @@ export class PaymentService {
 
   // ── Private: atomic wallet ops ────────────────────────────────
   private async debitWallet(
-    userId: string, amount: number,
-    orderId?: string, description = 'برداشت از کیف پول',
+    userId: string,
+    amount: number,
+    orderId?: string,
+    description = 'برداشت از کیف پول',
   ): Promise<void> {
     const updated = await this.walletModel.findOneAndUpdate(
       { userId: new Types.ObjectId(userId), balance: { $gte: amount } },
       { $inc: { balance: -amount } },
     );
     if (!updated)
-      throw new BadRequestException('موجودی کیف پول کافی نیست یا کیف پول فعال نیست');
+      throw new BadRequestException(
+        'موجودی کیف پول کافی نیست یا کیف پول فعال نیست',
+      );
 
     await this.txModel.create({
-      userId:        new Types.ObjectId(userId),
-      orderId:       orderId ? new Types.ObjectId(orderId) : null,
-      type:          TransactionType.DEBIT,
+      userId: new Types.ObjectId(userId),
+      orderId: orderId ? new Types.ObjectId(orderId) : null,
+      type: TransactionType.DEBIT,
       amount,
-      method:        PaymentMethod.WALLET,
-      status:        TransactionStatus.SUCCESS,
+      method: PaymentMethod.WALLET,
+      status: TransactionStatus.SUCCESS,
       description,
-      walletAmount:  amount,
+      walletAmount: amount,
       gatewayAmount: 0,
     });
   }

@@ -5,7 +5,13 @@ export type WalletDocument = Wallet & Document;
 
 @Schema({ timestamps: true })
 export class Wallet {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    unique: true,
+    index: true,
+  })
   userId: Types.ObjectId;
 
   @Prop({ default: 0, min: 0 })

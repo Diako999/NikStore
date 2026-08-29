@@ -1,14 +1,20 @@
 import {
-  Body, Controller, Delete, Get,
-  Param, Patch, Post, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { BannerService }      from './banner.service';
-import { CreateBannerDto }    from './dto/create-banner.dto';
-import { UpdateBannerDto }    from './dto/update-banner.dto';
-import { ReorderBannersDto }  from './dto/reorder-banners.dto';
-import { JwtAuthGuard }       from '../auth/guards/jwt-auth.guard';
-import { AdminGuard }         from '../../common/guards/admin.guard';
-import { Public }             from '../../common/decorators/public.decorator';
+import { BannerService } from './banner.service';
+import { CreateBannerDto } from './dto/create-banner.dto';
+import { UpdateBannerDto } from './dto/update-banner.dto';
+import { ReorderBannersDto } from './dto/reorder-banners.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '../../common/guards/admin.guard';
+import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('banners')
 export class BannerController {

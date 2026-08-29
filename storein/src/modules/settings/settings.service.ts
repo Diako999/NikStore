@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { SiteSettings, SiteSettingsDocument } from './entities/site-settings.schema';
+import {
+  SiteSettings,
+  SiteSettingsDocument,
+} from './entities/site-settings.schema';
 import { UpdateSettingsDto } from './dto/update-settings.dto';
 import { AppLoggerService } from '../../common/logger/app-logger.service';
 
@@ -40,10 +43,10 @@ export class SettingsService {
       .lean<SiteSettingsDocument>();
 
     this.logger.log('Site settings updated', {
-      fields:           Object.keys(dto),
-      hasSocial:        !!dto.social,
-      footerLinksCount: dto.footerLinks?.length  ?? 0,
-      trustItemsCount:  dto.trustItems?.length   ?? 0,
+      fields: Object.keys(dto),
+      hasSocial: !!dto.social,
+      footerLinksCount: dto.footerLinks?.length ?? 0,
+      trustItemsCount: dto.trustItems?.length ?? 0,
     });
 
     return doc;

@@ -5,7 +5,8 @@ import { SmsNotificationChannel } from './notification-channel.abstract';
 export class MockSmsChannel extends SmsNotificationChannel {
   private readonly logger = new Logger(MockSmsChannel.name);
 
-  async send(phone: string, body: string): Promise<void> {
+  send(phone: string, body: string): Promise<void> {
     this.logger.log(`📱 [MOCK SMS NOTIFY] → ${phone} | ${body}`);
+    return Promise.resolve();
   }
 }

@@ -11,14 +11,16 @@ export function IsEndDateAfterStartDate(
   return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isEndDateAfterStartDate',
-      target: (object as any).constructor,
+      target: object.constructor,
       propertyName,
       constraints: [property],
       options: validationOptions,
       validator: {
-        validate(value: any, args: ValidationArguments) {
-          const [relatedPropertyName] = args.constraints;
-          const relatedValue = (args.object as any)[relatedPropertyName];
+        validate(value: string, args: ValidationArguments) {
+          const [relatedPropertyName] = args.constraints as string[];
+          const relatedValue = (args.object as Record<string, string>)[
+            relatedPropertyName
+          ];
           if (!value || !relatedValue) return true;
           return new Date(value) > new Date(relatedValue);
         },

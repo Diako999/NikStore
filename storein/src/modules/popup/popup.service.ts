@@ -7,7 +7,9 @@ import { UpdatePopupDto } from './dto/update-popup.dto';
 
 @Injectable()
 export class PopupService {
-  constructor(@InjectModel(Popup.name) private popupModel: Model<PopupDocument>) {}
+  constructor(
+    @InjectModel(Popup.name) private popupModel: Model<PopupDocument>,
+  ) {}
 
   async findActive(): Promise<PopupDocument | null> {
     return this.popupModel

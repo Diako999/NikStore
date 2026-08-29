@@ -6,9 +6,12 @@ import { LocalStorageProvider } from './local-storage.provider';
 
 jest.mock('fs');
 
-const mockConfig = (dest = '/tmp/uploads', baseUrl = 'http://localhost:3000') => ({
+const mockConfig = (
+  dest = '/tmp/uploads',
+  baseUrl = 'http://localhost:3000',
+) => ({
   get: jest.fn((key: string) => {
-    if (key === 'upload.dest')    return dest;
+    if (key === 'upload.dest') return dest;
     if (key === 'upload.baseUrl') return baseUrl;
     return undefined;
   }),
@@ -60,7 +63,12 @@ describe('LocalStorageProvider', () => {
     it('writes file to dest/folder/filename', async () => {
       const buf = Buffer.from('img');
       await provider.save(
-        { buffer: buf, mimeType: 'image/webp', size: buf.length, filename: 'x.webp' },
+        {
+          buffer: buf,
+          mimeType: 'image/webp',
+          size: buf.length,
+          filename: 'x.webp',
+        },
         'products',
       );
       expect(fs.writeFileSync).toHaveBeenCalledWith(
@@ -72,7 +80,12 @@ describe('LocalStorageProvider', () => {
     it('returns StorageResult with relative url', async () => {
       const buf = Buffer.from('img');
       const result = await provider.save(
-        { buffer: buf, mimeType: 'image/webp', size: buf.length, filename: 'x.webp' },
+        {
+          buffer: buf,
+          mimeType: 'image/webp',
+          size: buf.length,
+          filename: 'x.webp',
+        },
         'products',
       );
       expect(result.url).toBe('/uploads/products/x.webp');
@@ -81,9 +94,14 @@ describe('LocalStorageProvider', () => {
 
     it('creates directory when it does not exist', async () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
-      const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockReturnValue(undefined as any);
+      const mkdirSpy = jest.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
       await provider.save(
-        { buffer: Buffer.from('x'), mimeType: 'image/webp', size: 1, filename: 'y.webp' },
+        {
+          buffer: Buffer.from('x'),
+          mimeType: 'image/webp',
+          size: 1,
+          filename: 'y.webp',
+        },
         'categories',
       );
       expect(mkdirSpy).toHaveBeenCalledWith(

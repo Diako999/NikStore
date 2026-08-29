@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Page, PageDocument, PageStatus } from './entities/page.schema';
@@ -6,20 +10,20 @@ import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 
 function slugify(text: string): string {
-  return text
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-    .replace(/-+/g, '-')
-    .slice(0, 120) || `page-${Date.now()}`;
+  return (
+    text
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+      .slice(0, 120) || `page-${Date.now()}`
+  );
 }
 
 @Injectable()
 export class PageService {
-  constructor(
-    @InjectModel(Page.name) private pageModel: Model<PageDocument>,
-  ) {}
+  constructor(@InjectModel(Page.name) private pageModel: Model<PageDocument>) {}
 
   async findAll(adminMode = false): Promise<PageDocument[]> {
     const filter = adminMode ? {} : { status: PageStatus.PUBLISHED };
@@ -48,7 +52,11 @@ export class PageService {
     const slug = dto.slug || slugify(dto.title);
     const exists = await this.pageModel.exists({ slug });
     if (exists) throw new ConflictException('این slug قبلاً استفاده شده است');
-    return this.pageModel.create({ ...dto, slug, status: (dto.status ?? 'draft') as PageStatus }) as unknown as PageDocument;
+    return this.pageModel.create({
+      ...dto,
+      slug,
+      status: (dto.status ?? 'draft') as PageStatus,
+    });
   }
 
   async update(id: string, dto: UpdatePageDto): Promise<PageDocument> {
@@ -58,8 +66,12 @@ export class PageService {
     const update: Record<string, any> = { ...dto };
 
     if (dto.slug && dto.slug !== existing.slug) {
-      const conflict = await this.pageModel.exists({ slug: dto.slug, _id: { $ne: id } });
-      if (conflict) throw new ConflictException('این slug قبلاً استفاده شده است');
+      const conflict = await this.pageModel.exists({
+        slug: dto.slug,
+        _id: { $ne: id },
+      });
+      if (conflict)
+        throw new ConflictException('این slug قبلاً استفاده شده است');
     }
 
     const updated = await this.pageModel

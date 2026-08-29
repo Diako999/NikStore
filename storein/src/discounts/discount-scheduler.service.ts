@@ -30,7 +30,7 @@ export class DiscountSchedulerService {
     const result = await this.discountModel.updateMany(
       {
         isActive: true,
-        endDate:  { $lt: new Date(), $ne: null },
+        endDate: { $lt: new Date(), $ne: null },
       },
       { $set: { isActive: false } },
     );

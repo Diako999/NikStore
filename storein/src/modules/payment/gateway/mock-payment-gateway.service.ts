@@ -9,7 +9,7 @@ import {
 export class MockPaymentGateway extends PaymentGateway {
   private readonly logger = new Logger(MockPaymentGateway.name);
 
-  async create(
+  create(
     amount: number,
     description: string,
     callbackUrl: string,
@@ -23,17 +23,17 @@ export class MockPaymentGateway extends PaymentGateway {
       `💳 [MOCK GATEWAY] Created | amount: ${amount} | authority: ${authority}`,
     );
 
-    return {
+    return Promise.resolve({
       authority,
       gatewayUrl: `http://localhost:3000/mock-pay?authority=${authority}&callback=${encodeURIComponent(callbackUrl)}`,
-    };
+    });
   }
 
-  async verify(authority: string, amount: number): Promise<GatewayVerifyResult> {
+  verify(authority: string): Promise<GatewayVerifyResult> {
     const refId = `REF-${Date.now()}`;
     this.logger.log(
       `✅ [MOCK GATEWAY] Verified | authority: ${authority} | refId: ${refId}`,
     );
-    return { success: true, refId };
+    return Promise.resolve({ success: true, refId });
   }
 }

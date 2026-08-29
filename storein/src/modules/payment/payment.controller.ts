@@ -1,6 +1,12 @@
 import {
-  Body, Controller, Get, HttpCode, HttpStatus, Post,
-  Query, UseGuards,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { PayOrderDto } from './dto/pay-order.dto';
@@ -11,7 +17,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import type { UserDocument } from '../user/entities/user.schema';
 
-const uid = (u: UserDocument) => (u._id as any).toString();
+const uid = (u: UserDocument) => u._id.toString();
 
 @Controller('payments')
 export class PaymentController {

@@ -1,18 +1,24 @@
 import {
-  Body, Controller, Delete,
-  Get, Param, Patch, Post,
-  Query, UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { AdminBroadcastDto } from './dto/admin-broadcast.dto';
-import { AdminSmsDto }       from './dto/admin-sms.dto';
+import { AdminSmsDto } from './dto/admin-sms.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserDocument } from '../user/entities/user.schema';
 
-const uid = (u: UserDocument) => (u._id as any).toString();
+const uid = (u: UserDocument) => u._id.toString();
 
 @UseGuards(JwtAuthGuard)
 @Controller('notifications')
