@@ -206,7 +206,7 @@
           :class="[
             'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
             isWishlisted
-              ? 'border-red-200 bg-red-50 text-red-500'
+              ? 'border-red-400/40 bg-red-500/10 text-red-500'
               : 'border-surface-border text-text-secondary hover:border-brand/50',
           ]"
         >

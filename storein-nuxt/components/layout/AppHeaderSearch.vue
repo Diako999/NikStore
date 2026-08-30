@@ -6,7 +6,7 @@
         'flex items-center rounded-full border transition-all duration-200',
         isFocused
           ? 'border-brand shadow-[0_0_0_3px_rgb(var(--color-brand-rgb)/0.18)] bg-[var(--color-card)]'
-          : 'border-[var(--color-border)] bg-white/5 hover:border-white/20',
+          : 'border-[var(--color-border)] bg-glass hover:border-white/20',
       ]"
     >
       <!-- Search icon -->

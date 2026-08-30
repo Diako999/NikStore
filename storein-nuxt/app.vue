@@ -83,6 +83,13 @@ if (import.meta.client) {
   watch(theme, (t) => { if (t) applyFromSettings(t) }, { immediate: true })
 }
 
+// ── Dark/light mode — reflected as data-theme on <html> for SSR-safe,
+// no-flash rendering (see composables/useThemeMode.js) ──────────────
+const { mode: themeMode } = useThemeMode()
+useHead({
+  htmlAttrs: { 'data-theme': computed(() => themeMode.value) },
+})
+
 // ── Settings fetch ───────────────────────────────────────────────
 onMounted(() => settingsStore.fetchSettings())
 

@@ -1,4 +1,5 @@
 @import './variables.css';
+@import './glass-theme.css';
 @import './fonts.css';
 
 @tailwind base;

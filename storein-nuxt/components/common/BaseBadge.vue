@@ -18,7 +18,9 @@ const variantClass = {
   yellow: 'badge-yellow',
   blue:   'badge-blue',
   navy:   'badge-navy',
-  gray:   'bg-gray-100 text-gray-600',
+  // Token-based (not hardcoded gray-100/600) so it reads on both themes —
+  // bg-glass resolves to a translucent white in both dark and light modes.
+  gray:   'bg-glass text-glass-text-secondary',
 }
 
 const dotClass = {

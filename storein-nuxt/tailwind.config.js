@@ -12,8 +12,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans:  ['IRANSans',      'Tahoma', 'system-ui', 'sans-serif'],
-        fanum: ['IRANSansFaNum', 'Tahoma', 'system-ui', 'sans-serif'],
+        sans:  ['Vazirmatn',      'Tahoma', 'system-ui', 'sans-serif'],
+        fanum: ['VazirmatnFaNum', 'Tahoma', 'system-ui', 'sans-serif'],
       },
       colors: {
         brand: {
@@ -33,15 +33,31 @@ export default {
         },
         card: 'var(--color-card)',
         bg:   'var(--color-bg)',
-        glass: {
-          DEFAULT: 'var(--glass-bg)',
-          strong:  'var(--glass-bg-strong)',
-          border:  'var(--glass-border)',
-        },
         success: '#10B981',
         warning: '#F59E0B',
         error:   '#EF4444',
         info:    '#3B82F6',
+
+        // ── New glassmorphism token family (chunk 1) — additive, wired to
+        // glass-theme.css's --brand/--text-*/--glass* vars. Named glass-text/
+        // glass-brand/glass (not text/brand) so existing components using the
+        // old tokens above don't silently repoint mid-migration; later chunks
+        // will consciously move call sites to these as they restyle each file.
+        'glass-text': {
+          primary:   'rgb(var(--text-primary-rgb) / <alpha-value>)',
+          secondary: 'rgb(var(--text-secondary-rgb) / <alpha-value>)',
+          disabled:  'var(--text-disabled)',
+        },
+        'glass-brand': {
+          DEFAULT: 'var(--brand)',
+          dark:    'var(--brand-dark)',
+          light:   'var(--brand-light)',
+        },
+        glass: {
+          DEFAULT: 'var(--glass)',
+          strong:  'var(--glass-strong)',
+          border:  'var(--glass-border)',
+        },
       },
       spacing: {
         '18': '4.5rem',

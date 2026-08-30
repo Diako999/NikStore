@@ -1,7 +1,7 @@
 <template>
   <div
-    :class="['bg-gray-200 animate-pulse', circle ? 'rounded-full' : 'rounded-lg']"
-    :style="{ width, height }"
+    :class="['animate-pulse', circle ? 'rounded-full' : 'rounded-lg']"
+    :style="{ width, height, backgroundColor: 'var(--skeleton-bg)' }"
   />
 </template>
 

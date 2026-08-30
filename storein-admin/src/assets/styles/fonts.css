@@ -1,70 +1,73 @@
-/* ── IRANSans Web Font — local files ── */
+/* ── Vazirmatn Web Font — local files (self-hosted, replaces IRANSans) ──
+   Static weights 400/500/600/700/800 per the glassmorphism mockups.
+   Files copied from the `vazirmatn` npm package's fonts/webfonts/ directory. ── */
 
 @font-face {
-  font-family: 'IRANSans';
-  src: url('../fonts/IRANSansWeb-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'IRANSans';
-  src: url('../fonts/IRANSansWeb-Regular.woff2') format('woff2');
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSans';
-  src: url('../fonts/IRANSansWeb-Medium.woff2') format('woff2');
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSans';
-  src: url('../fonts/IRANSansWeb-Bold.woff2') format('woff2');
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSans';
-  src: url('../fonts/IRANSansWeb-Black.woff2') format('woff2');
-  font-weight: 900;
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }
 
 /*
-  IRANSansFaNum — used for prices, counters, badges (font-fanum class).
-  FaNum variant not available; mapped to the same IRANSans files.
+  VazirmatnFaNum — used for prices, counters, badges (font-fanum class).
+  FaNum variant not shipped in the static build; mapped to the same
+  Vazirmatn files (Vazirmatn's default figures already read fine at these sizes).
 */
 @font-face {
-  font-family: 'IRANSansFaNum';
-  src: url('../fonts/IRANSansWeb-Regular.woff2') format('woff2');
+  font-family: 'VazirmatnFaNum';
+  src: url('../fonts/Vazirmatn-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSansFaNum';
-  src: url('../fonts/IRANSansWeb-Medium.woff2') format('woff2');
+  font-family: 'VazirmatnFaNum';
+  src: url('../fonts/Vazirmatn-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSansFaNum';
-  src: url('../fonts/IRANSansWeb-Bold.woff2') format('woff2');
+  font-family: 'VazirmatnFaNum';
+  src: url('../fonts/Vazirmatn-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'IRANSansFaNum';
-  src: url('../fonts/IRANSansWeb-Black.woff2') format('woff2');
-  font-weight: 900;
+  font-family: 'VazirmatnFaNum';
+  src: url('../fonts/Vazirmatn-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
   font-style: normal;
   font-display: swap;
 }

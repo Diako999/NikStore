@@ -1,10 +1,13 @@
-// Apply theme before Vue mounts — prevents flash of unstyled content
+// Apply dark/light mode before Vue mounts — prevents flash of wrong theme.
+// Resolution order: localStorage 'nik-admin-theme' ?? prefers-color-scheme ?? 'dark'.
+// Sets data-theme on <html> (glass-theme.css keys off this attribute) —
+// NOT a `.dark` class; darkMode:'class' is intentionally not enabled in
+// tailwind.config.js for this app, this styles off CSS vars directly.
 ;(function () {
-  const stored = localStorage.getItem('theme')
+  const stored = localStorage.getItem('nik-admin-theme')
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  if (stored === 'dark' || (!stored && prefersDark)) {
-    document.documentElement.classList.add('dark')
-  }
+  const mode = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light')
+  document.documentElement.setAttribute('data-theme', mode)
 })()
 
 import { createApp }        from 'vue'

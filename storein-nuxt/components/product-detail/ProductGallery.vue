@@ -93,7 +93,7 @@
           @click="activeIndex = idx"
           :class="[
             'rounded-full transition-all duration-200 flex-shrink-0',
-            activeIndex === idx ? 'w-5 h-[6px] bg-brand' : 'w-[6px] h-[6px] bg-gray-300',
+            activeIndex === idx ? 'w-5 h-[6px] bg-brand' : 'w-[6px] h-[6px] bg-glass-text-disabled',
           ]"
           style="min-width: 44px; min-height: 44px; width: auto; height: auto; display: flex; align-items: center; justify-content: center; background: transparent;"
           role="tab"
@@ -103,7 +103,7 @@
           <span
             :class="[
               'rounded-full transition-all duration-200 block',
-              activeIndex === idx ? 'w-5 h-1.5 bg-brand' : 'w-1.5 h-1.5 bg-gray-300',
+              activeIndex === idx ? 'w-5 h-1.5 bg-brand' : 'w-1.5 h-1.5 bg-glass-text-disabled',
             ]"
           />
         </button>

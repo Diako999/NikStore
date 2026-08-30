@@ -4,7 +4,8 @@
       <div
         v-for="toast in toasts"
         :key="toast.id"
-        :class="['flex items-center gap-3 px-4 py-3 rounded-xl shadow-dropdown pointer-events-auto w-full', typeClass(toast.type)]"
+        class="toast-item flex items-center gap-3 px-4 py-3 rounded-xl shadow-dropdown pointer-events-auto w-full"
+        :style="accentStyle(toast.type)"
       >
         <span class="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-white text-xs font-bold" :class="iconBg(toast.type)">
           {{ typeIcon(toast.type) }}
@@ -27,13 +28,26 @@ import { useUiStore } from '~/stores/ui.store'
 const uiStore = useUiStore()
 const { toasts } = storeToRefs(uiStore)
 
-function typeClass(type) {
+// Token-driven glass toast: translucent --glass-strong body + a colored
+// accent border on the leading (RTL-logical) edge per type — readable in
+// both themes instead of the old hardcoded light-mode pastels.
+const accentColor = {
+  success: '#10B981',
+  error:   '#EF4444',
+  warning: '#F59E0B',
+  info:    '#3B82F6',
+}
+
+function accentStyle(type) {
+  const color = accentColor[type] || 'var(--text-secondary)'
   return {
-    success: 'bg-green-50 text-green-800 border border-green-200',
-    error:   'bg-red-50 text-red-800 border border-red-200',
-    warning: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
-    info:    'bg-blue-50 text-blue-800 border border-blue-200',
-  }[type] || 'bg-surface-card text-text-primary border border-surface-border'
+    background: 'var(--glass-strong)',
+    border: '1px solid var(--glass-border)',
+    borderInlineStart: `3px solid ${color}`,
+    color: 'var(--text-primary)',
+    backdropFilter: 'blur(20px) saturate(150%)',
+    WebkitBackdropFilter: 'blur(20px) saturate(150%)',
+  }
 }
 
 function iconBg(type) {

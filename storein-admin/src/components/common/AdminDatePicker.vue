@@ -14,7 +14,7 @@
       format="YYYY-MM-DD"
       display-format="jYYYY/jMM/jDD"
       :input-class="inputClass"
-      :color="'#1B4F8A'"
+      :color="'#3D8B52'"
       :auto-submit="true"
     />
     <p v-if="error" class="field-error mt-1">{{ error }}</p>

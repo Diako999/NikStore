@@ -128,6 +128,9 @@
         </Transition>
       </div>
 
+      <!-- Theme toggle -->
+      <ThemeToggle />
+
       <div class="hidden sm:flex flex-col items-end">
         <span class="text-sm font-medium text-text-primary">{{ userName }}</span>
         <span class="text-xs text-primary font-medium">ادمین سیستم</span>
@@ -145,6 +148,7 @@ import { useRouter }     from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useUiStore }    from '@/stores/ui.store'
 import { useAuthStore }  from '@/stores/auth.store'
+import ThemeToggle       from '@/components/common/ThemeToggle.vue'
 
 const ui     = useUiStore()
 const auth   = useAuthStore()

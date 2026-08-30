@@ -1,4 +1,5 @@
 @import './variables.css';
+@import './glass-theme.css';
 @import './fonts.css';
 
 @tailwind base;
@@ -74,8 +75,8 @@
   }
   .input-field::placeholder { color: var(--color-text-disabled); }
 
-  /* Skeleton loader */
-  .skeleton { @apply bg-white/10 animate-pulse rounded; }
+  /* Skeleton loader — token-driven so it reads on both themes */
+  .skeleton { background-color: var(--skeleton-bg); @apply animate-pulse rounded; }
 
   /* Persian numeral font for prices and counters */
   .font-fanum {

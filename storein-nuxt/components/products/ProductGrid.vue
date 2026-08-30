@@ -14,7 +14,7 @@
         <div class="skeleton rounded h-4 mb-2" />
         <div class="skeleton rounded h-3.5 w-3/5 mb-3" />
         <div class="skeleton rounded h-5 w-1/2 mb-3" />
-        <div class="bg-gray-200 animate-pulse rounded-lg h-10" />
+        <div class="skeleton rounded-lg h-10" />
       </div>
     </div>
 
