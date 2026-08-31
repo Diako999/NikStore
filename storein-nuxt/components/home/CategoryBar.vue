@@ -1,17 +1,18 @@
 <template>
   <section v-if="items.length" class="cat-bar">
-    <div class="cat-bar__grid">
-      <NuxtLink
+    <div ref="gridRef" class="cat-bar__grid">
+      <GlassCategoryTile
         v-for="item in items"
         :key="item.slug"
         :to="`/category/${item.slug}`"
-        class="cat-tile"
+        :label="item.name"
+        :sub="subtitleFor(item.slug)"
       >
-        <div class="cat-tile__ico">
-          <img v-if="item.image" :src="item.image" :alt="item.name" class="cat-tile__img" />
-          <svg v-else viewBox="0 0 24 24" fill="none" stroke="#6EB082"
+        <template #icon>
+          <img v-if="item.image" :src="item.image" :alt="item.name" class="cat-bar__img" />
+          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-               class="cat-tile__svg">
+               class="cat-bar__svg">
             <template v-if="iconFor(item.slug) === 'women'">
               <!-- Dress / blouse silhouette -->
               <path d="M9.5 3.5 12 6l2.5-2.5"/>
@@ -28,13 +29,14 @@
               <circle cx="12" cy="12.5" r="1.1"/>
             </template>
             <template v-else>
-              <rect x="4" y="4" width="16" height="16" rx="4"/>
+              <!-- Generic apparel hanger — fallback for any other category -->
+              <path d="M12 3a2 2 0 0 1 2 2c0 .9-.6 1.6-1.4 1.9L12 7l-.6-.1A2 2 0 0 1 10 5a2 2 0 0 1 2-2z"/>
+              <path d="M12 7 3 13l1 3h16l1-3-9-6z"/>
+              <path d="M6 16v3h12v-3"/>
             </template>
           </svg>
-        </div>
-        <span class="cat-tile__lbl">{{ item.name }}</span>
-        <span class="cat-tile__sub">{{ subtitleFor(item.slug) }}</span>
-      </NuxtLink>
+        </template>
+      </GlassCategoryTile>
     </div>
   </section>
 </template>
@@ -42,6 +44,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { categoryService } from '~/services/category.service'
+import GlassCategoryTile from '~/components/glass/CategoryTile.vue'
+import { useGsapReveal } from '~/composables/useGsapReveal'
 
 const ICON_SLUG_MAP = { women: 'women', men: 'men', kids: 'kids' }
 const SUBTITLE_MAP  = {
@@ -58,6 +62,9 @@ function subtitleFor(slug) {
 }
 
 const items = ref([])
+const gridRef = ref(null)
+
+useGsapReveal(gridRef, { y: 18, stagger: 0.06 })
 
 onMounted(async () => {
   try {
@@ -78,63 +85,15 @@ onMounted(async () => {
   gap: 0.75rem;
 }
 
-.cat-tile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1.1rem 0.5rem;
-  border-radius: 18px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(150%);
-  -webkit-backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid var(--glass-border);
-  text-decoration: none;
-  text-align: center;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease, background-color 0.22s ease;
-}
-
-.cat-tile:hover {
-  transform: translateY(-4px);
-  background: rgba(27, 42, 33, 0.72);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
-}
-
-.cat-tile__ico {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgb(var(--color-brand-rgb) / 0.16);
-  flex-shrink: 0;
-}
-
-.cat-tile__img {
+.cat-bar__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 14px;
+  border-radius: 50%;
 }
 
-.cat-tile__svg {
-  width: 24px;
-  height: 24px;
-}
-
-.cat-tile__lbl {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-}
-
-.cat-tile__sub {
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  line-height: 1.3;
+.cat-bar__svg {
+  width: 20px;
+  height: 20px;
 }
 </style>

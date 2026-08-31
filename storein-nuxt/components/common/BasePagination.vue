@@ -7,7 +7,7 @@
       @click="changePage(modelValue - 1)"
       :disabled="modelValue === 1 || loading"
       class="w-9 h-9 rounded-lg flex items-center justify-center
-             border border-surface-border text-text-secondary
+             border border-glass-border text-glass-text-secondary
              hover:border-brand hover:text-brand
              disabled:opacity-30 disabled:cursor-not-allowed
              transition-colors duration-150"
@@ -24,7 +24,7 @@
       <span
         v-if="p === '...'"
         class="w-9 h-9 flex items-center justify-center
-               text-text-disabled text-sm select-none"
+               text-glass-text-disabled text-sm select-none"
       >
         …
       </span>
@@ -35,7 +35,7 @@
           'w-9 h-9 rounded-lg text-sm font-medium transition-all duration-150',
           p === modelValue
             ? 'bg-brand text-white shadow-sm'
-            : 'border border-surface-border text-text-secondary hover:border-brand hover:text-brand',
+            : 'border border-glass-border text-glass-text-secondary hover:border-brand hover:text-brand',
         ]"
         :aria-current="p === modelValue ? 'page' : undefined"
       >
@@ -48,7 +48,7 @@
       @click="changePage(modelValue + 1)"
       :disabled="modelValue === totalPages || loading"
       class="w-9 h-9 rounded-lg flex items-center justify-center
-             border border-surface-border text-text-secondary
+             border border-glass-border text-glass-text-secondary
              hover:border-brand hover:text-brand
              disabled:opacity-30 disabled:cursor-not-allowed
              transition-colors duration-150"

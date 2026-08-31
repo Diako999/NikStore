@@ -120,15 +120,17 @@ onMounted(async () => {
 <style scoped>
 /* ── Card ───────────────────────────────────────────── */
 .popup-card {
-  background: #0f0f18;
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
   border-radius: 20px 20px 0 0;
-  box-shadow: 0 -4px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  box-shadow: 0 -4px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.04);
 }
 @media (min-width: 640px) {
   .popup-card {
     border-radius: 20px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06);
   }
 }
 
@@ -177,14 +179,14 @@ onMounted(async () => {
 .popup-title {
   font-size: 17px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-primary);
   line-height: 1.35;
   letter-spacing: -0.01em;
 }
 .popup-desc {
   font-size: 12px;
   line-height: 1.6;
-  color: rgba(255,255,255,0.45);
+  color: var(--text-secondary);
 }
 
 /* ── CTA Button ─────────────────────────────────────── */
@@ -210,23 +212,23 @@ onMounted(async () => {
 /* ── Dismiss ────────────────────────────────────────── */
 .dismiss-btn {
   font-size: 11px;
-  color: rgba(255,255,255,0.28);
+  color: var(--text-disabled);
   transition: color 0.15s ease;
   padding-bottom: 2px;
 }
-.dismiss-btn:hover { color: rgba(255,255,255,0.55); }
+.dismiss-btn:hover { color: var(--text-secondary); }
 
 /* ── Close button ───────────────────────────────────── */
 .close-btn {
-  background: rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.6);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
   transition: background 0.15s ease, color 0.15s ease, transform 0.2s ease;
   backdrop-filter: blur(4px);
 }
 .close-btn:hover {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
+  background: var(--glass-strong);
+  color: var(--text-primary);
   transform: rotate(90deg);
 }
 

@@ -2,10 +2,10 @@
   <header
     class="sticky top-0 z-header transition-colors duration-200"
     style="
-      background-color: var(--color-header-bg);
+      background-color: var(--glass-strong);
       backdrop-filter: blur(20px) saturate(150%);
       -webkit-backdrop-filter: blur(20px) saturate(150%);
-      border-bottom: 1px solid var(--color-header-border);
+      border-bottom: 1px solid var(--glass-border);
     "
   >
     <!-- Main row -->
@@ -13,7 +13,7 @@
       <!-- Mobile hamburger -->
       <button
         class="md:hidden p-2 -ml-1 rounded-lg transition-colors"
-        style="color: var(--color-text-secondary);"
+        style="color: var(--text-secondary);"
         @click="uiStore.toggleMenu()"
         aria-label="منو"
       >
@@ -27,7 +27,7 @@
         <img src="/nik-logo.png" :alt="`لوگو ${settingsStore.siteName}`" class="w-8 h-8 shrink-0 object-contain rounded-full" draggable="false" />
         <div class="flex flex-col items-start">
           <span class="text-brand font-bold text-xl tracking-tight">{{ settingsStore.siteName }}</span>
-          <span class="hidden md:block -mt-0.5 text-xs" style="color: var(--color-text-secondary);">{{ settingsStore.tagline }}</span>
+          <span class="hidden md:block -mt-0.5 text-xs" style="color: var(--text-secondary);">{{ settingsStore.tagline }}</span>
         </div>
       </NuxtLink>
 

@@ -1,6 +1,6 @@
 ﻿<template>
   <!-- Skeleton -->
-  <div v-if="loading" class="rounded-3xl shadow-card overflow-hidden" style="background-color: var(--color-card);">
+  <div v-if="loading" class="rounded-3xl overflow-hidden fp-card-skel">
     <BaseSkeleton height="280px" class="rounded-none" />
     <div class="p-4 space-y-3">
       <div class="flex gap-2">
@@ -11,11 +11,11 @@
     </div>
   </div>
 
-  <!-- Featured card -->
+  <!-- Featured card — GlassCard-style translucent fill + gradient border,
+       matching the mockups' `.p-card` recipe -->
   <article
     v-else
-    class="rounded-3xl shadow-soft overflow-hidden cursor-pointer hover:shadow-medium hover:-translate-y-1 transition-all duration-200 flex flex-col"
-    style="background-color: var(--color-card);"
+    class="fp-card rounded-3xl overflow-hidden cursor-pointer flex flex-col"
     @click="handleClick"
   >
 
@@ -29,22 +29,31 @@
       <!-- Heart button: top-left — floating glass control, same language as BaseProductCard -->
       <button
         type="button"
-        class="absolute top-4 left-4 z-10 w-12 h-12 rounded-full flex items-center justify-center glass shadow-soft tactile hover:scale-110"
+        class="fp-card__heart absolute top-4 left-4 z-10 w-12 h-12 rounded-full flex items-center justify-center tactile hover:scale-110"
         @click.stop="$emit('toggle-wish')"
+        :aria-label="wishlist ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
+        :aria-pressed="wishlist"
       >
-        <svg class="w-5 h-5" viewBox="0 0 24 24"
-          :fill="wishlist ? 'currentColor' : 'none'"
-          stroke="currentColor" stroke-width="1.8"
-          :class="wishlist ? 'text-red-400' : 'text-white/60'">
-          <path stroke-linecap="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
-        </svg>
+        <Motion
+          as="span"
+          class="inline-flex"
+          :animate="reducedMotion ? {} : { scale: wishlist ? 1.18 : 1 }"
+          :transition="{ type: 'spring', stiffness: 500, damping: 15 }"
+        >
+          <svg class="w-5 h-5" viewBox="0 0 24 24"
+            :fill="wishlist ? 'currentColor' : 'none'"
+            stroke="currentColor" stroke-width="1.8"
+            :class="wishlist ? 'text-red-400' : 'text-white/70'">
+            <path stroke-linecap="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+          </svg>
+        </Motion>
       </button>
 
       <!-- Discount badge: top-right — tinted glass chip -->
       <div
         v-if="discount > 0"
-        class="absolute top-4 right-4 z-10 rounded-2xl text-center glass shadow-soft"
-        style="padding: 10px 14px; min-width: 60px; background: rgba(239,68,68,0.16);"
+        class="fp-card__discount absolute top-4 right-4 z-10 rounded-2xl text-center"
+        style="padding: 10px 14px; min-width: 60px;"
       >
         <p class="text-red-300 font-black leading-none font-fanum" style="font-size: 1.4rem;">{{ discount }}%</p>
         <p class="text-red-300/80 font-bold mt-1" style="font-size: 11px;">تخفیف</p>
@@ -68,8 +77,8 @@
 
       <!-- Product name -->
       <div>
-        <p class="text-text-secondary font-medium leading-none mb-1" style="font-size: 10px;">{{ product.category?.name }}</p>
-        <h3 class="text-text-primary font-bold leading-snug line-clamp-2" style="font-size: 0.875rem;">{{ product.name }}</h3>
+        <p class="text-glass-text-secondary font-medium leading-none mb-1" style="font-size: 10px;">{{ product.category?.name }}</p>
+        <h3 class="text-glass-text-primary font-bold leading-snug line-clamp-2" style="font-size: 0.875rem;">{{ product.name }}</h3>
       </div>
 
       <!-- ① Variant image cards (horizontal scroll) -->
@@ -117,7 +126,7 @@
             <!-- Icon circle -->
             <div
               class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style="background: rgb(var(--color-brand-rgb) / 0.15);"
+              style="background: rgb(var(--brand-rgb) / 0.15);"
             >
               <!-- Feather / quality -->
               <svg v-if="i === 0" class="w-4 h-4 text-brand" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
@@ -134,8 +143,8 @@
               </svg>
             </div>
             <div class="min-w-0">
-              <p class="font-bold text-text-primary leading-tight" style="font-size: 11px;">{{ f.title }}</p>
-              <p class="text-text-secondary leading-tight mt-0.5" style="font-size: 10px;">{{ f.subtitle }}</p>
+              <p class="font-bold text-glass-text-primary leading-tight" style="font-size: 11px;">{{ f.title }}</p>
+              <p class="text-glass-text-secondary leading-tight mt-0.5" style="font-size: 10px;">{{ f.subtitle }}</p>
             </div>
           </div>
         </div>
@@ -144,8 +153,8 @@
         <div class="flex flex-col items-end gap-2">
           <!-- Rating row -->
           <div v-if="product.avgRating" class="flex items-center gap-1">
-            <span class="text-text-secondary font-fanum" style="font-size: 11px;">({{ product.reviewCount || 0 }} نظر)</span>
-            <span class="font-bold text-text-primary font-fanum text-sm">{{ product.avgRating }}</span>
+            <span class="text-glass-text-secondary font-fanum" style="font-size: 11px;">({{ product.reviewCount || 0 }} نظر)</span>
+            <span class="font-bold text-glass-text-primary font-fanum text-sm">{{ product.avgRating }}</span>
             <span class="text-yellow-400" style="font-size: 1rem;">★</span>
           </div>
 
@@ -154,13 +163,13 @@
             <!-- Strikethrough comparePrice -->
             <p
               v-if="currentVariant?.comparePrice > currentVariant?.price"
-              class="text-text-disabled line-through font-fanum leading-none"
+              class="text-glass-text-disabled line-through font-fanum leading-none"
               style="font-size: 12px;"
             >
               {{ formatPrice(currentVariant.comparePrice) }}
             </p>
             <!-- Main price (number only, large) -->
-            <p class="font-black text-text-primary font-fanum leading-tight mt-1" style="font-size: 1.45rem;">
+            <p class="font-black text-glass-text-primary font-fanum leading-tight mt-1" style="font-size: 1.45rem;">
               {{ formatNumber(currentVariant?.price || product.minPrice) }}
             </p>
             <!-- تومان in brand color -->
@@ -185,24 +194,28 @@
 
       <!-- Not in cart: dual Add-to-Cart / Buy-Now actions -->
       <div v-else class="flex items-center gap-2.5">
-        <button
+        <Motion
+          as="button"
           type="button"
           @click.stop="handleAddToCart"
+          :while-press="(reducedMotion || product.totalStock === 0 || addingToCart) ? undefined : { scale: 0.95 }"
           :disabled="product.totalStock === 0 || addingToCart"
-          class="flex-1 h-11 rounded-full border-2 border-brand text-brand font-bold disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform hover:bg-brand/10"
+          class="flex-1 h-11 rounded-full border-2 border-brand text-brand font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-brand/10"
           style="font-size: 0.8125rem;"
         >
           {{ product.totalStock === 0 ? 'ناموجود' : 'افزودن به سبد' }}
-        </button>
-        <button
+        </Motion>
+        <Motion
+          as="button"
           type="button"
           @click.stop="handleBuyNow"
+          :while-press="(reducedMotion || product.totalStock === 0 || addingToCart) ? undefined : { scale: 0.95 }"
           :disabled="product.totalStock === 0 || addingToCart"
-          class="flex-1 h-11 rounded-full bg-brand hover:bg-brand-dark text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform"
+          class="flex-1 h-11 rounded-full bg-brand hover:bg-brand-dark text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           style="font-size: 0.8125rem;"
         >
           {{ addingToCart ? '...' : (product.totalStock === 0 ? 'ناموجود' : 'خرید سریع') }}
-        </button>
+        </Motion>
       </div>
 
     </div>
@@ -210,8 +223,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Motion } from 'motion-v'
 import BaseSkeleton from './BaseSkeleton.vue'
 import { formatPrice, formatNumber } from '~/utils/formatters'
 import { PRODUCT_PLACEHOLDER } from '~/utils/constants'
@@ -231,6 +245,10 @@ const cartStore = useCartStore()
 const ui        = useUiStore()
 
 const addingToCart = ref(false)
+const reducedMotion = ref(false)
+onMounted(() => {
+  reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+})
 
 // ── Variants ──────────────────────────────────────────────────────
 const activeVariants = computed(() =>
@@ -350,3 +368,39 @@ function handleClick() {
   if (props.product.slug) router.push(`/product/${props.product.slug}`)
 }
 </script>
+
+<style scoped>
+.fp-card-skel { background: var(--glass); }
+
+.fp-card {
+  position: relative;
+  border: 1.5px solid transparent;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(150deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .04) 55%, rgba(231, 175, 66, .30)) border-box;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+[data-theme='light'] .fp-card {
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 175, 66, .5) 55%, rgba(122, 90, 220, .4) 100%) border-box;
+  box-shadow: var(--glass-shadow);
+}
+.fp-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, .28);
+}
+
+.fp-card__heart {
+  background: rgba(9, 15, 12, .45);
+  backdrop-filter: blur(6px);
+}
+[data-theme='light'] .fp-card__heart { background: rgba(255, 255, 255, .55); }
+
+.fp-card__discount {
+  background: rgba(239, 68, 68, .16);
+  backdrop-filter: blur(10px);
+}
+</style>

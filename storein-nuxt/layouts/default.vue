@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col bg-surface">
+  <div class="min-h-screen flex flex-col bg-transparent">
     <!-- UXID-006: skip navigation for keyboard/screen-reader users -->
     <a
       href="#main-content"

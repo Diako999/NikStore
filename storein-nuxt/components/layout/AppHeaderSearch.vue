@@ -5,12 +5,12 @@
       :class="[
         'flex items-center rounded-full border transition-all duration-200',
         isFocused
-          ? 'border-brand shadow-[0_0_0_3px_rgb(var(--color-brand-rgb)/0.18)] bg-[var(--color-card)]'
-          : 'border-[var(--color-border)] bg-glass hover:border-white/20',
+          ? 'border-brand shadow-[0_0_0_3px_rgb(var(--brand-rgb)/0.18)] bg-glass-strong'
+          : 'border-glass-border bg-glass hover:border-white/20',
       ]"
     >
       <!-- Search icon -->
-      <span class="pr-3.5 pl-1 text-text-secondary pointer-events-none shrink-0">
+      <span class="pr-3.5 pl-1 text-glass-text-secondary pointer-events-none shrink-0">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4.5 h-4.5 w-[18px] h-[18px]">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
         </svg>
@@ -24,16 +24,16 @@
         dir="rtl"
         autocomplete="off"
         placeholder="جستجو در پوشاک، برند، دسته‌بندی ..."
-        class="flex-1 min-w-0 py-2.5 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-disabled)] focus:outline-none"
+        class="flex-1 min-w-0 py-2.5 bg-transparent text-sm text-glass-text-primary placeholder:text-glass-text-disabled focus:outline-none"
         @focus="onFocus"
         @keydown="onInputKeydown"
       />
 
       <!-- Keyboard shortcut hint — desktop only -->
       <div class="hidden lg:flex items-center gap-1 ml-2 shrink-0">
-        <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded border border-[var(--color-border)] text-[var(--color-text-disabled)] bg-[var(--color-bg)] leading-none">Ctrl</kbd>
-        <span class="text-[var(--color-text-disabled)] text-[10px]">+</span>
-        <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded border border-[var(--color-border)] text-[var(--color-text-disabled)] bg-[var(--color-bg)] leading-none">K</kbd>
+        <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded border border-glass-border text-glass-text-disabled bg-glass leading-none">Ctrl</kbd>
+        <span class="text-glass-text-disabled text-[10px]">+</span>
+        <kbd class="px-1.5 py-0.5 text-[10px] font-mono rounded border border-glass-border text-glass-text-disabled bg-glass leading-none">K</kbd>
       </div>
 
       <!-- Search button -->
@@ -50,7 +50,7 @@
     <Transition name="search-drop">
       <div
         v-if="isOpen && query.trim().length >= 2"
-        class="absolute top-full mt-2 w-full rounded-2xl shadow-dropdown z-dropdown overflow-hidden glass-strong"
+        class="absolute top-full mt-2 w-full rounded-2xl shadow-dropdown z-dropdown overflow-hidden search-drop-panel"
       >
         <!-- Loading -->
         <div v-if="loading" class="p-4 space-y-3">
@@ -64,7 +64,7 @@
           <template v-if="hasResults">
             <!-- Product suggestions -->
             <div v-if="suggestions.products?.length">
-              <div class="px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-disabled)]">
+              <div class="px-4 pt-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-glass-text-disabled">
                 محصولات
               </div>
               <button
@@ -72,7 +72,7 @@
                 :key="item.slug"
                 type="button"
                 class="w-full text-right px-4 py-2.5 flex items-center gap-3 transition-colors duration-100 group"
-                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === idx ? 'rgba(255,255,255,0.06)' : '' }"
+                :style="{ color: 'var(--text-primary)', backgroundColor: activeIndex === idx ? 'var(--glass)' : '' }"
                 @mouseenter="activeIndex = idx"
                 @mouseleave="activeIndex = -1"
                 @click="goToProduct(item)"
@@ -91,9 +91,9 @@
               <div
                 v-if="suggestions.products?.length"
                 class="mx-4 my-1"
-                style="border-top: 1px solid var(--color-border);"
+                style="border-top: 1px solid var(--glass-border);"
               />
-              <div class="px-4 pt-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-disabled)]">
+              <div class="px-4 pt-2 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-glass-text-disabled">
                 دسته‌بندی‌ها
               </div>
               <button
@@ -101,7 +101,7 @@
                 :key="cat.slug"
                 type="button"
                 class="w-full text-right px-4 py-2.5 flex items-center gap-3 transition-colors duration-100"
-                :style="{ color: 'var(--color-text-primary)', backgroundColor: activeIndex === (suggestions.products?.length || 0) + cidx ? 'rgba(255,255,255,0.06)' : '' }"
+                :style="{ color: 'var(--text-primary)', backgroundColor: activeIndex === (suggestions.products?.length || 0) + cidx ? 'var(--glass)' : '' }"
                 @mouseenter="activeIndex = (suggestions.products?.length || 0) + cidx"
                 @mouseleave="activeIndex = -1"
                 @click="goToCategory(cat)"
@@ -112,7 +112,7 @@
                   </svg>
                 </span>
                 <span class="text-sm truncate">{{ cat.name }}</span>
-                <span class="mr-auto text-xs px-2 py-0.5 rounded-full text-brand" style="background-color: rgb(var(--color-brand-rgb) / 0.15);">دسته‌بندی</span>
+                <span class="mr-auto text-xs px-2 py-0.5 rounded-full text-brand" style="background-color: rgb(var(--brand-rgb) / 0.15);">دسته‌بندی</span>
               </button>
             </div>
           </template>
@@ -120,15 +120,15 @@
           <!-- No results -->
           <div v-else class="py-10 text-center">
             <div class="text-3xl mb-2">🔍</div>
-            <p class="text-sm text-[var(--color-text-secondary)]">نتیجه‌ای برای «{{ query }}» یافت نشد</p>
+            <p class="text-sm text-glass-text-secondary">نتیجه‌ای برای «{{ query }}» یافت نشد</p>
           </div>
 
           <!-- Search all -->
-          <div style="border-top: 1px solid var(--color-border);">
+          <div style="border-top: 1px solid var(--glass-border);">
             <button
               type="button"
               class="w-full px-4 py-3 text-sm text-brand flex items-center justify-center gap-2 font-medium transition-colors duration-100"
-              @mouseenter="e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'"
+              @mouseenter="e => e.currentTarget.style.backgroundColor = 'var(--glass)'"
               @mouseleave="e => e.currentTarget.style.backgroundColor = ''"
               @click="handleSearch"
             >
@@ -265,6 +265,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>
+.search-drop-panel {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
+
 .search-drop-enter-active { transition: all 0.15s ease; }
 .search-drop-leave-active { transition: all 0.1s ease; }
 .search-drop-enter-from,

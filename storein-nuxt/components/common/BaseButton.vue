@@ -33,9 +33,9 @@ defineProps({
 defineEmits(['click'])
 
 const variantClasses = {
-  primary:   'bg-brand text-white hover:bg-brand-dark',
-  outline:   'border border-brand text-brand hover:bg-brand hover:text-white',
-  ghost:     'text-text-secondary hover:bg-surface-border',
+  primary:   'bg-glass-brand text-white shadow-[0_8px_22px_rgba(0,0,0,.25)] hover:bg-glass-brand-dark',
+  outline:   'border border-glass-brand text-glass-brand backdrop-blur-md bg-glass hover:bg-glass-strong',
+  ghost:     'text-glass-text-secondary hover:bg-glass',
   danger:    'bg-error text-white hover:bg-red-700',
 }
 

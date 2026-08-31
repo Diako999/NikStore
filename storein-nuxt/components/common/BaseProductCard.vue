@@ -1,6 +1,6 @@
-﻿<template>
+<template>
   <!-- Skeleton -->
-  <div v-if="loading" class="rounded-2xl shadow-card overflow-hidden bg-card">
+  <div v-if="loading" class="rounded-2xl overflow-hidden p-card-skel">
     <BaseSkeleton height="200px" class="rounded-none" />
     <div class="p-4 space-y-3">
       <BaseSkeleton height="1.1rem" />
@@ -10,10 +10,11 @@
     </div>
   </div>
 
-  <!-- Product card -->
+  <!-- Product card — GlassCard-style translucent fill + gradient border,
+       matching the mockups' `.p-card` recipe -->
   <article
     v-else
-    class="rounded-2xl shadow-soft overflow-hidden cursor-pointer hover:shadow-medium hover:-translate-y-1 transition-all duration-200 flex flex-col h-full bg-card"
+    class="p-card cursor-pointer flex flex-col h-full"
     @click="handleClick"
     @keydown.enter.prevent="handleClick"
     @keydown.space.prevent="handleClick"
@@ -22,23 +23,30 @@
     :aria-label="product.name"
   >
     <!-- Image area -->
-    <div class="aspect-square relative shrink-0 overflow-hidden p-3 bg-card">
+    <div class="p-card__thumb aspect-square relative shrink-0 overflow-hidden">
 
       <!-- Wishlist: top-end (physically left in RTL) — floating glass control -->
       <button
         type="button"
-        class="absolute top-2.5 end-2.5 z-10 w-11 h-11 flex items-center justify-center rounded-full glass shadow-soft tactile hover:scale-110"
+        class="p-card__heart absolute top-2.5 end-2.5 z-10 w-11 h-11 flex items-center justify-center rounded-full tactile"
         @click.stop="$emit('toggle-wish')"
         :aria-label="wishlist ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
         :aria-pressed="wishlist"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-          :fill="wishlist ? 'currentColor' : 'none'"
-          stroke="currentColor" stroke-width="1.8"
-          :class="['w-4 h-4', wishlist ? 'text-red-400' : 'text-white/60']"
+        <Motion
+          as="span"
+          class="inline-flex"
+          :animate="reducedMotion ? {} : { scale: wishlist ? 1.18 : 1 }"
+          :transition="{ type: 'spring', stiffness: 500, damping: 15 }"
         >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
-        </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+            :fill="wishlist ? 'currentColor' : 'none'"
+            stroke="currentColor" stroke-width="1.8"
+            :class="['w-4 h-4', wishlist ? 'text-red-400' : 'text-white/70']"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+          </svg>
+        </Motion>
       </button>
 
       <!-- Discount + New badges: top-start (physically right in RTL) -->
@@ -47,17 +55,19 @@
         <BaseBadge v-if="product.isNew" variant="navy" size="sm">جدید</BaseBadge>
       </div>
 
+      <div v-if="!imgSrc || imgError" class="p-card__fallback" :class="fallbackClass" aria-hidden="true" />
       <img
+        v-else
         :src="imgSrc"
         :alt="product.name"
-        class="w-full h-full object-contain"
+        class="w-full h-full object-contain relative z-[1]"
         loading="lazy"
         @error="imgError = true"
       />
 
       <!-- Out of stock overlay -->
-      <div v-if="product.totalStock === 0" class="absolute inset-0 bg-black/55 flex items-center justify-center" aria-hidden="true">
-        <span class="text-white font-semibold text-sm px-3 py-1.5 glass-strong rounded-full">ناموجود</span>
+      <div v-if="product.totalStock === 0" class="absolute inset-0 bg-black/55 flex items-center justify-center z-[2]" aria-hidden="true">
+        <span class="text-white font-semibold text-sm px-3 py-1.5 rounded-full" style="background: var(--glass-strong); backdrop-filter: blur(10px);">ناموجود</span>
       </div>
     </div>
 
@@ -65,7 +75,7 @@
     <div class="p-4 flex flex-col gap-2 flex-1">
 
       <!-- Name -->
-      <h3 class="text-sm font-bold text-text-primary line-clamp-2 leading-relaxed" style="min-height: 2.75rem">
+      <h3 class="text-sm font-bold text-glass-text-primary line-clamp-2 leading-relaxed" style="min-height: 2.75rem">
         {{ product.name }}
       </h3>
 
@@ -82,12 +92,12 @@
       <!-- Price block -->
       <div class="mt-auto pt-1 space-y-1">
         <div v-if="discount > 0" class="flex items-center justify-between gap-1">
-          <span class="text-xs text-text-secondary line-through font-fanum">
+          <span class="text-xs text-glass-text-secondary line-through font-fanum">
             {{ formatPrice(maxComparePrice) }}
           </span>
           <BaseBadge variant="red" size="sm">{{ discount }}%</BaseBadge>
         </div>
-        <p class="text-base font-bold text-text-primary text-right font-fanum">
+        <p class="text-base font-bold text-glass-text-primary text-right font-fanum">
           {{ formatPrice(displayPrice) }}
         </p>
       </div>
@@ -108,24 +118,28 @@
 
       <!-- Not in cart: dual Add-to-Cart / Buy-Now actions -->
       <div v-else class="mt-2 flex items-center gap-2">
-        <button
+        <Motion
+          as="button"
           type="button"
-          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold border-2 border-brand text-brand transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand/10 px-2 truncate"
+          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold border-2 border-brand text-brand transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-brand/10 px-2 truncate"
+          :while-press="(reducedMotion || product.totalStock === 0) ? undefined : { scale: 0.94 }"
           :disabled="product.totalStock === 0"
-          @click.stop="$emit('add-to-cart')"
+          @click="onAddToCart"
           :aria-label="`افزودن ${product.name} به سبد خرید`"
         >
           افزودن به سبد
-        </button>
-        <button
+        </Motion>
+        <Motion
+          as="button"
           type="button"
-          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-dark transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed px-2 truncate"
+          class="flex-1 h-11 min-w-0 rounded-xl text-xs font-bold text-white bg-brand hover:bg-brand-dark transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed px-2 truncate"
+          :while-press="(reducedMotion || product.totalStock === 0) ? undefined : { scale: 0.94 }"
           :disabled="product.totalStock === 0"
-          @click.stop="$emit('buy-now')"
+          @click="onBuyNow"
           :aria-label="`خرید سریع ${product.name}`"
         >
           خرید سریع
-        </button>
+        </Motion>
       </div>
 
     </div>
@@ -133,13 +147,13 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { Motion } from 'motion-v'
 import BaseSkeleton from './BaseSkeleton.vue'
 import BaseBadge    from './BaseBadge.vue'
 import BaseRating   from './BaseRating.vue'
 import { formatPrice } from '~/utils/formatters'
-import { PRODUCT_PLACEHOLDER } from '~/utils/constants'
 import { useCartStore }  from '~/stores/cart.store'
 
 const props = defineProps({
@@ -149,10 +163,18 @@ const props = defineProps({
   featured: { type: Boolean, default: false },
 })
 
-defineEmits(['click', 'add-to-cart', 'buy-now', 'toggle-wish'])
+const emit = defineEmits(['click', 'add-to-cart', 'buy-now', 'toggle-wish'])
 
 const router    = useRouter()
 const cartStore = useCartStore()
+
+const reducedMotion = ref(false)
+onMounted(() => {
+  reducedMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+})
+
+function onAddToCart(e) { emit('add-to-cart', e) }
+function onBuyNow(e) { emit('buy-now', e) }
 
 const isInCart = computed(() =>
   cartStore.items.some(item => item.productId === props.product._id)
@@ -164,15 +186,26 @@ function goToCart() {
 
 const imgError = ref(false)
 
+// Fallback garment-silhouette gradient art (mockup's g-hoodie/g-jacket/etc.)
+// used when a product has no image — picked deterministically from the
+// product id so the same product always gets the same fallback tone.
+const FALLBACK_CLASSES = ['p-card__g-hoodie', 'p-card__g-jacket', 'p-card__g-pants', 'p-card__g-tee', 'p-card__g-sneaker', 'p-card__g-bag']
+const fallbackClass = computed(() => {
+  const id = props.product?._id || props.product?.slug || ''
+  let hash = 0
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
+  return FALLBACK_CLASSES[hash % FALLBACK_CLASSES.length]
+})
+
 function resolveImg(p) {
   if (p.thumbnail) return p.thumbnail
   const img = p.images?.[0]
-  if (!img) return PRODUCT_PLACEHOLDER
+  if (!img) return ''
   if (typeof img === 'string') return img
-  return img.thumbnail || img.url || PRODUCT_PLACEHOLDER
+  return img.thumbnail || img.url || ''
 }
 
-const imgSrc = computed(() => imgError.value ? PRODUCT_PLACEHOLDER : resolveImg(props.product))
+const imgSrc = computed(() => imgError.value ? '' : resolveImg(props.product))
 
 watch(() => props.product?._id, () => { imgError.value = false })
 
@@ -221,3 +254,56 @@ function handleClick() {
   if (props.product.slug) router.push(`/product/${props.product.slug}`)
 }
 </script>
+
+<style scoped>
+.p-card-skel { background: var(--glass); }
+
+.p-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1.5px solid transparent;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(150deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .04) 55%, rgba(122, 90, 220, .30)) border-box;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+[data-theme='light'] .p-card {
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 175, 66, .5) 55%, rgba(122, 90, 220, .4) 100%) border-box;
+  box-shadow: var(--glass-shadow);
+}
+.p-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, .28);
+}
+.p-card:focus-visible {
+  outline: 2px solid var(--brand-light);
+  outline-offset: 2px;
+}
+
+.p-card__thumb { background: var(--glass); }
+
+.p-card__heart {
+  background: rgba(9, 15, 12, .45);
+  backdrop-filter: blur(6px);
+}
+[data-theme='light'] .p-card__heart { background: rgba(255, 255, 255, .55); box-shadow: 0 2px 6px rgba(40, 55, 46, .15); }
+
+.p-card__fallback { width: 100%; height: 100%; }
+.p-card__g-hoodie  { background: radial-gradient(120% 120% at 30% 20%, #A9C9B4 0%, #3D8B52 55%, #0F1A13 100%); }
+.p-card__g-jacket  { background: radial-gradient(120% 120% at 70% 15%, #E7C878 0%, #B5893C 55%, #17130A 100%); }
+.p-card__g-pants   { background: radial-gradient(120% 120% at 30% 80%, #C6B5EE 0%, #7A5ADC 55%, #140E24 100%); }
+.p-card__g-tee     { background: radial-gradient(120% 120% at 50% 10%, #F5F7F3 0%, #6EB082 55%, #0F1A13 100%); }
+.p-card__g-sneaker { background: radial-gradient(120% 120% at 20% 90%, #F5F7F3 0%, #93A69C 55%, #17241C 100%); }
+.p-card__g-bag     { background: radial-gradient(120% 120% at 80% 20%, #FBEFC8 0%, #C7A45C 55%, #17130A 100%); }
+[data-theme='light'] .p-card__g-hoodie  { background: radial-gradient(120% 120% at 30% 20%, #D9EEE0 0%, #6EB082 55%, #245535 100%); }
+[data-theme='light'] .p-card__g-jacket  { background: radial-gradient(120% 120% at 70% 15%, #FBE7CE 0%, #E0A468 55%, #6B3F17 100%); }
+[data-theme='light'] .p-card__g-pants   { background: radial-gradient(120% 120% at 30% 80%, #E7DCF7 0%, #A98BE6 55%, #4A2E82 100%); }
+[data-theme='light'] .p-card__g-tee     { background: radial-gradient(120% 120% at 50% 10%, #FBF3D9 0%, #E9C465 55%, #7A5410 100%); }
+[data-theme='light'] .p-card__g-sneaker { background: radial-gradient(120% 120% at 20% 90%, #FDE6EE 0%, #E9A0B9 55%, #7C2E45 100%); }
+[data-theme='light'] .p-card__g-bag     { background: radial-gradient(120% 120% at 80% 20%, #FBEFCC 0%, #DDB667 55%, #7A5410 100%); }
+</style>
