@@ -5,7 +5,7 @@
     <template v-if="loading">
       <BaseSkeleton height="2rem" class="w-3/4" />
       <BaseSkeleton height="1rem" class="w-1/2" />
-      <div class="border-t border-surface-border pt-4">
+      <div class="border-t border-glass-border pt-4">
         <BaseSkeleton height="1rem" class="w-1/4 mb-3" />
         <div class="flex gap-2">
           <BaseSkeleton v-for="i in 3" :key="i" width="36px" height="36px" circle />
@@ -26,13 +26,13 @@
         >
           {{ product.category?.name }}
         </NuxtLink>
-        <h1 class="text-xl md:text-2xl font-bold text-text-primary leading-8">
+        <h1 class="text-xl md:text-2xl font-bold text-glass-text-primary leading-8">
           {{ product.name }}
         </h1>
       </div>
 
       <!-- ② Rating row -->
-      <div class="flex items-center gap-3 pb-4 border-b border-surface-border">
+      <div class="flex items-center gap-3 pb-4 border-b border-glass-border">
         <BaseRating
           :modelValue="product.avgRating || 0"
           readonly
@@ -40,16 +40,16 @@
           :count="product.reviewCount"
           size="md"
         />
-        <span class="text-text-disabled text-sm">|</span>
-        <span class="text-text-secondary text-sm font-fanum">
+        <span class="text-glass-text-disabled text-sm">|</span>
+        <span class="text-glass-text-secondary text-sm font-fanum">
           {{ formatNumber(product.viewCount || 0) }} بازدید
         </span>
       </div>
 
       <!-- ③ Size selector — pill row -->
-      <div v-if="sizeOptions.length > 0" class="pb-4 border-b border-surface-border">
+      <div v-if="sizeOptions.length > 0" class="pb-4 border-b border-glass-border">
         <div class="flex items-center gap-2 mb-3">
-          <span class="text-sm font-medium text-text-primary">سایز:</span>
+          <span class="text-sm font-medium text-glass-text-primary">سایز:</span>
           <span class="text-sm text-brand font-medium">{{ selectedSize }}</span>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -64,7 +64,7 @@
               'min-w-[44px] h-11 px-3 rounded-xl text-sm font-bold border-2 transition-all duration-150',
               selectedSize === size.value
                 ? 'bg-brand border-brand text-white'
-                : 'border-surface-border text-text-secondary hover:border-brand/50',
+                : 'border-glass-border text-glass-text-secondary hover:border-brand/50',
               size.disabled ? 'opacity-35 cursor-not-allowed line-through' : '',
             ]"
           >
@@ -74,9 +74,9 @@
       </div>
 
       <!-- ④ Color selector — circle swatches -->
-      <div v-if="colorOptions.length > 0" class="pb-4 border-b border-surface-border">
+      <div v-if="colorOptions.length > 0" class="pb-4 border-b border-glass-border">
         <div class="flex items-center gap-2 mb-3">
-          <span class="text-sm font-medium text-text-primary">رنگ:</span>
+          <span class="text-sm font-medium text-glass-text-primary">رنگ:</span>
           <span class="text-sm text-brand font-medium">{{ selectedColor }}</span>
         </div>
         <div class="flex flex-wrap gap-3">
@@ -111,30 +111,30 @@
                 </svg>
               </span>
             </span>
-            <span class="text-xs text-text-secondary leading-none">{{ color.value }}</span>
+            <span class="text-xs text-glass-text-secondary leading-none">{{ color.value }}</span>
           </button>
         </div>
       </div>
 
       <!-- ④ Price -->
-      <div class="pb-4 border-b border-surface-border">
+      <div class="pb-4 border-b border-glass-border">
 
         <!-- variant-level manual discount (comparePrice set on variant) -->
         <template v-if="activeDiscountMode === 'variant'">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-text-disabled line-through text-sm font-fanum">
+            <span class="text-glass-text-disabled line-through text-sm font-fanum">
               {{ formatPrice(selectedVariant.comparePrice) }}
             </span>
             <BaseBadge variant="red" size="sm">{{ discountPercent }}٪ تخفیف</BaseBadge>
           </div>
-          <div class="text-2xl font-black text-text-primary font-fanum">
+          <div class="text-2xl font-black text-glass-text-primary font-fanum">
             {{ formatPrice(selectedVariant?.price || product.minPrice) }}
           </div>
         </template>
         <!-- system-level discount from admin discount panel -->
         <template v-else-if="activeDiscountMode === 'system'">
           <div class="flex items-center gap-2 mb-1">
-            <span class="text-text-disabled line-through text-sm font-fanum">
+            <span class="text-glass-text-disabled line-through text-sm font-fanum">
               {{ formatPrice(selectedVariant?.price || product.minPrice) }}
             </span>
             <BaseBadge variant="red" size="sm">{{ product.discountPercentage }}٪ تخفیف</BaseBadge>
@@ -144,7 +144,7 @@
           </div>
         </template>
         <template v-else>
-          <div class="text-2xl font-black text-text-primary font-fanum">
+          <div class="text-2xl font-black text-glass-text-primary font-fanum">
             {{ formatPrice(selectedVariant?.price || product.minPrice) }}
           </div>
         </template>
@@ -171,22 +171,20 @@
         class="sticky bottom-0 z-20 -mx-4 px-4 py-3 glass-strong shadow-floating md:static md:z-auto md:mx-0 md:px-0 md:py-0 md:bg-transparent md:backdrop-blur-none md:border-0 md:shadow-none flex gap-3"
         style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));"
       >
-        <button
-          type="button"
+        <GlassButton
+          variant="secondary"
+          size="lg"
+          class="flex-1"
           :disabled="!isInStock"
-          :class="[
-            'flex-1 py-3.5 rounded-xl border-2 border-brand text-brand font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2',
-            !isInStock ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand/10',
-          ]"
           @click="handleAddToCart"
         >
-          <svg v-if="!addingToCart" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
           </svg>
           {{ isInStock ? 'افزودن به سبد' : 'ناموجود' }}
-        </button>
+        </GlassButton>
 
-        <BaseButton
+        <GlassButton
           variant="primary"
           size="lg"
           class="flex-1"
@@ -195,7 +193,7 @@
           @click="handleBuyNow"
         >
           {{ isInStock ? 'خرید سریع' : 'ناموجود' }}
-        </BaseButton>
+        </GlassButton>
       </div>
 
       <div class="flex gap-3">
@@ -207,7 +205,7 @@
             'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
             isWishlisted
               ? 'border-red-400/40 bg-red-500/10 text-red-500'
-              : 'border-surface-border text-text-secondary hover:border-brand/50',
+              : 'border-glass-border text-glass-text-secondary hover:border-brand/50',
           ]"
         >
           <svg
@@ -229,7 +227,7 @@
             'flex-1 py-3 rounded-xl border-2 font-medium text-sm flex items-center justify-center gap-2 transition-all duration-200',
             shareCopied
               ? 'border-success/40 bg-success/5 text-success'
-              : 'border-surface-border text-text-secondary hover:border-brand/50',
+              : 'border-glass-border text-glass-text-secondary hover:border-brand/50',
           ]"
         >
           <svg v-if="!shareCopied" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -249,13 +247,13 @@
           :key="g.label"
           class="flex flex-col items-center gap-1.5 text-center"
         >
-          <div class="w-10 h-10 rounded-xl bg-surface flex items-center justify-center">
+          <div class="w-10 h-10 rounded-xl bg-glass border border-glass-border flex items-center justify-center">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
                  class="w-5 h-5 text-brand" aria-hidden="true">
               <path :d="g.svgPath"/>
             </svg>
           </div>
-          <span class="text-text-secondary text-xs leading-4">{{ g.label }}</span>
+          <span class="text-glass-text-secondary text-xs leading-4">{{ g.label }}</span>
         </div>
       </div>
 
@@ -272,8 +270,8 @@ import { useUiStore }       from '~/stores/ui.store'
 import { formatPrice, formatNumber, calcDiscount } from '~/utils/formatters'
 import BaseRating   from '~/components/common/BaseRating.vue'
 import BaseBadge    from '~/components/common/BaseBadge.vue'
-import BaseButton   from '~/components/common/BaseButton.vue'
 import BaseSkeleton from '~/components/common/BaseSkeleton.vue'
+import GlassButton  from '~/components/glass/GlassButton.vue'
 
 const props = defineProps({
   product: { type: Object,  default: null },

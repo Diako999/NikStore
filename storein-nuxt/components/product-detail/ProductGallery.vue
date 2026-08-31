@@ -13,9 +13,11 @@
     <template v-else>
 
       <!-- Main image -->
-      <div
-        class="relative rounded-2xl overflow-hidden border border-surface-border group cursor-zoom-in"
-        style="background-color: var(--color-card); aspect-ratio: 1 / 1;"
+      <GlassCard
+        padding="sm"
+        radius="20px"
+        class="!p-0 group cursor-zoom-in"
+        style="aspect-ratio: 1 / 1;"
         ref="mainContainer"
         @click="openLightbox"
         @keydown.enter.prevent="openLightbox"
@@ -39,19 +41,19 @@
         <template v-if="normalizedImages.length > 1">
           <button
             @click.stop="prev"
-            class="hidden md:flex absolute top-1/2 right-3 -translate-y-1/2 w-11 h-11 bg-black/30 hover:bg-black/50 shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            class="hidden md:flex absolute top-1/2 right-3 -translate-y-1/2 w-11 h-11 glass hover:glass-strong tactile shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
             aria-label="تصویر قبلی"
           >
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-5 h-5 text-glass-text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
             </svg>
           </button>
           <button
             @click.stop="next"
-            class="hidden md:flex absolute top-1/2 left-3 -translate-y-1/2 w-11 h-11 bg-black/30 hover:bg-black/50 shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            class="hidden md:flex absolute top-1/2 left-3 -translate-y-1/2 w-11 h-11 glass hover:glass-strong tactile shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
             aria-label="تصویر بعدی"
           >
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
+            <svg class="w-5 h-5 text-glass-text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
@@ -64,26 +66,28 @@
         >
           {{ activeIndex + 1 }}/{{ normalizedImages.length }}
         </div>
-      </div>
+      </GlassCard>
 
       <!-- Desktop thumbnails -->
-      <div v-if="normalizedImages.length > 1" class="hidden md:flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        <button
-          v-for="(img, idx) in normalizedImages"
-          :key="idx"
-          @click="activeIndex = idx"
-          :class="[
-            'flex-shrink-0 w-[72px] h-[72px] rounded-xl border-2 overflow-hidden transition-all duration-150',
-            activeIndex === idx
-              ? 'border-brand shadow-sm scale-105'
-              : 'border-surface-border hover:border-brand/50',
-          ]"
-          :aria-label="`تصویر ${idx + 1}`"
-          :aria-pressed="activeIndex === idx"
-        >
-          <img :src="img.thumbnail || img.url" :alt="`تصویر ${idx + 1}`" class="w-full h-full object-contain p-1" />
-        </button>
-      </div>
+      <GlassCard v-if="normalizedImages.length > 1" padding="sm" radius="16px" class="hidden md:block">
+        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            v-for="(img, idx) in normalizedImages"
+            :key="idx"
+            @click="activeIndex = idx"
+            :class="[
+              'flex-shrink-0 w-[72px] h-[72px] rounded-xl border-2 overflow-hidden transition-all duration-150',
+              activeIndex === idx
+                ? 'border-brand shadow-sm scale-105'
+                : 'border-glass-border hover:border-brand/50',
+            ]"
+            :aria-label="`تصویر ${idx + 1}`"
+            :aria-pressed="activeIndex === idx"
+          >
+            <img :src="img.thumbnail || img.url" :alt="`تصویر ${idx + 1}`" class="w-full h-full object-contain p-1" />
+          </button>
+        </div>
+      </GlassCard>
 
       <!-- Mobile dot indicators -->
       <div v-if="normalizedImages.length > 1" class="md:hidden flex justify-center gap-1.5 py-1" role="tablist" :aria-label="`تصاویر ${name}`">
@@ -184,6 +188,7 @@
 <script setup>
 import { ref, computed, nextTick, watch } from 'vue'
 import BaseSkeleton from '~/components/common/BaseSkeleton.vue'
+import GlassCard     from '~/components/glass/GlassCard.vue'
 import { PRODUCT_PLACEHOLDER } from '~/utils/constants'
 
 const props = defineProps({

@@ -4,7 +4,7 @@
       v-if="activeChips.length > 0"
       class="flex items-center gap-2 flex-wrap py-2 mb-3"
     >
-      <span class="text-text-secondary text-sm flex-shrink-0">فیلترهای فعال:</span>
+      <span class="text-glass-text-secondary text-sm flex-shrink-0">فیلترهای فعال:</span>
 
       <TransitionGroup name="chip" tag="div" class="flex flex-wrap gap-2">
         <span
@@ -42,7 +42,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { GENDER_OPTIONS, EYEWEAR_CATEGORIES } from '~/utils/constants'
+import { GENDER_OPTIONS, PRODUCT_CATEGORIES } from '~/utils/constants'
 import { formatNumber } from '~/utils/formatters'
 
 const props = defineProps({
@@ -56,7 +56,7 @@ const activeChips = computed(() => {
 
   // Category
   if (f.category) {
-    const cat = EYEWEAR_CATEGORIES.find(c => c.slug === f.category)
+    const cat = PRODUCT_CATEGORIES.find(c => c.slug === f.category)
     chips.push({ key: 'category', value: f.category, label: cat?.label || f.category })
   }
 

@@ -1,7 +1,10 @@
 ﻿<template>
   <section v-if="products.length > 0 || loading" class="mt-6">
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-lg font-bold text-text-primary">محصولات مرتبط</h2>
+      <div class="flex items-center gap-2.5">
+        <span class="block w-1 h-[22px] rounded-full flex-shrink-0" style="background: linear-gradient(180deg, var(--brand-light) 0%, var(--brand) 100%);" aria-hidden="true" />
+        <h2 class="text-lg font-bold text-glass-text-primary">محصولات مرتبط</h2>
+      </div>
       <NuxtLink
         :to="`/category/${categorySlug}`"
         class="text-brand text-sm flex items-center gap-1 hover:gap-2 transition-all duration-200"
@@ -18,11 +21,11 @@
 
       <!-- Skeleton -->
       <template v-if="loading">
-        <div v-for="i in 5" :key="i" class="min-w-[180px] rounded-xl p-3 flex-shrink-0" style="background-color: var(--color-card);">
+        <GlassCard v-for="i in 5" :key="i" padding="sm" radius="14px" class="min-w-[180px] flex-shrink-0">
           <BaseSkeleton height="150px" class="rounded-lg mb-3" />
           <BaseSkeleton height="1rem" class="mb-2" />
           <BaseSkeleton height="1.25rem" width="60%" />
-        </div>
+        </GlassCard>
       </template>
 
       <!-- Real products -->
@@ -55,6 +58,7 @@ import { useCartStore }     from '~/stores/cart.store'
 import { useUiStore }       from '~/stores/ui.store'
 import BaseSkeleton    from '~/components/common/BaseSkeleton.vue'
 import BaseProductCard from '~/components/common/BaseProductCard.vue'
+import GlassCard       from '~/components/glass/GlassCard.vue'
 
 const props = defineProps({
   categorySlug: { type: String, default: '' },

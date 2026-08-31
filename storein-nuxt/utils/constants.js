@@ -8,12 +8,15 @@ export const SORT_OPTIONS = [
   { label: 'بیشترین تخفیف', value: 'discount'   },
 ]
 
-// ─── Eyewear Categories ──────────────────────────────────────────
-export const EYEWEAR_CATEGORIES = [
-  { label: 'عینک آفتابی',  value: 'sunglasses',  slug: 'sunglasses',  icon: '☀️' },
-  { label: 'عینک طبی',     value: 'prescription', slug: 'prescription', icon: '👓' },
-  { label: 'لنز طبی',      value: 'contact-lens', slug: 'contact-lens', icon: '🔵' },
-  { label: 'لوازم جانبی',  value: 'accessories',  slug: 'accessories',  icon: '🧴' },
+// ─── Product Categories ───────────────────────────────────────────
+// Fallback labels for the top-level category slugs (see CategoryBar.vue on
+// the homepage for the same women/men/kids slug convention). Used only as a
+// display-label lookup when a filter chip needs a human label for a category
+// slug that isn't already resolved from the live category tree.
+export const PRODUCT_CATEGORIES = [
+  { label: 'زنانه',   value: 'women', slug: 'women', icon: '👗' },
+  { label: 'مردانه',  value: 'men',   slug: 'men',   icon: '👔' },
+  { label: 'بچگانه',  value: 'kids',  slug: 'kids',  icon: '🧸' },
 ]
 
 // ─── Frame Shapes ─────────────────────────────────────────────────

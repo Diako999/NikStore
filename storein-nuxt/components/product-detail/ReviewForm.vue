@@ -1,9 +1,9 @@
 ﻿<template>
-  <div class="bg-surface rounded-xl p-5 mb-6">
+  <GlassCard padding="lg" radius="16px" class="mb-6">
 
     <!-- Not logged in -->
     <div v-if="!authStore.isLoggedIn" class="text-center py-4">
-      <p class="text-text-secondary text-sm mb-3">
+      <p class="text-glass-text-secondary text-sm mb-3">
         برای ثبت نظر وارد حساب کاربری خود شوید
       </p>
       <NuxtLink to="/auth/login">
@@ -14,9 +14,9 @@
     <!-- Form -->
     <div v-else>
       <button @click="formOpen = !formOpen" class="flex items-center justify-between w-full">
-        <span class="font-bold text-text-primary text-sm">ثبت نظر و امتیاز</span>
+        <span class="font-bold text-glass-text-primary text-sm">ثبت نظر و امتیاز</span>
         <svg
-          class="w-4 h-4 text-text-secondary transition-transform duration-200"
+          class="w-4 h-4 text-glass-text-secondary transition-transform duration-200"
           :class="{ 'rotate-180': formOpen }"
           fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
         >
@@ -29,7 +29,7 @@
 
           <!-- Star selector -->
           <div>
-            <label class="text-sm text-text-secondary block mb-2">
+            <label class="text-sm text-glass-text-secondary block mb-2">
               امتیاز شما:
               <span class="text-brand font-bold">{{ ratingLabel }}</span>
             </label>
@@ -38,14 +38,14 @@
 
           <!-- Title dropdown -->
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-1.5">عنوان نظر</label>
+            <label class="block text-sm font-medium text-glass-text-primary mb-1.5">عنوان نظر</label>
             <div class="relative">
               <select
                 v-model="form.title"
                 :class="[
                   'input-field appearance-none w-full cursor-pointer',
                   errors.title ? 'border-error' : '',
-                  !form.title ? 'text-text-disabled' : 'text-text-primary',
+                  !form.title ? 'text-glass-text-disabled' : 'text-glass-text-primary',
                 ]"
               >
                 <option value="" disabled>یک عنوان انتخاب کنید...</option>
@@ -62,7 +62,7 @@
               </select>
               <!-- chevron icon -->
               <svg
-                class="pointer-events-none absolute top-1/2 -translate-y-1/2 left-3 w-4 h-4 text-text-secondary"
+                class="pointer-events-none absolute top-1/2 -translate-y-1/2 left-3 w-4 h-4 text-glass-text-secondary"
                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
               >
                 <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
@@ -73,7 +73,7 @@
 
           <!-- Body -->
           <div>
-            <label class="block text-sm font-medium text-text-primary mb-1.5">
+            <label class="block text-sm font-medium text-glass-text-primary mb-1.5">
               متن نظر <span class="text-error">*</span>
             </label>
             <textarea
@@ -94,7 +94,7 @@
         </div>
       </Transition>
     </div>
-  </div>
+  </GlassCard>
 </template>
 
 <script setup>
@@ -104,6 +104,7 @@ import { useUiStore }   from '~/stores/ui.store'
 import { reviewService } from '~/services/review.service'
 import BaseButton from '~/components/common/BaseButton.vue'
 import BaseRating from '~/components/common/BaseRating.vue'
+import GlassCard  from '~/components/glass/GlassCard.vue'
 
 const props = defineProps({
   productId: { type: String, required: true },

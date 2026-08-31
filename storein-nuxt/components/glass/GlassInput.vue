@@ -33,6 +33,8 @@
 </template>
 
 <script setup>
+import { useId } from 'vue'
+
 // Form-field surface on the glass token system. IMPORTANT constraint (per
 // design spec): inputs must stay high-contrast and easily readable — a
 // light glass tint (bg-glass) with a solid, clearly-visible border and

@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="py-5 border-b border-surface-border last:border-none">
+  <div class="py-5 border-b border-glass-border last:border-none">
 
     <!-- Header -->
     <div class="flex items-start gap-3 mb-3">
@@ -10,10 +10,10 @@
       </div>
       <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between gap-2 flex-wrap">
-          <span class="font-medium text-text-primary text-sm">
+          <span class="font-medium text-glass-text-primary text-sm">
             {{ review.userId?.firstName }} {{ review.userId?.lastName }}
           </span>
-          <span class="text-text-disabled text-xs font-fanum">
+          <span class="text-glass-text-disabled text-xs font-fanum">
             {{ formatDate(review.createdAt) }}
           </span>
         </div>
@@ -22,12 +22,12 @@
     </div>
 
     <!-- Title -->
-    <h4 v-if="review.title" class="font-bold text-text-primary text-sm mb-2">
+    <h4 v-if="review.title" class="font-bold text-glass-text-primary text-sm mb-2">
       {{ review.title }}
     </h4>
 
     <!-- Body -->
-    <p class="text-text-secondary text-sm leading-7 mb-3">
+    <p class="text-glass-text-secondary text-sm leading-7 mb-3">
       {{ review.body }}
     </p>
 
@@ -38,13 +38,13 @@
         :key="img"
         :src="img"
         alt="تصویر نظر"
-        class="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-surface-border cursor-pointer hover:opacity-80 transition-opacity"
+        class="w-16 h-16 rounded-lg object-cover flex-shrink-0 border border-glass-border cursor-pointer hover:opacity-80 transition-opacity"
       />
     </div>
 
     <!-- Helpful button -->
     <div class="flex items-center gap-2">
-      <span class="text-text-disabled text-xs">آیا این نظر مفید بود؟</span>
+      <span class="text-glass-text-disabled text-xs">آیا این نظر مفید بود؟</span>
       <button
         @click="toggleHelpful"
         :disabled="loading"
@@ -52,7 +52,7 @@
           'flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg border transition-all duration-200',
           liked
             ? 'text-brand border-brand/30 bg-brand/8 font-medium'
-            : 'text-text-secondary border-transparent hover:text-brand hover:bg-brand/5 hover:border-brand/20',
+            : 'text-glass-text-secondary border-transparent hover:text-brand hover:bg-brand/5 hover:border-brand/20',
           loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
         ]"
       >

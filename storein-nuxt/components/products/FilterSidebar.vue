@@ -1,10 +1,10 @@
 ﻿<template>
   <aside class="w-64 flex-shrink-0" aria-label="فیلتر محصولات">
-    <div class="rounded-xl shadow-card overflow-hidden" style="background-color: var(--color-card);">
+    <GlassCard padding="sm" radius="20px" class="!p-0" tint="accent-gold">
 
       <!-- Header -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-surface-border">
-        <h3 class="font-bold text-text-primary text-sm">فیلترها</h3>
+      <div class="flex items-center justify-between px-4 py-3 border-b border-glass-border">
+        <h3 class="font-bold text-glass-text-primary text-sm">فیلترها</h3>
         <button
           v-if="activeCount > 0"
           @click="clearAll"
@@ -15,10 +15,10 @@
       </div>
 
       <!-- ① Category -->
-      <div class="border-b border-surface-border">
+      <div class="border-b border-glass-border">
         <button
           class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
+                 text-sm font-medium text-glass-text-primary hover:text-brand
                  transition-colors duration-150"
           :aria-expanded="open.category"
           aria-controls="filter-panel-category"
@@ -39,7 +39,7 @@
               @change="setFilter('category', null)"
               class="w-3.5 h-3.5 accent-brand flex-shrink-0"
             />
-            <span class="text-sm text-text-primary group-hover:text-brand transition-colors">
+            <span class="text-sm text-glass-text-primary group-hover:text-brand transition-colors">
               همه محصولات
             </span>
           </label>
@@ -54,7 +54,7 @@
                 class="w-3.5 h-3.5 accent-brand flex-shrink-0"
               />
               <span class="text-sm group-hover:text-brand transition-colors"
-                :class="cat.depth > 0 ? 'text-text-secondary' : 'text-text-primary'">
+                :class="cat.depth > 0 ? 'text-glass-text-secondary' : 'text-glass-text-primary'">
                 {{ cat.name }}
               </span>
             </label>
@@ -63,10 +63,10 @@
       </div>
 
       <!-- ② Brand -->
-      <div v-if="brands.length" class="border-b border-surface-border">
+      <div v-if="brands.length" class="border-b border-glass-border">
         <button
           class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
+                 text-sm font-medium text-glass-text-primary hover:text-brand
                  transition-colors duration-150"
           :aria-expanded="open.brand"
           aria-controls="filter-panel-brand"
@@ -87,7 +87,7 @@
               @change="setFilter('brand', null)"
               class="w-3.5 h-3.5 accent-brand flex-shrink-0"
             />
-            <span class="text-sm text-text-primary group-hover:text-brand transition-colors">همه برندها</span>
+            <span class="text-sm text-glass-text-primary group-hover:text-brand transition-colors">همه برندها</span>
           </label>
           <label
             v-for="b in brands"
@@ -101,7 +101,7 @@
               @change="setFilter('brand', b._id)"
               class="w-3.5 h-3.5 accent-brand flex-shrink-0"
             />
-            <span class="text-sm text-text-primary group-hover:text-brand transition-colors">
+            <span class="text-sm text-glass-text-primary group-hover:text-brand transition-colors">
               {{ b.name }}
             </span>
           </label>
@@ -109,10 +109,10 @@
       </div>
 
       <!-- ③ Gender -->
-      <div class="border-b border-surface-border">
+      <div class="border-b border-glass-border">
         <button
           class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
+                 text-sm font-medium text-glass-text-primary hover:text-brand
                  transition-colors duration-150"
           :aria-expanded="open.gender"
           aria-controls="filter-panel-gender"
@@ -137,7 +137,7 @@
               @change="toggleArray('genders', opt.value)"
               class="w-4 h-4 accent-brand rounded"
             />
-            <span class="text-sm text-text-primary group-hover:text-brand transition-colors">
+            <span class="text-sm text-glass-text-primary group-hover:text-brand transition-colors">
               {{ opt.label }}
             </span>
           </label>
@@ -145,10 +145,10 @@
       </div>
 
       <!-- ④ Price Range -->
-      <div class="border-b border-surface-border">
+      <div class="border-b border-glass-border">
         <button
           class="w-full flex items-center justify-between px-4 py-3
-                 text-sm font-medium text-text-primary hover:text-brand
+                 text-sm font-medium text-glass-text-primary hover:text-brand
                  transition-colors duration-150"
           :aria-expanded="open.price"
           aria-controls="filter-panel-price"
@@ -163,35 +163,25 @@
         <div id="filter-panel-price" v-show="open.price" class="px-4 pb-4 space-y-3">
           <div class="flex gap-2">
             <div class="flex-1">
-              <label for="filter-price-min" class="text-xs text-text-secondary block mb-1">از (تومان)</label>
-              <input
-                id="filter-price-min"
+              <GlassInput
+                label="از (تومان)"
                 type="text"
                 inputmode="numeric"
-                :value="filters.minPrice ? formatNumber(filters.minPrice) : ''"
+                :model-value="filters.minPrice ? formatNumber(filters.minPrice) : ''"
                 placeholder="۰"
-                @change="onPriceInput('min', $event)"
-                class="w-full border border-surface-border rounded-lg px-2 py-1.5
-                       text-xs text-center font-fanum focus:border-brand
-                       focus:ring-1 focus:ring-brand/20 outline-none
-                       bg-surface text-text-primary placeholder:text-text-secondary"
-                :class="priceError ? 'border-error' : ''"
+                class="font-fanum"
+                @blur="onPriceInput('min', $event)"
               />
             </div>
             <div class="flex-1">
-              <label for="filter-price-max" class="text-xs text-text-secondary block mb-1">تا (تومان)</label>
-              <input
-                id="filter-price-max"
+              <GlassInput
+                label="تا (تومان)"
                 type="text"
                 inputmode="numeric"
-                :value="filters.maxPrice ? formatNumber(filters.maxPrice) : ''"
+                :model-value="filters.maxPrice ? formatNumber(filters.maxPrice) : ''"
                 placeholder="نامحدود"
-                @change="onPriceInput('max', $event)"
-                class="w-full border border-surface-border rounded-lg px-2 py-1.5
-                       text-xs text-center font-fanum focus:border-brand
-                       focus:ring-1 focus:ring-brand/20 outline-none
-                       bg-surface text-text-primary placeholder:text-text-secondary"
-                :class="priceError ? 'border-error' : ''"
+                class="font-fanum"
+                @blur="onPriceInput('max', $event)"
               />
             </div>
           </div>
@@ -208,17 +198,19 @@
             @change="setFilter('inStock', $event.target.checked)"
             class="w-4 h-4 accent-brand rounded"
           />
-          <span class="text-sm font-medium text-text-primary">فقط کالاهای موجود</span>
+          <span class="text-sm font-medium text-glass-text-primary">فقط کالاهای موجود</span>
         </label>
       </div>
 
-    </div>
+    </GlassCard>
   </aside>
 </template>
 
 <script setup>
 import { computed, reactive, ref } from 'vue'
 import { useCategoryStore } from '~/stores/category.store'
+import GlassCard from '~/components/glass/GlassCard.vue'
+import GlassInput from '~/components/glass/GlassInput.vue'
 import { GENDER_OPTIONS } from '~/utils/constants'
 import { formatNumber } from '~/utils/formatters'
 

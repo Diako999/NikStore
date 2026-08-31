@@ -1,15 +1,15 @@
 <template>
   <div class="container-main py-4">
 
-    <nav aria-label="مسیر صفحه" class="flex items-center gap-2 text-sm text-text-secondary mb-4">
+    <nav aria-label="مسیر صفحه" class="flex items-center gap-2 text-sm text-glass-text-secondary mb-4">
       <NuxtLink to="/" class="hover:text-brand transition-colors">خانه</NuxtLink>
       <svg class="w-3 h-3 rotate-180 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
       </svg>
-      <span class="text-text-primary font-medium">{{ currentCategory?.name || 'دسته‌بندی' }}</span>
+      <span class="text-glass-text-primary font-medium">{{ currentCategory?.name || 'دسته‌بندی' }}</span>
     </nav>
 
-    <h1 class="text-xl font-bold text-text-primary mb-5">
+    <h1 class="text-xl font-bold text-glass-text-primary mb-5">
       {{ currentCategory?.name || 'دسته‌بندی' }}
     </h1>
 

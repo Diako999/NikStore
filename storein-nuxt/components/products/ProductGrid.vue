@@ -5,23 +5,25 @@
       v-if="loading"
       class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
     >
-      <div
+      <GlassCard
         v-for="i in skeletonCount"
         :key="i"
-        class="rounded-xl p-3" style="background-color: var(--color-card);"
+        padding="sm"
+        radius="14px"
       >
         <div class="skeleton rounded-lg h-44 mb-3" />
         <div class="skeleton rounded h-4 mb-2" />
         <div class="skeleton rounded h-3.5 w-3/5 mb-3" />
         <div class="skeleton rounded h-5 w-1/2 mb-3" />
         <div class="skeleton rounded-lg h-10" />
-      </div>
+      </GlassCard>
     </div>
 
     <!-- Product grid -->
     <div
       v-else-if="products.length > 0"
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
+      ref="gridEl"
+      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
     >
       <BaseProductCard
         v-for="product in products"
@@ -47,12 +49,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter }        from 'vue-router'
 import { useWishlistStore } from '~/stores/wishlist.store'
 import { useCartStore }     from '~/stores/cart.store'
 import { useUiStore }       from '~/stores/ui.store'
+import { useGsapReveal }    from '~/composables/useGsapReveal'
 import BaseProductCard from '~/components/common/BaseProductCard.vue'
 import BaseEmpty       from '~/components/common/BaseEmpty.vue'
+import GlassCard        from '~/components/glass/GlassCard.vue'
 
 defineProps({
   products:      { type: Array,   default: () => [] },
@@ -64,6 +69,11 @@ const router         = useRouter()
 const wishlistStore = useWishlistStore()
 const cartStore     = useCartStore()
 const ui            = useUiStore()
+
+// Scroll-in stagger for the grid's initial paint — see useGsapReveal.js
+// (reduced-motion aware, SSR-safe, fires once).
+const gridEl = ref(null)
+useGsapReveal(gridEl, { y: 20, stagger: 0.04 })
 
 async function handleAddToCart(product) {
   const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]

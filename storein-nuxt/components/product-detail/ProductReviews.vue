@@ -2,16 +2,16 @@
   <div>
 
     <!-- Stats panel -->
-    <div v-if="stats" class="bg-surface rounded-2xl p-5 mb-6">
+    <GlassCard v-if="stats" padding="lg" radius="18px" class="mb-6">
       <div class="flex items-start gap-6 flex-wrap">
 
         <!-- Overall score -->
         <div class="text-center flex-shrink-0">
-          <div class="text-5xl font-black text-text-primary font-fanum mb-1">
+          <div class="text-5xl font-black text-glass-text-primary font-fanum mb-1">
             {{ stats.avgRating?.toFixed(1) || '0.0' }}
           </div>
           <BaseRating :modelValue="stats.avgRating || 0" readonly size="sm" />
-          <div class="text-text-secondary text-xs mt-1 font-fanum">
+          <div class="text-glass-text-secondary text-xs mt-1 font-fanum">
             از {{ formatNumber(stats.reviewCount) }} نظر
           </div>
         </div>
@@ -19,23 +19,23 @@
         <!-- Bar distribution -->
         <div class="flex-1 min-w-[200px] space-y-2">
           <div v-for="star in [5, 4, 3, 2, 1]" :key="star" class="flex items-center gap-3">
-            <span class="text-xs text-text-secondary w-4 text-left font-fanum flex-shrink-0">{{ star }}</span>
+            <span class="text-xs text-glass-text-secondary w-4 text-left font-fanum flex-shrink-0">{{ star }}</span>
             <svg class="w-3 h-3 text-yellow-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
             </svg>
-            <div class="flex-1 rounded-full h-2 overflow-hidden" style="background-color: var(--color-border);">
+            <div class="flex-1 rounded-full h-2 overflow-hidden" style="background-color: var(--glass-border);">
               <div
                 class="h-full bg-yellow-400 rounded-full transition-all duration-500"
                 :style="{ width: barWidth(star) + '%' }"
               />
             </div>
-            <span class="text-xs text-text-disabled font-fanum w-8 text-left">
+            <span class="text-xs text-glass-text-disabled font-fanum w-8 text-left">
               {{ stats.distribution?.[star] || 0 }}
             </span>
           </div>
         </div>
       </div>
-    </div>
+    </GlassCard>
 
     <!-- Review form -->
     <ReviewForm :product-id="productId" @submitted="onReviewSubmitted" />
@@ -54,12 +54,12 @@
 
     <!-- List header -->
     <div class="flex items-center justify-between mb-4">
-      <h3 class="font-bold text-text-primary">نظرات کاربران</h3>
+      <h3 class="font-bold text-glass-text-primary">نظرات کاربران</h3>
       <select
         v-model="sortBy"
         @change="fetchReviews(true)"
-        class="text-sm border border-surface-border rounded-lg px-3 py-1.5 text-text-secondary outline-none focus:border-brand"
-        style="background-color: var(--color-card);"
+        class="text-sm border border-glass-border rounded-lg px-3 py-1.5 text-glass-text-secondary outline-none focus:border-brand"
+        style="background-color: var(--glass-strong);"
       >
         <option value="createdAt">جدیدترین</option>
         <option value="helpful">مفیدترین</option>
@@ -69,7 +69,7 @@
 
     <!-- Loading skeleton -->
     <div v-if="loading" class="space-y-6">
-      <div v-for="i in 3" :key="i" class="py-5 border-b border-surface-border">
+      <div v-for="i in 3" :key="i" class="py-5 border-b border-glass-border">
         <div class="flex gap-3 mb-3">
           <BaseSkeleton circle width="40px" height="40px" />
           <div class="flex-1">
@@ -93,7 +93,7 @@
       <!-- Empty state -->
       <div v-if="reviews.length === 0" class="text-center py-10">
         <div class="text-4xl mb-3">💬</div>
-        <p class="text-text-secondary text-sm">هنوز نظری ثبت نشده است. اولین نفر باشید!</p>
+        <p class="text-glass-text-secondary text-sm">هنوز نظری ثبت نشده است. اولین نفر باشید!</p>
       </div>
 
       <!-- Load more -->
@@ -115,6 +115,7 @@ import { formatNumber }  from '~/utils/formatters'
 import BaseRating   from '~/components/common/BaseRating.vue'
 import BaseSkeleton from '~/components/common/BaseSkeleton.vue'
 import BaseButton   from '~/components/common/BaseButton.vue'
+import GlassCard    from '~/components/glass/GlassCard.vue'
 import ReviewCard   from './ReviewCard.vue'
 import ReviewForm   from './ReviewForm.vue'
 

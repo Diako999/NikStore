@@ -2,7 +2,7 @@
   <div class="container-main py-4 pb-24 md:pb-6">
 
     <!-- Breadcrumb -->
-    <nav aria-label="مسیر صفحه" class="flex items-center gap-2 text-sm text-text-secondary mb-5 overflow-x-auto scrollbar-hide whitespace-nowrap pb-1">
+    <nav aria-label="مسیر صفحه" class="flex items-center gap-2 text-sm text-glass-text-secondary mb-5 overflow-x-auto scrollbar-hide whitespace-nowrap pb-1">
       <NuxtLink to="/" class="hover:text-brand flex-shrink-0">خانه</NuxtLink>
       <svg class="w-3 h-3 rotate-180 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
@@ -17,7 +17,7 @@
       <svg v-if="product?.category" class="w-3 h-3 rotate-180 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
       </svg>
-      <span class="text-text-primary font-medium truncate">{{ product?.name || '...' }}</span>
+      <span class="text-glass-text-primary font-medium truncate">{{ product?.name || '...' }}</span>
     </nav>
 
     <!-- Gallery + Info -->
