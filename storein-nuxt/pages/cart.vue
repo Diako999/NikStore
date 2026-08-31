@@ -39,10 +39,11 @@
         <!-- Items column -->
         <div class="lg:col-span-2 flex flex-col gap-8">
           <TransitionGroup name="cart-item" tag="div" class="flex flex-col gap-4">
-            <div
+            <GlassCard
               v-for="item in cartStore.items"
               :key="`${item.productId}-${item.variantId}`"
-              class="flex gap-4 p-4 rounded-2xl border border-surface-border transition-all bg-card"
+              padding="md"
+              class="flex gap-4"
             >
               <NuxtLink v-if="item.slug" :to="`/product/${item.slug}`" class="flex-shrink-0">
                 <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl" @error="e => e.target.src = PLACEHOLDER" />
@@ -80,14 +81,14 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </GlassCard>
           </TransitionGroup>
         </div>
 
         <!-- Summary column -->
         <div class="flex flex-col gap-4 lg:sticky lg:top-24">
 
-          <div class="rounded-2xl border border-surface-border p-5 flex flex-col gap-4 bg-card">
+          <GlassCard padding="lg" class="flex flex-col gap-4">
             <h2 class="font-bold text-text-primary text-base border-b border-surface-border pb-3"><span aria-hidden="true">🛍️</span> خلاصه سفارش</h2>
             <div class="flex flex-col gap-3 text-sm">
               <div class="flex justify-between">
@@ -113,8 +114,8 @@
                 <span class="text-brand text-xl font-black font-fanum">{{ formatPrice(cartStore.totalPrice) }}</span>
               </div>
             </div>
-            <BaseButton variant="primary" block size="lg" @click="navigateTo('/checkout')">ادامه و پرداخت ←</BaseButton>
-          </div>
+            <GlassButton variant="primary" block size="lg" @click="navigateTo('/checkout')">ادامه و پرداخت ←</GlassButton>
+          </GlassCard>
 
           <NuxtLink to="/products" class="text-center text-sm text-brand hover:underline block flex items-center justify-center gap-1.5">
             <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
@@ -132,7 +133,8 @@
 <script setup>
 import { formatPrice, formatNumber } from '~/utils/formatters'
 import BaseEmpty   from '~/components/common/BaseEmpty.vue'
-import BaseButton  from '~/components/common/BaseButton.vue'
+import GlassCard   from '~/components/glass/GlassCard.vue'
+import GlassButton from '~/components/glass/GlassButton.vue'
 
 definePageMeta({ layout: 'default' })
 

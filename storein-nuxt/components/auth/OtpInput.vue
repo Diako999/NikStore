@@ -2,6 +2,7 @@
   <!-- CSS grid: each box gets 1fr — physically cannot overflow the container -->
   <div
     class="grid w-full"
+    :class="{ 'otp-shake': shaking }"
     :style="`grid-template-columns: repeat(${length}, 1fr); gap: 10px;`"
     dir="ltr"
     data-testid="otp-grid"
@@ -22,15 +23,14 @@
         error
           ? 'border-error text-error'
           : digit
-            ? 'border-brand text-brand'
-            : 'border-surface-border text-text-primary',
-        !error && digit ? 'bg-brand/10' : '',
+            ? 'border-glass-brand text-glass-brand'
+            : 'border-glass-border text-glass-text-primary',
+        !error && digit ? 'bg-glass-brand/10' : '',
         error ? 'bg-error/5' : '',
-        !digit && !error ? '' : '',
-        'focus:border-brand focus:ring-2 focus:ring-brand/20 focus:scale-[1.06]',
+        !digit && !error ? 'bg-glass' : '',
+        'focus:border-glass-brand focus:ring-2 focus:ring-glass-brand/20 focus:scale-[1.06]',
         disabled ? 'opacity-50 cursor-not-allowed' : '',
       ]"
-      :style="!digit && !error ? 'background-color: var(--color-bg);' : ''"
       @input="onInput(index, $event)"
       @keydown="onKeydown(index, $event)"
       @paste="onPaste"
@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { logger } from '~/utils/logger'
 
 const CTX = 'OtpInput'
@@ -55,6 +55,25 @@ const emit = defineEmits(['update:modelValue', 'complete'])
 
 const inputs = ref([])
 const digits = ref(Array(props.length).fill(''))
+
+// Wrong-code feedback: a brief shake on the whole grid whenever the parent
+// flips `error` on (e.g. after a failed verify). Plain CSS keyframes rather
+// than motion-v/GSAP — a one-shot transient class toggle doesn't need an
+// animation library, and this keeps the OTP grid's own light bundle light.
+const shaking = ref(false)
+let shakeTimeout = null
+
+watch(() => props.error, (val) => {
+  if (!val) return
+  shaking.value = false
+  // Re-flow before re-adding the class so the animation restarts even if
+  // two failed attempts land back-to-back.
+  requestAnimationFrame(() => {
+    shaking.value = true
+    clearTimeout(shakeTimeout)
+    shakeTimeout = setTimeout(() => { shaking.value = false }, 420)
+  })
+})
 
 watch(() => props.modelValue, (val) => {
   if (val === '') {
@@ -114,4 +133,20 @@ function emitValue() {
 defineExpose({
   focus: () => nextTick(() => inputs.value[0]?.focus()),
 })
+
+onUnmounted(() => clearTimeout(shakeTimeout))
 </script>
+
+<style scoped>
+/* Respect reduced-motion — the media query below fully disables it. */
+.otp-shake { animation: otp-shake 0.42s ease; }
+@keyframes otp-shake {
+  10%, 90%  { transform: translateX(-1px); }
+  20%, 80%  { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60%  { transform: translateX(4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .otp-shake { animation: none; }
+}
+</style>

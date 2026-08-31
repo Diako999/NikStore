@@ -13,14 +13,16 @@
       <NuxtLink to="/" class="text-brand hover:underline text-sm">بازگشت به صفحه اصلی</NuxtLink>
     </div>
 
-    <article v-else>
-      <h1 class="text-2xl font-black text-text-primary mb-6 leading-snug">{{ page.title }}</h1>
-      <div class="prose-page text-text-primary text-sm leading-loose" v-html="page.content" />
-    </article>
+    <GlassCard v-else padding="lg" as="article">
+      <h1 class="text-2xl font-black text-glass-text-primary mb-6 leading-snug">{{ page.title }}</h1>
+      <div class="prose-page text-glass-text-primary text-sm leading-loose" v-html="page.content" />
+    </GlassCard>
   </div>
 </template>
 
 <script setup>
+import GlassCard from '~/components/glass/GlassCard.vue'
+
 definePageMeta({ layout: 'default' })
 
 const route  = useRoute()

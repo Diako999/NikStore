@@ -2,9 +2,9 @@
   <div class="container-main py-8 min-h-[70vh]">
 
     <!-- Sticky mobile total bar (UXID-016) -->
-    <div v-if="checkoutItems.length" class="sticky top-14 z-10 lg:hidden bg-card border-b border-surface-border px-4 py-2.5 flex justify-between items-center text-sm shadow-sm -mx-4 mb-4">
-      <span class="text-text-secondary">مبلغ قابل پرداخت</span>
-      <span class="font-fanum font-black text-brand text-base">{{ formatPrice(checkoutTotal) }}</span>
+    <div v-if="checkoutItems.length" class="sticky top-14 z-10 lg:hidden bg-glass backdrop-blur-md border-b border-glass-border px-4 py-2.5 flex justify-between items-center text-sm -mx-4 mb-4">
+      <span class="text-glass-text-secondary">مبلغ قابل پرداخت</span>
+      <span class="font-fanum font-black text-glass-brand text-base">{{ formatPrice(checkoutTotal) }}</span>
     </div>
 
     <!-- Stepper -->
@@ -32,7 +32,7 @@
     <div v-if="!checkoutItems.length && !placing" class="text-center py-20">
       <div class="text-5xl mb-4">🛒</div>
       <p class="text-text-secondary mb-4">سبد خرید شما خالی است</p>
-      <NuxtLink to="/products" class="btn-brand px-6 py-2.5 text-sm">مشاهده محصولات</NuxtLink>
+      <GlassButton variant="primary" to="/products">مشاهده محصولات</GlassButton>
     </div>
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -42,8 +42,8 @@
 
         <!-- STEP 0: آدرس تحویل -->
         <div v-show="currentStep === 0" :inert="currentStep !== 0">
-          <div class="rounded-2xl border border-surface-border p-5 space-y-4 bg-card">
-            <h2 class="font-bold text-text-primary text-base flex items-center gap-2">
+          <GlassCard padding="lg" class="space-y-4">
+            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
               <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۱</span>
               آدرس تحویل
             </h2>
@@ -95,7 +95,7 @@
 
             <div v-else-if="!loadingAddresses && !showAddressForm" class="py-6 text-center">
               <p class="text-text-secondary text-sm mb-3">آدرسی ثبت نشده است</p>
-              <button @click="showAddressForm = true" class="btn-brand text-sm px-4 py-2">افزودن آدرس</button>
+              <GlassButton variant="primary" size="sm" @click="showAddressForm = true">افزودن آدرس</GlassButton>
             </div>
 
             <Transition name="expand">
@@ -103,7 +103,7 @@
 
                 <!-- عنوان آدرس — full width with chip presets -->
                 <div class="flex flex-col gap-2">
-                  <label for="addr-title" class="form-label">عنوان آدرس <span class="text-error" aria-hidden="true">*</span></label>
+                  <label class="form-label">عنوان آدرس <span class="text-error" aria-hidden="true">*</span></label>
                   <div class="flex gap-2" role="group" aria-label="انتخاب سریع عنوان">
                     <button
                       v-for="p in ['خانه', 'محل کار', 'خانه پدری']" :key="p"
@@ -117,20 +117,14 @@
                       ]"
                     >{{ p }}</button>
                   </div>
-                  <input id="addr-title" v-model="addrForm.title" class="form-input" placeholder="یا عنوان دلخواه بنویس..." maxlength="30" :aria-required="true" />
-                  <p v-if="addrErrors.title" role="alert" class="text-error text-xs">{{ addrErrors.title }}</p>
+                  <GlassInput v-model="addrForm.title" placeholder="یا عنوان دلخواه بنویس..." maxlength="30" :error="addrErrors.title" aria-required="true" />
                 </div>
 
                 <!-- نام + تلفن -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <GlassInput v-model="addrForm.recipientName" label="نام گیرنده" placeholder="نام و نام خانوادگی" :error="addrErrors.recipientName" aria-required="true" />
                   <div class="flex flex-col gap-1.5">
-                    <label for="addr-name" class="form-label">نام گیرنده <span class="text-error" aria-hidden="true">*</span></label>
-                    <input id="addr-name" v-model="addrForm.recipientName" class="form-input" placeholder="نام و نام خانوادگی" :aria-required="true" />
-                    <p v-if="addrErrors.recipientName" role="alert" class="text-error text-xs">{{ addrErrors.recipientName }}</p>
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label for="addr-phone" class="form-label">تلفن گیرنده <span class="text-error" aria-hidden="true">*</span></label>
-                    <input id="addr-phone" v-model="addrForm.recipientPhone" class="form-input font-fanum" dir="ltr" placeholder="09xxxxxxxxx" type="tel" :aria-required="true" />
+                    <GlassInput v-model="addrForm.recipientPhone" label="تلفن گیرنده" class="font-fanum" dir="ltr" placeholder="09xxxxxxxxx" type="tel" :error="addrErrors.recipientPhone" aria-required="true" />
                     <button
                       v-if="auth.user?.phone && addrForm.recipientPhone !== auth.user.phone"
                       type="button"
@@ -142,7 +136,6 @@
                       </svg>
                       استفاده از شماره خودم ({{ auth.user.phone }})
                     </button>
-                    <p v-if="addrErrors.recipientPhone" role="alert" class="text-error text-xs">{{ addrErrors.recipientPhone }}</p>
                   </div>
                 </div>
 
@@ -151,7 +144,7 @@
                   <div class="flex flex-col gap-1.5">
                     <label for="addr-province" class="form-label">استان <span class="text-error" aria-hidden="true">*</span></label>
                     <div class="select-wrapper">
-                      <select id="addr-province" v-model="addrForm.province" class="form-input form-select" @change="addrForm.city = ''" :aria-required="true">
+                      <select id="addr-province" v-model="addrForm.province" class="glass-select" @change="addrForm.city = ''" :aria-required="true">
                         <option value="" disabled>انتخاب استان</option>
                         <option v-for="p in PROVINCE_NAMES" :key="p" :value="p">{{ p }}</option>
                       </select>
@@ -160,7 +153,7 @@
                   <div class="flex flex-col gap-1.5">
                     <label for="addr-city" class="form-label">شهر <span class="text-error" aria-hidden="true">*</span></label>
                     <div class="select-wrapper">
-                      <select id="addr-city" v-model="addrForm.city" class="form-input form-select" :disabled="!addrForm.province" :aria-required="true">
+                      <select id="addr-city" v-model="addrForm.city" class="glass-select" :disabled="!addrForm.province" :aria-required="true">
                         <option value="" disabled>{{ addrForm.province ? 'انتخاب شهر' : 'ابتدا استان را انتخاب کنید' }}</option>
                         <option v-for="c in addrCities" :key="c" :value="c">{{ c }}</option>
                       </select>
@@ -170,45 +163,36 @@
 
                 <!-- خیابان + کد پستی -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="flex flex-col gap-1.5">
-                    <label for="addr-street" class="form-label">خیابان / کوچه <span class="text-error" aria-hidden="true">*</span></label>
-                    <input id="addr-street" v-model="addrForm.street" class="form-input" placeholder="خیابان ولیعصر، کوچه بهار" :aria-required="true" />
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label for="addr-postal" class="form-label">کد پستی <span class="text-error" aria-hidden="true">*</span></label>
-                    <input id="addr-postal" v-model="addrForm.postalCode" class="form-input font-fanum" dir="ltr" placeholder="1234567890" maxlength="10" :aria-required="true" />
-                    <p v-if="addrErrors.postalCode" role="alert" class="text-error text-xs">{{ addrErrors.postalCode }}</p>
-                  </div>
+                  <GlassInput v-model="addrForm.street" label="خیابان / کوچه" placeholder="خیابان ولیعصر، کوچه بهار" aria-required="true" />
+                  <GlassInput v-model="addrForm.postalCode" label="کد پستی" class="font-fanum" dir="ltr" placeholder="1234567890" maxlength="10" :error="addrErrors.postalCode" aria-required="true" />
                 </div>
 
                 <!-- جزئیات -->
                 <div class="flex flex-col gap-1.5">
                   <label for="addr-detail" class="form-label">جزئیات آدرس (پلاک، طبقه، واحد) <span class="text-error" aria-hidden="true">*</span></label>
-                  <textarea id="addr-detail" v-model="addrForm.detail" class="form-input resize-none" rows="2" placeholder="مثال: پلاک ۱۲، طبقه سوم، واحد ۷" :aria-required="true" />
+                  <textarea id="addr-detail" v-model="addrForm.detail" class="glass-textarea" rows="2" placeholder="مثال: پلاک ۱۲، طبقه سوم، واحد ۷" :aria-required="true" />
                 </div>
 
-                <button type="submit" :disabled="savingAddress" class="btn-brand text-sm px-6 py-3 flex items-center gap-2 disabled:opacity-50 w-full justify-center sm:w-auto">
-                  <svg v-if="savingAddress" class="w-4 h-4 animate-spin" aria-hidden="true" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                  <svg v-else class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+                <GlassButton variant="primary" :loading="savingAddress" :disabled="savingAddress" block class="sm:w-auto sm:inline-flex" @click="saveNewAddress">
                   {{ savingAddress ? 'در حال ذخیره...' : 'ذخیره و استفاده از این آدرس' }}
-                </button>
+                </GlassButton>
 
               </form>
             </Transition>
-          </div>
+          </GlassCard>
 
           <div class="flex justify-end mt-4">
-            <button @click="goToStep(1)" :disabled="!selectedAddressId" class="btn-brand px-8 py-3 flex items-center gap-2 disabled:opacity-40">
+            <GlassButton variant="primary" size="lg" :disabled="!selectedAddressId" @click="goToStep(1)">
               ادامه — بررسی سفارش
               <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-            </button>
+            </GlassButton>
           </div>
         </div>
 
         <!-- STEP 1: بررسی سفارش -->
         <div v-show="currentStep === 1" :inert="currentStep !== 1">
-          <div class="rounded-2xl border border-surface-border p-5 space-y-4 bg-card">
-            <h2 class="font-bold text-text-primary text-base flex items-center gap-2">
+          <GlassCard padding="lg" class="space-y-4">
+            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
               <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۲</span>
               بررسی سفارش
             </h2>
@@ -229,16 +213,13 @@
               </div>
             </div>
             <div class="space-y-2">
-              <label class="form-label">کد تخفیف</label>
-              <div class="flex gap-2">
-                <input v-model="couponCode" class="form-input flex-1 uppercase tracking-widest" dir="ltr" placeholder="کد تخفیف (اختیاری)"
-                  :disabled="couponApplied || checkingCoupon" @keydown.enter="applyCoupon" @input="couponMessage = ''; couponError = false" />
-                <button v-if="!couponApplied" @click="applyCoupon" :disabled="!couponCode.trim() || checkingCoupon"
-                  class="px-4 py-2.5 rounded-xl border border-brand text-brand text-sm font-medium hover:bg-brand hover:text-white transition-colors disabled:opacity-40 flex items-center gap-1.5 flex-shrink-0">
-                  <svg v-if="checkingCoupon" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-                  {{ checkingCoupon ? 'بررسی...' : 'اعمال' }}
-                </button>
-                <button v-else @click="removeCoupon" class="px-4 py-2.5 rounded-xl border border-error text-error text-sm font-medium hover:bg-error hover:text-white transition-colors">حذف</button>
+              <div class="flex gap-2 items-start">
+                <GlassInput v-model="couponCode" class="flex-1 uppercase tracking-widest" label="کد تخفیف" dir="ltr" placeholder="کد تخفیف (اختیاری)"
+                  :disabled="couponApplied || checkingCoupon" @enter="applyCoupon" @update:model-value="couponMessage = ''; couponError = false" />
+                <GlassButton v-if="!couponApplied" variant="secondary" size="md" class="mt-6 flex-shrink-0" :loading="checkingCoupon" :disabled="!couponCode.trim() || checkingCoupon" @click="applyCoupon">
+                  اعمال
+                </GlassButton>
+                <GlassButton v-else variant="ghost" size="md" class="mt-6 flex-shrink-0 !text-error" @click="removeCoupon">حذف</GlassButton>
               </div>
               <p v-if="couponMessage" :class="['text-xs font-medium flex items-center gap-1', couponError ? 'text-error' : 'text-success']">
                 <span v-if="couponError">✕</span>{{ couponMessage }}
@@ -246,26 +227,26 @@
             </div>
             <div class="space-y-2">
               <label class="form-label">یادداشت برای سفارش (اختیاری)</label>
-              <textarea v-model="orderNote" class="form-input resize-none" rows="2" placeholder="اگر توضیح خاصی برای سفارش دارید بنویسید..." maxlength="300" />
+              <textarea v-model="orderNote" class="glass-textarea" rows="2" placeholder="اگر توضیح خاصی برای سفارش دارید بنویسید..." maxlength="300" />
               <p class="text-xs text-text-disabled font-fanum text-left">{{ orderNote.length }}/۳۰۰</p>
             </div>
-          </div>
+          </GlassCard>
           <div class="flex justify-between mt-4">
             <button @click="goToStep(0)" class="px-5 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2">
               <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
               بازگشت
             </button>
-            <button @click="goToStep(2)" class="btn-brand px-8 py-3 flex items-center gap-2">
+            <GlassButton variant="primary" size="lg" @click="goToStep(2)">
               ادامه — پرداخت
               <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-            </button>
+            </GlassButton>
           </div>
         </div>
 
         <!-- STEP 2: روش پرداخت -->
         <div v-show="currentStep === 2" :inert="currentStep !== 2">
-          <div class="rounded-2xl border border-surface-border p-5 space-y-5 bg-card">
-            <h2 class="font-bold text-text-primary text-base flex items-center gap-2">
+          <GlassCard padding="lg" class="space-y-5">
+            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
               <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۳</span>
               روش پرداخت
             </h2>
@@ -317,20 +298,21 @@
                           aria-label="کاهش مبلغ کیف پول">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 12H4"/></svg>
                         </button>
-                        <input
+                        <GlassInput
                           id="wallet-amount-input"
                           type="number"
-                          v-model.number="walletAmount"
+                          :model-value="walletAmount"
+                          @update:model-value="v => walletAmount = Number(v)"
                           :min="1"
                           :max="walletBalance"
                           :step="10000"
-                          class="form-input flex-1 text-center font-fanum font-bold"
+                          class="flex-1 text-center font-fanum font-bold"
                           dir="ltr"
                           :aria-label="`مبلغ از کیف پول، حداکثر ${formatPrice(walletBalance)}`"
                           :aria-valuenow="walletAmount"
                           :aria-valuemin="1"
                           :aria-valuemax="walletBalance"
-                          @change="walletAmount = Math.min(walletBalance, Math.max(1, walletAmount))"
+                          @blur="walletAmount = Math.min(walletBalance, Math.max(1, walletAmount))"
                         />
                         <button type="button" @click="walletAmount = Math.min(walletBalance, walletAmount + 10000)"
                           class="w-9 h-9 rounded-lg border border-surface-border flex items-center justify-center text-text-primary hover:bg-surface transition-colors flex-shrink-0"
@@ -344,25 +326,23 @@
                 </div>
               </label>
             </div>
-          </div>
+          </GlassCard>
           <div class="flex justify-between mt-4">
             <button @click="goToStep(1)" class="px-5 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2">
               <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
               بازگشت
             </button>
-            <button @click="placeOrder" :disabled="placing" class="btn-brand px-8 py-3 flex items-center gap-2 disabled:opacity-50">
-              <svg v-if="placing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg>
-              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <GlassButton variant="primary" size="lg" :loading="placing" :disabled="placing" @click="placeOrder">
               {{ placing ? 'در حال پردازش...' : 'تأیید و پرداخت' }}
-            </button>
+            </GlassButton>
           </div>
         </div>
 
       </div>
 
       <!-- Sticky order summary -->
-      <div class="rounded-2xl border border-surface-border p-5 flex flex-col gap-4 lg:sticky lg:top-24 bg-card">
-        <h2 class="font-bold text-text-primary text-sm border-b border-surface-border pb-3">خلاصه سبد خرید</h2>
+      <GlassCard padding="lg" class="flex flex-col gap-4 lg:sticky lg:top-24">
+        <h2 class="font-bold text-glass-text-primary text-sm border-b border-surface-border pb-3">خلاصه سبد خرید</h2>
         <div class="space-y-2 max-h-52 overflow-y-auto">
           <div v-for="item in checkoutItems" :key="`${item.productId}-${item.variantId}`" class="flex items-center gap-2">
             <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" @error="e => e.target.src = PLACEHOLDER" />
@@ -405,7 +385,7 @@
             <span>{{ t.label }}</span>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
     </div>
   </div>
@@ -418,6 +398,9 @@ import { orderService }    from '~/services/order.service'
 import { paymentService }  from '~/services/payment.service'
 import { discountService } from '~/services/discount.service'
 import { PROVINCE_NAMES, getCities } from '~/data/iran-cities'
+import GlassCard   from '~/components/glass/GlassCard.vue'
+import GlassButton from '~/components/glass/GlassButton.vue'
+import GlassInput  from '~/components/glass/GlassInput.vue'
 
 definePageMeta({ layout: 'default', middleware: ['auth'] })
 useSeoMeta({ title: 'تکمیل خرید', robots: 'noindex' })
@@ -588,15 +571,28 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.form-label { font-size: 0.8125rem; font-weight: 500; color: var(--color-text-primary); }
-.form-input {
-  width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.75rem;
-  border: 1px solid var(--color-border, var(--color-surface-border));
-  background-color: var(--color-bg, var(--color-surface));
-  color: var(--color-text-primary); font-size: 0.875rem; outline: none;
-  transition: border-color 0.15s; font-family: inherit;
+.form-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+
+/* Select/textarea fields — checkout is the one page where the spec insists
+   form fields stay high-contrast and readable rather than heavily blurred,
+   so these intentionally mirror GlassInput's shallow-blur, solid-text
+   recipe (bg-glass + glass-border + 8px blur) rather than the decorative
+   GlassCard treatment. GlassInput itself only renders <input>, so <select>
+   and <textarea> get this local equivalent instead of the shared component. */
+.glass-select, .glass-textarea {
+  width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.875rem;
+  border: 1.5px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  color: var(--text-primary); font-size: 0.875rem; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
 }
-.form-input:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 12%, transparent); }
+.glass-select:focus, .glass-textarea:focus {
+  border-color: var(--brand-light);
+  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.18);
+}
+.glass-textarea { resize: none; }
 .expand-enter-active, .expand-leave-active { transition: all 0.25s ease; overflow: hidden; }
 .expand-enter-from, .expand-leave-to { opacity: 0; max-height: 0; }
 .expand-enter-to, .expand-leave-from { max-height: 600px; opacity: 1; }
@@ -610,9 +606,9 @@ onMounted(async () => {
   width: 0; height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 5px solid var(--color-text-secondary);
+  border-top: 5px solid var(--text-secondary);
   pointer-events: none;
 }
-.form-select { appearance: none; -webkit-appearance: none; padding-left: 2rem; cursor: pointer; }
-.form-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.glass-select { appearance: none; -webkit-appearance: none; padding-left: 2rem; cursor: pointer; }
+.glass-select:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>

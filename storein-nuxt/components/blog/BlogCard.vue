@@ -1,6 +1,6 @@
 <template>
-  <NuxtLink :to="`/blog/${post.slug}`" class="group block">
-    <article class="bg-card rounded-2xl overflow-hidden border border-border hover:border-brand/30 hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+  <NuxtLink :to="`/blog/${post.slug}`" class="group block h-full">
+    <GlassCard padding="sm" class="overflow-hidden h-full flex flex-col !p-0">
 
       <!-- Image -->
       <div class="relative overflow-hidden aspect-[16/9] bg-gray-100 dark:bg-gray-800 flex-shrink-0">
@@ -29,16 +29,16 @@
 
       <!-- Body -->
       <div class="p-4 flex flex-col flex-1">
-        <h3 class="font-bold text-[var(--color-text-primary)] text-base leading-snug line-clamp-2 group-hover:text-brand transition-colors mb-2">
+        <h3 class="font-bold text-glass-text-primary text-base leading-snug line-clamp-2 group-hover:text-glass-brand transition-colors mb-2">
           {{ post.title }}
         </h3>
 
-        <p v-if="post.excerpt" class="text-[var(--color-text-secondary)] text-sm line-clamp-2 leading-relaxed flex-1">
+        <p v-if="post.excerpt" class="text-glass-text-secondary text-sm line-clamp-2 leading-relaxed flex-1">
           {{ post.excerpt }}
         </p>
 
         <!-- Meta -->
-        <div class="flex items-center justify-between mt-3 pt-3 border-t border-[var(--color-border)] text-xs text-[var(--color-text-secondary)]">
+        <div class="flex items-center justify-between mt-3 pt-3 border-t border-glass-border text-xs text-glass-text-secondary">
           <div class="flex items-center gap-2">
             <span v-if="authorName">✍️ {{ authorName }}</span>
           </div>
@@ -54,12 +54,13 @@
           </div>
         </div>
       </div>
-    </article>
+    </GlassCard>
   </NuxtLink>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import GlassCard from '~/components/glass/GlassCard.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },

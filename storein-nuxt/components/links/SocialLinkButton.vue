@@ -34,6 +34,8 @@ defineProps({
   border-radius: 999px;
   padding: 10px 18px 10px 10px;
   text-decoration: none;
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
   transition: background-color var(--transition-fast), transform var(--transition-fast);
 }
 

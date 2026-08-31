@@ -39,7 +39,7 @@
 
     <!-- Grid -->
     <div v-else>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <GlassCard padding="md" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         <div v-for="product in products" :key="product._id" class="relative">
           <BaseProductCard
             :product="product"
@@ -62,7 +62,7 @@
             </div>
           </Transition>
         </div>
-      </div>
+      </GlassCard>
 
       <!-- Pagination -->
       <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-8">
@@ -98,6 +98,7 @@ import { useUiStore }        from '~/stores/ui.store'
 import { formatNumber }      from '~/utils/formatters'
 import BaseProductCard from '~/components/common/BaseProductCard.vue'
 import BaseEmpty       from '~/components/common/BaseEmpty.vue'
+import GlassCard       from '~/components/glass/GlassCard.vue'
 
 const wishlistStore = useWishlistStore()
 const router        = useRouter()
