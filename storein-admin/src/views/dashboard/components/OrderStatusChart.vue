@@ -45,6 +45,17 @@ import { Doughnut } from 'vue-chartjs'
 import AdminSkeleton from '@/components/common/AdminSkeleton.vue'
 import { formatNumber } from '@/utils/formatters'
 import { ORDER_STATUSES } from '@/utils/constants'
+import { useThemeMode } from '@/composables/useThemeMode'
+import { resolveThemeColor } from '@/utils/chartTheme'
+
+// Bug fix: the slice border used to be a hardcoded '#ffffff', which breaks
+// (a solid white ring) on a dark card. Resolve the current card background
+// so the border blends with the surface instead, in both themes.
+const { mode } = useThemeMode()
+const sliceBorderColor = computed(() => {
+  void mode.value
+  return resolveThemeColor('--color-card', '#ffffff')
+})
 
 const props = defineProps({
   data:    { type: Object,  default: () => ({}) },
@@ -73,7 +84,7 @@ const chartData = computed(() => ({
     data:             legendItems.value.map(i => i.value),
     backgroundColor:  legendItems.value.map(i => i.color),
     borderWidth:      2,
-    borderColor:      '#ffffff',
+    borderColor:      sliceBorderColor.value,
     hoverBorderWidth: 3,
     hoverOffset:      6,
   }],

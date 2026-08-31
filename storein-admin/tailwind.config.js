@@ -22,13 +22,19 @@ export default {
           activeText: '#EEF1EA',
           border:     '#232323',
         },
-        surface: '#EEF1EA',
-        card:    '#FFFFFF',
-        border:  '#E5E7E0',
+        // Additive-retoken: these used to be static hex (light-mode only).
+        // Now backed by variables.css's [data-theme] tokens so every
+        // existing bg-surface/bg-card/border-border/text-text-* call site
+        // across the app responds to the dark/light toggle automatically,
+        // while staying fully flat/opaque (no glass) — required for dense
+        // tables/forms per the retheme spec.
+        surface: 'var(--color-surface)',
+        card:    'var(--color-card)',
+        border:  'var(--color-border)',
         text: {
-          primary:   '#1C1C1C',
-          secondary: '#6B7280',
-          disabled:  '#A8AFA9',
+          primary:   'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          disabled:  'var(--color-text-disabled)',
         },
         success: '#10B981',
         warning: '#F59E0B',

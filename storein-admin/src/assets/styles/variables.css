@@ -8,10 +8,28 @@
   --radius-md:  10px;
   --radius-lg:  14px;
   --transition: 200ms ease;
+}
 
-  /* Semantic color tokens — Forest Green */
+/* ── Semantic color tokens — theme-aware (dark/light via data-theme) ────────
+   These back the flat/opaque Tailwind families (surface, card, border,
+   text.primary/secondary/disabled) used by dense tables and forms — they
+   must stay high-contrast and blur-free, but still respond to the toggle.
+   Default (no attribute yet, pre-hydration) matches dark since main.js
+   always sets data-theme before mount — mirrors glass-theme.css's own
+   :root, [data-theme="dark"] convention. ─────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --color-surface:        #101B14;
+  --color-card:           #16221A;
+  --color-bg:             #0E1712;
+  --color-border:         rgba(255, 255, 255, 0.09);
+  --color-text-primary:   #F5F7F3;
+  --color-text-secondary: #C3D2C7;
+  --color-text-disabled:  #7E8F84;
+}
+[data-theme="light"] {
   --color-surface:        #EEF1EA;
   --color-card:           #FFFFFF;
+  --color-bg:             #F6F4EE;
   --color-border:         #E5E7E0;
   --color-text-primary:   #1C1C1C;
   --color-text-secondary: #6B7280;

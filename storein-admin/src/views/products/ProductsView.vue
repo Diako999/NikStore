@@ -189,15 +189,15 @@
         style="background: rgba(0,0,0,0.5);"
         @click.self="discountModal.open = false"
       >
-        <div class="rounded-2xl shadow-modal w-full max-w-sm p-6 space-y-5" style="background-color: var(--color-card);">
+        <div class="glass-surface w-full max-w-sm p-6 space-y-5">
 
-          <div>
-            <h3 class="text-base font-bold text-text-primary">تنظیم تخفیف</h3>
-            <p class="text-sm text-text-secondary mt-0.5 line-clamp-1">{{ discountModal.product?.name }}</p>
+          <div class="relative">
+            <h3 class="text-base font-bold text-glass-text-primary">تنظیم تخفیف</h3>
+            <p class="text-sm text-glass-text-secondary mt-0.5 line-clamp-1">{{ discountModal.product?.name }}</p>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-sm font-medium text-text-secondary">درصد تخفیف</label>
+          <div class="relative space-y-2">
+            <label class="text-sm font-medium text-glass-text-secondary">درصد تخفیف</label>
             <div class="flex items-center gap-3">
               <input
                 v-model.number="discountModal.pct"
@@ -214,7 +214,7 @@
           </div>
 
           <!-- Preview -->
-          <div v-if="discountModal.pct > 0 && discountModal.product" class="rounded-xl p-3 space-y-1 text-sm" style="background-color: var(--color-bg);">
+          <div v-if="discountModal.pct > 0 && discountModal.product" class="relative rounded-xl p-3 space-y-1 text-sm" style="background-color: var(--color-bg);">
             <div class="flex justify-between text-text-secondary">
               <span>قیمت اصلی</span>
               <span class="font-fanum line-through text-text-disabled">{{ formatPrice(discountModalBase) }}</span>
@@ -225,7 +225,7 @@
             </div>
           </div>
 
-          <div class="flex gap-2 pt-1">
+          <div class="relative flex gap-2 pt-1">
             <AdminButton variant="secondary" class="flex-1" @click="discountModal.open = false" :disabled="discountModal.loading">
               انصراف
             </AdminButton>

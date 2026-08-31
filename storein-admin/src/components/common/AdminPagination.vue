@@ -1,12 +1,13 @@
 <template>
-  <div v-if="totalPages > 1" class="flex items-center justify-center gap-1 mt-6 flex-wrap">
+  <div v-if="totalPages > 1" class="flex items-center justify-center mt-6">
+  <div class="glass-pill-dock flex-wrap">
 
     <!-- Prev -->
     <button
       @click="changePage(modelValue - 1)"
       :disabled="modelValue <= 1 || loading"
-      class="w-9 h-9 flex items-center justify-center rounded-lg border border-border
-             text-text-secondary hover:border-primary hover:text-primary
+      class="w-9 h-9 flex items-center justify-center rounded-full
+             text-text-secondary hover:bg-glass hover:text-primary
              disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -22,10 +23,10 @@
       <button v-else
         @click="changePage(p)"
         :class="[
-          'w-9 h-9 flex items-center justify-center rounded-lg text-sm font-medium transition-colors font-fanum',
+          'w-9 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors font-fanum',
           p === modelValue
-            ? 'bg-primary text-white border border-primary'
-            : 'border border-border text-text-secondary hover:border-primary hover:text-primary',
+            ? 'bg-primary text-white shadow-sm'
+            : 'text-text-secondary hover:bg-glass hover:text-primary',
         ]"
       >
         {{ p }}
@@ -36,8 +37,8 @@
     <button
       @click="changePage(modelValue + 1)"
       :disabled="modelValue >= totalPages || loading"
-      class="w-9 h-9 flex items-center justify-center rounded-lg border border-border
-             text-text-secondary hover:border-primary hover:text-primary
+      class="w-9 h-9 flex items-center justify-center rounded-full
+             text-text-secondary hover:bg-glass hover:text-primary
              disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -45,6 +46,7 @@
       </svg>
     </button>
 
+  </div>
   </div>
 </template>
 
