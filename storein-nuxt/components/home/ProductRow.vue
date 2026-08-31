@@ -97,6 +97,7 @@ import BaseProductCard  from '~/components/common/BaseProductCard.vue'
 import BaseFeaturedCard from '~/components/common/BaseFeaturedCard.vue'
 import BaseSkeleton     from '~/components/common/BaseSkeleton.vue'
 import BaseEmpty        from '~/components/common/BaseEmpty.vue'
+import { useGsapReveal } from '~/composables/useGsapReveal'
 
 const props = defineProps({
   title:         { type: String,  required: true },
@@ -115,6 +116,8 @@ const ui            = useUiStore()
 const scrollEl = ref(null)
 const atStart  = ref(true)
 const atEnd    = ref(false)
+
+useGsapReveal(scrollEl, { y: 16, stagger: 0.06 })
 
 function getAbsScrollLeft(el) {
   return Math.abs(el.scrollLeft)
@@ -186,7 +189,7 @@ onMounted(() => onScroll())
   display: block;
   width: 4px;
   height: 22px;
-  background: linear-gradient(180deg, rgb(var(--color-brand-light-rgb)) 0%, rgb(var(--color-brand-rgb)) 100%);
+  background: linear-gradient(180deg, var(--brand-light) 0%, var(--brand) 100%);
   border-radius: 99px;
   flex-shrink: 0;
 }
@@ -194,7 +197,7 @@ onMounted(() => onScroll())
 .prow__title {
   font-size: 1.0625rem;
   font-weight: 800;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   letter-spacing: 0.01em;
 }
 
@@ -204,10 +207,11 @@ onMounted(() => onScroll())
   gap: 4px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: rgb(var(--color-brand-rgb));
+  color: var(--brand-light);
   text-decoration: none;
   transition: gap 0.2s ease, opacity 0.2s ease;
 }
+[data-theme='light'] .prow__all { color: var(--brand-dark); }
 .prow__all:hover { gap: 8px; opacity: 0.8; }
 
 /* ── Scroll area ──────────────────────────────────── */
@@ -224,7 +228,7 @@ onMounted(() => onScroll())
   border-radius: 14px;
   overflow: hidden;
   flex-shrink: 0;
-  background-color: var(--color-card);
+  background: var(--glass);
 }
 
 /* ── Arrows ───────────────────────────────────────── */
@@ -235,9 +239,11 @@ onMounted(() => onScroll())
   z-index: 10;
   width: 38px; height: 38px;
   border-radius: 50%;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
+  background: var(--glass-strong);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
   cursor: pointer;
   display: none;
   align-items: center;

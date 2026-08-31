@@ -1,8 +1,9 @@
 <template>
   <div class="home">
+    <HeroProduct />
     <div class="container-main">
-      <HeroProduct />
-      <CategoryBar />
+      <GlassSearchBar v-model="searchQuery" class="home__search" @submit="onSearch" />
+      <CategoryBar class="home__section" />
       <FlashSale class="home__section" />
       <ProductRow
         title="جدیدترین محصولات"
@@ -40,6 +41,8 @@ import CategoryBar   from '~/components/home/CategoryBar.vue'
 import FlashSale     from '~/components/home/FlashSale.vue'
 import ProductRow    from '~/components/home/ProductRow.vue'
 import SpecialBanner from '~/components/home/SpecialBanner.vue'
+import GlassSearchBar from '~/components/glass/GlassSearchBar.vue'
+import { useRouter } from 'vue-router'
 const MostViewed      = defineAsyncComponent(() => import('~/components/home/MostViewed.vue'))
 const LatestBlogPosts = defineAsyncComponent(() => import('~/components/home/LatestBlogPosts.vue'))
 const TrustStrip      = defineAsyncComponent(() => import('~/components/home/TrustStrip.vue'))
@@ -49,6 +52,13 @@ definePageMeta({ layout: 'default' })
 const config        = useRuntimeConfig()
 const settingsStore = useSettingsStore()
 const wishlistStore = useWishlistStore()
+const router        = useRouter()
+const searchQuery   = ref('')
+
+function onSearch(q) {
+  if (!q?.trim()) return
+  router.push({ path: '/search', query: { q: q.trim() } })
+}
 
 useSeoMeta({
   title:       () => settingsStore.tagline,
@@ -97,6 +107,7 @@ onMounted(() => { wishlistStore.fetchWishlist() })
 
 <style scoped>
 .home { padding-bottom: 2rem; }
+.home__search { margin-top: 1.25rem; margin-bottom: 1.25rem; }
 .home__section { margin-bottom: 1.75rem; }
 @media (min-width: 768px) {
   .home__section { margin-bottom: 3rem; }

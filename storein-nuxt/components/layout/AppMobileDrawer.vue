@@ -14,26 +14,26 @@
     <Transition name="drawer">
       <nav
         v-if="uiStore.isMenuOpen"
-        class="fixed top-0 right-0 bottom-0 w-[288px] z-[260] md:hidden flex flex-col overflow-y-auto glass-strong"
-        style="border-left: 1px solid var(--glass-border); border-top: none; border-bottom: none; border-right: none;"
+        class="fixed top-0 right-0 bottom-0 w-[288px] z-[260] md:hidden flex flex-col overflow-y-auto bg-glass-strong"
+        style="backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%); border-left: 1px solid var(--glass-border); border-top: none; border-bottom: none; border-right: none;"
       >
         <!-- Brand accent strip -->
         <div class="h-1 flex-shrink-0 bg-brand" />
 
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-4 flex-shrink-0"
-             style="border-bottom: 1px solid var(--color-border);">
+             style="border-bottom: 1px solid var(--glass-border);">
           <NuxtLink :to="'/'" @click="close" class="flex items-center gap-3">
             <img src="/nik-logo.png" :alt="`لوگو ${settingsStore.siteName}`" class="w-9 h-9 shrink-0 object-contain rounded-full" draggable="false" />
             <div class="flex flex-col leading-tight">
               <span class="text-brand font-bold text-[17px] tracking-tight">{{ settingsStore.siteName }}</span>
-              <span class="text-[11px]" style="color: var(--color-text-disabled);">{{ settingsStore.tagline }}</span>
+              <span class="text-[11px]" style="color: var(--text-disabled);">{{ settingsStore.tagline }}</span>
             </div>
           </NuxtLink>
           <button
             @click="close"
             class="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-            style="background-color: var(--color-bg); color: var(--color-text-secondary);"
+            style="background-color: var(--glass); color: var(--text-secondary);"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -42,18 +42,18 @@
         </div>
 
         <!-- User section -->
-        <div class="px-4 py-4 flex-shrink-0" style="border-bottom: 1px solid var(--color-border);">
+        <div class="px-4 py-4 flex-shrink-0" style="border-bottom: 1px solid var(--glass-border);">
           <template v-if="authStore.isLoggedIn">
             <div class="flex items-center gap-3">
               <div class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
-                   style="background-color: var(--color-bg); border: 2px solid var(--color-border);">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5" style="color: var(--color-text-secondary);">
+                   style="background-color: var(--glass); border: 2px solid var(--glass-border);">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5" style="color: var(--text-secondary);">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                 </svg>
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium" style="color: var(--color-text-disabled);">خوش آمدید</p>
-                <p class="font-bold text-sm truncate" style="color: var(--color-text-primary);">{{ userName }}</p>
+                <p class="text-xs font-medium" style="color: var(--text-disabled);">خوش آمدید</p>
+                <p class="font-bold text-sm truncate" style="color: var(--text-primary);">{{ userName }}</p>
               </div>
             </div>
           </template>
@@ -67,7 +67,7 @@
         </div>
 
         <!-- Quick links -->
-        <div class="px-3 py-3 flex-shrink-0" style="border-bottom: 1px solid var(--color-border);">
+        <div class="px-3 py-3 flex-shrink-0" style="border-bottom: 1px solid var(--glass-border);">
           <NuxtLink
             v-for="link in quickLinks"
             :key="link.name"
@@ -75,12 +75,12 @@
             @click="close"
             class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors"
             :class="isActive(link) ? 'bg-brand/10 text-brand' : ''"
-            :style="!isActive(link) ? 'color: var(--color-text-primary);' : ''"
-            @mouseenter="e => { if (!isActive(link)) e.currentTarget.style.backgroundColor = 'var(--color-bg)' }"
+            :style="!isActive(link) ? 'color: var(--text-primary);' : ''"
+            @mouseenter="e => { if (!isActive(link)) e.currentTarget.style.backgroundColor = 'var(--glass)' }"
             @mouseleave="e => { if (!isActive(link)) e.currentTarget.style.backgroundColor = '' }"
           >
             <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors"
-                 :style="isActive(link) ? 'background-color: var(--color-brand); color: white;' : 'background-color: var(--color-bg); color: var(--color-text-secondary);'">
+                 :style="isActive(link) ? 'background-color: var(--brand); color: white;' : 'background-color: var(--glass); color: var(--text-secondary);'">
               <component :is="link.icon" class="w-4 h-4" />
             </div>
             {{ link.label }}
@@ -90,7 +90,7 @@
         <!-- Categories -->
         <div class="py-3 flex-1" v-if="categories.length">
           <p class="px-4 pb-2 text-[11px] font-bold tracking-widest uppercase"
-             style="color: var(--color-text-disabled);">دسته‌بندی‌ها</p>
+             style="color: var(--text-disabled);">دسته‌بندی‌ها</p>
           <div class="px-3 flex flex-col gap-0.5">
             <MobileNavItem
               v-for="cat in categories"
@@ -104,22 +104,22 @@
 
         <!-- User actions footer -->
         <div v-if="authStore.isLoggedIn" class="p-3 flex-shrink-0"
-             style="border-top: 1px solid var(--color-border);">
-          <div class="rounded-2xl overflow-hidden" style="background-color: var(--color-bg);">
+             style="border-top: 1px solid var(--glass-border);">
+          <div class="rounded-2xl overflow-hidden" style="background-color: var(--glass);">
             <NuxtLink :to="'/user/profile'" @click="close"
               class="flex items-center gap-3 px-4 py-3 text-sm transition-colors"
-              style="color: var(--color-text-primary);"
-              @mouseenter="e => e.currentTarget.style.backgroundColor = 'var(--color-brand-5, rgba(124,58,237,0.05))'"
+              style="color: var(--text-primary);"
+              @mouseenter="e => e.currentTarget.style.backgroundColor = 'rgb(var(--brand-rgb) / 0.08)'"
               @mouseleave="e => e.currentTarget.style.backgroundColor = ''">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 flex-shrink-0" style="color: var(--color-text-secondary);">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 flex-shrink-0" style="color: var(--text-secondary);">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
               </svg>
               <span class="flex-1">پروفایل من</span>
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--color-text-disabled);">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="color: var(--text-disabled);">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
               </svg>
             </NuxtLink>
-            <div style="height: 1px; background-color: var(--color-border); margin: 0 12px;" />
+            <div style="height: 1px; background-color: var(--glass-border); margin: 0 12px;" />
             <button @click="handleLogout"
               class="w-full flex items-center gap-3 px-4 py-3 text-sm text-error transition-colors"
               @mouseenter="e => e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.05)'"

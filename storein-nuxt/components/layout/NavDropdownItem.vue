@@ -7,13 +7,13 @@
         'flex items-center justify-between gap-2 w-full text-sm px-3 py-2 rounded-lg transition-colors whitespace-nowrap',
         open && item.children?.length
           ? 'text-brand bg-brand/5'
-          : 'text-text-secondary hover:text-brand hover:bg-brand/5',
+          : 'text-glass-text-secondary hover:text-brand hover:bg-brand/5',
       ]"
     >
       {{ item.name }}
       <svg v-if="item.children?.length"
         class="w-3 h-3 flex-shrink-0 transition-transform duration-200"
-        :class="open ? 'text-brand' : 'text-text-disabled'"
+        :class="open ? 'text-brand' : 'text-glass-text-disabled'"
         style="transform: rotate(90deg);"
         fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"
         data-testid="sub-chevron">
@@ -27,8 +27,8 @@
     <div
       v-if="item.children?.length"
       v-show="open"
-      class="absolute top-0 z-[320] min-w-44 rounded-xl shadow-xl border border-surface-border p-1.5"
-      style="right: calc(100% + 4px); background-color: var(--color-card);"
+      class="absolute top-0 z-[320] min-w-44 rounded-xl shadow-xl nav-sub-panel p-1.5"
+      style="right: calc(100% + 4px);"
       data-testid="sub-panel"
       @mouseenter="onEnter"
       @mouseleave="onLeave"
@@ -68,3 +68,12 @@ function onLeave() {
   timer = setTimeout(() => { open.value = false }, 150)
 }
 </script>
+
+<style scoped>
+.nav-sub-panel {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
+</style>

@@ -1,5 +1,5 @@
-﻿<template>
-  <section class="mv">
+<template>
+  <GlassCard as="section" tint="accent-purple" padding="sm" radius="20px" class="mv">
 
     <!-- Header -->
     <div class="mv__head">
@@ -27,7 +27,7 @@
     </div>
 
     <!-- Products -->
-    <div class="mv__products">
+    <div ref="rowRef" class="mv__products">
       <template v-if="loading">
         <div v-for="i in 6" :key="i" class="mv__skeleton">
           <BaseSkeleton height="150px" class="rounded-none" />
@@ -70,7 +70,7 @@
       </template>
     </div>
 
-  </section>
+  </GlassCard>
 </template>
 
 <script setup>
@@ -82,6 +82,8 @@ import { useWishlistStore } from '~/stores/wishlist.store'
 import { useUiStore }       from '~/stores/ui.store'
 import BaseProductCard from '~/components/common/BaseProductCard.vue'
 import BaseSkeleton    from '~/components/common/BaseSkeleton.vue'
+import GlassCard from '~/components/glass/GlassCard.vue'
+import { useGsapReveal } from '~/composables/useGsapReveal'
 
 const router        = useRouter()
 const cartStore     = useCartStore()
@@ -90,6 +92,9 @@ const ui            = useUiStore()
 
 const products = ref([])
 const loading  = ref(true)
+const rowRef   = ref(null)
+
+useGsapReveal(rowRef, { y: 16, stagger: 0.06 })
 
 async function handleAddToCart(product) {
   const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]
@@ -131,46 +136,13 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* ── Root ──────────────────────────────────────────── */
-.mv {
-  border-radius: 20px;
-  overflow: hidden;
-  position: relative;
-  background: linear-gradient(135deg, #0d1f0f 0%, #0a2e12 50%, #061a09 100%);
-  border: 1px solid rgba(57,255,20,0.15);
-}
-
-/* Dot mesh */
-.mv::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(57,255,20,0.06) 1px, transparent 1px);
-  background-size: 22px 22px;
-  pointer-events: none;
-}
-
-/* Neon glow blob */
-.mv::after {
-  content: '';
-  position: absolute;
-  top: -80px;
-  left: 25%;
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(57,255,20,0.12) 0%, transparent 60%);
-  pointer-events: none;
-}
-
 /* ── Header ──────────────────────────────────────────── */
 .mv__head {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding: 1.25rem 1.375rem 0.875rem;
-  position: relative;
-  z-index: 1;
+  padding: 0.375rem 0.375rem 0.875rem;
 }
 
 .mv__title-wrap {
@@ -183,34 +155,32 @@ onMounted(async () => {
   width: 44px;
   height: 44px;
   border-radius: 13px;
-  background: rgba(57,255,20,0.12);
-  border: 1px solid rgba(57,255,20,0.35);
+  background: linear-gradient(135deg, rgba(122, 90, 220, .28), rgba(61, 139, 82, .18));
+  border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(57,255,20,0.2);
 }
 
 .mv__icon-svg {
   width: 22px;
   height: 22px;
-  color: #39ff14;
-  filter: drop-shadow(0 0 4px rgba(57,255,20,0.7));
+  color: var(--brand-light);
 }
+[data-theme='light'] .mv__icon-svg { color: var(--brand-dark); }
 
 .mv__title {
   font-size: 1.25rem;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0;
   line-height: 1.2;
-  text-shadow: 0 0 20px rgba(57,255,20,0.25);
 }
 
 .mv__sub {
   font-size: 0.7rem;
-  color: rgba(255,255,255,0.42);
+  color: var(--text-secondary);
   margin: 3px 0 0;
 }
 
@@ -220,22 +190,21 @@ onMounted(async () => {
   gap: 4px;
   font-size: 0.8rem;
   font-weight: 600;
-  color: rgba(57,255,20,0.7);
+  color: var(--brand-light);
   text-decoration: none;
   margin-right: auto;
   transition: color 0.2s ease, gap 0.2s ease;
 }
-.mv__all:hover { color: #39ff14; gap: 8px; }
+[data-theme='light'] .mv__all { color: var(--brand-dark); }
+.mv__all:hover { gap: 8px; }
 
 /* ── Products ──────────────────────────────────────── */
 .mv__products {
   display: flex;
   gap: 0.75rem;
   overflow-x: auto;
-  padding: 0.25rem 1.375rem 1.375rem;
+  padding: 0.25rem 0.375rem 0.375rem;
   scrollbar-width: none;
-  position: relative;
-  z-index: 1;
 }
 .mv__products::-webkit-scrollbar { display: none; }
 
@@ -251,7 +220,7 @@ onMounted(async () => {
   border-radius: 14px;
   overflow: hidden;
   flex-shrink: 0;
-  background-color: var(--color-card);
+  background: var(--glass);
 }
 
 /* ── Rank badge ─────────────────────────────────────── */
@@ -263,30 +232,28 @@ onMounted(async () => {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.55);
+  background: var(--glass-strong);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(57,255,20,0.3);
+  border: 1px solid var(--glass-border);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   pointer-events: none;
-  box-shadow: 0 0 8px rgba(57,255,20,0.2);
 }
 
 .mv__rank--top {
-  background: rgba(0,0,0,0.5);
   font-size: 0.9rem;
   width: 28px;
   height: 28px;
 }
 
 .mv__rank-num {
-  color: #39ff14;
+  color: var(--brand-light);
   font-weight: 700;
   font-size: 0.65rem;
-  filter: drop-shadow(0 0 3px rgba(57,255,20,0.8));
 }
+[data-theme='light'] .mv__rank-num { color: var(--brand-dark); }
 
 /* ── View count badge ───────────────────────────────── */
 .mv__views {
@@ -299,24 +266,24 @@ onMounted(async () => {
   gap: 3px;
   padding: 2px 6px;
   border-radius: 20px;
-  background: rgba(0,0,0,0.6);
+  background: var(--glass-strong);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(57,255,20,0.25);
+  border: 1px solid var(--glass-border);
   pointer-events: none;
 }
 
 .mv__views-icon {
   width: 11px;
   height: 11px;
-  color: #39ff14;
+  color: var(--brand-light);
   flex-shrink: 0;
-  filter: drop-shadow(0 0 3px rgba(57,255,20,0.7));
 }
+[data-theme='light'] .mv__views-icon { color: var(--brand-dark); }
 
 .mv__views-count {
   font-size: 0.6rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.85);
+  color: var(--text-primary);
   line-height: 1;
   direction: ltr;
 }
@@ -325,7 +292,7 @@ onMounted(async () => {
   width: 100%;
   text-align: center;
   padding: 2.5rem 0;
-  color: rgba(255,255,255,0.4);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 </style>

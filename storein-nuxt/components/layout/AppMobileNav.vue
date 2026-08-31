@@ -1,5 +1,5 @@
 ﻿<template>
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-header h-14 glass-strong shadow-floating">
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-header h-14 bg-glass-strong border-t border-glass-border shadow-floating" style="backdrop-filter: blur(24px) saturate(160%); -webkit-backdrop-filter: blur(24px) saturate(160%);">
     <div class="flex items-stretch h-full">
       <NuxtLink
         v-for="item in navItems"
@@ -7,7 +7,7 @@
         :to="item.to"
         :class="[
           'flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors relative',
-          isActive(item) ? 'text-brand' : 'text-text-secondary',
+          isActive(item) ? 'text-brand' : 'text-glass-text-secondary',
         ]"
         :aria-label="item.label"
       >
@@ -25,7 +25,7 @@
         <span
           v-if="isActive(item)"
           class="absolute inset-x-2.5 top-1.5 bottom-1.5 rounded-xl -z-10"
-          style="background: rgb(var(--color-brand-rgb) / 0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);"
+          style="background: rgb(var(--brand-rgb) / 0.16); box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);"
           aria-hidden="true"
         />
 

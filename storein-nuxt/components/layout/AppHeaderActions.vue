@@ -6,8 +6,8 @@
       <button
         class="relative p-2 rounded-lg transition-colors"
         :class="isNotifOpen
-          ? 'text-brand bg-[var(--color-surface,rgba(0,0,0,.06))]'
-          : 'text-text-secondary hover:text-brand hover:bg-surface'"
+          ? 'text-brand bg-glass'
+          : 'text-glass-text-secondary hover:text-brand hover:bg-glass'"
         title="اعلان‌ها"
         data-testid="bell-btn"
         @click="toggleNotif"
@@ -111,7 +111,7 @@
     <!-- ─── Cart ──────────────────────────────────────────────── -->
     <NuxtLink
       :to="'/cart'"
-      class="relative p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-colors"
+      class="relative p-2 rounded-lg text-glass-text-secondary hover:text-brand hover:bg-glass transition-colors"
       title="سبد خرید"
     >
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -141,7 +141,7 @@
       <NuxtLink
         v-if="!authStore.isLoggedIn"
         to="/auth/login"
-        class="md:hidden p-2 rounded-lg text-text-secondary hover:text-brand hover:bg-surface transition-colors"
+        class="md:hidden p-2 rounded-lg text-glass-text-secondary hover:text-brand hover:bg-glass transition-colors"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
@@ -151,14 +151,14 @@
       <!-- Logged in: avatar button -->
       <button
         v-else
-        class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-surface transition-colors"
+        class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-glass transition-colors"
         @click="isOpen = !isOpen"
       >
         <span class="w-8 h-8 rounded-full bg-brand text-white text-sm font-bold flex items-center justify-center shrink-0">
           {{ avatarLetter }}
         </span>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-          :class="['w-3.5 h-3.5 text-text-secondary transition-transform duration-200 hidden md:block', isOpen ? 'rotate-180' : '']"
+          :class="['w-3.5 h-3.5 text-glass-text-secondary transition-transform duration-200 hidden md:block', isOpen ? 'rotate-180' : '']"
         >
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
         </svg>
@@ -168,12 +168,12 @@
       <Transition name="dropdown">
         <div
           v-if="isOpen && authStore.isLoggedIn"
-          class="absolute top-full end-0 mt-2 w-56 rounded-xl shadow-dropdown z-dropdown overflow-hidden"
-          style="background-color: var(--color-card); border: 1px solid var(--color-border); max-width: calc(100vw - 1rem);"
+          class="absolute top-full end-0 mt-2 w-56 rounded-xl shadow-dropdown z-dropdown overflow-hidden user-drop-panel"
+          style="max-width: calc(100vw - 1rem);"
         >
-          <div class="px-4 py-3" style="border-bottom: 1px solid var(--color-border);">
-            <p class="text-xs" style="color: var(--color-text-secondary);">سلام،</p>
-            <p class="text-sm font-semibold truncate" style="color: var(--color-text-primary);">{{ userName }}</p>
+          <div class="px-4 py-3" style="border-bottom: 1px solid var(--glass-border);">
+            <p class="text-xs" style="color: var(--text-secondary);">سلام،</p>
+            <p class="text-sm font-semibold truncate" style="color: var(--text-primary);">{{ userName }}</p>
           </div>
           <nav class="py-1">
             <NuxtLink
@@ -181,18 +181,18 @@
               :key="item.name"
               :to="item.to"
               class="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors"
-              style="color: var(--color-text-primary);"
-              @mouseenter="e => e.currentTarget.style.backgroundColor = 'var(--color-bg)'"
+              style="color: var(--text-primary);"
+              @mouseenter="e => e.currentTarget.style.backgroundColor = 'var(--glass)'"
               @mouseleave="e => e.currentTarget.style.backgroundColor = ''"
               @click="isOpen = false"
             >
-              <component :is="item.icon" class="w-4 h-4 shrink-0" style="color: var(--color-text-secondary);" />
+              <component :is="item.icon" class="w-4 h-4 shrink-0" style="color: var(--text-secondary);" />
               {{ item.label }}
             </NuxtLink>
           </nav>
-          <div class="py-1" style="border-top: 1px solid var(--color-border);">
+          <div class="py-1" style="border-top: 1px solid var(--glass-border);">
             <button
-              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error transition-colors hover:bg-red-50"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-error transition-colors hover:bg-red-500/10"
               @click="handleLogout"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 shrink-0">
@@ -312,6 +312,14 @@ async function handleLogout() {
 .dropdown-enter-from,
 .dropdown-leave-to     { opacity: 0; transform: translateY(-8px) scale(0.97); }
 
+/* ── User dropdown panel ───────────────────────────────────── */
+.user-drop-panel {
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
+
 /* ── Bell badge ─────────────────────────────────────────────── */
 .nd__bell-badge {
   position: absolute;
@@ -329,7 +337,7 @@ async function handleLogout() {
   justify-content: center;
   padding: 0 4px;
   line-height: 1;
-  border: 1.5px solid var(--color-card, #0f172a);
+  border: 1.5px solid var(--glass-strong);
 }
 
 /* ── Notification dropdown panel ────────────────────────────── */
@@ -342,8 +350,10 @@ async function handleLogout() {
   max-width: calc(100vw - 0.5rem);
   border-radius: 20px;
   overflow: hidden;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
   box-shadow:
     0 24px 64px rgba(0, 0, 0, 0.28),
     0 8px 24px rgba(0, 0, 0, 0.16),
@@ -370,7 +380,7 @@ async function handleLogout() {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.125rem 0.875rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--glass-border);
   background: linear-gradient(
     to bottom,
     rgba(255,255,255,.03) 0%,
@@ -381,21 +391,21 @@ async function handleLogout() {
 .nd__head-title {
   font-size: 0.9rem;
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   letter-spacing: -0.01em;
 }
 
 .nd__head-count {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #39FF14;
-  background: rgba(57, 255, 20, 0.1);
-  border: 1px solid rgba(57, 255, 20, 0.22);
+  color: var(--brand-light);
+  background: rgb(var(--brand-rgb) / 0.14);
+  border: 1px solid rgb(var(--brand-rgb) / 0.28);
   border-radius: 20px;
   padding: 3px 10px;
-  text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
   letter-spacing: 0.01em;
 }
+[data-theme='light'] .nd__head-count { color: var(--brand-dark); }
 
 /* Loading skeleton */
 .nd__loading { padding: 0.5rem 0; }
@@ -411,7 +421,7 @@ async function handleLogout() {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--color-border);
+  background: var(--glass-strong);
   flex-shrink: 0;
   animation: sk-pulse 1.5s ease-in-out infinite;
 }
@@ -421,7 +431,7 @@ async function handleLogout() {
 .nd__sk-line {
   height: 0.75rem;
   border-radius: 5px;
-  background: var(--color-border);
+  background: var(--glass-strong);
   animation: sk-pulse 1.5s ease-in-out infinite;
 }
 
@@ -443,13 +453,13 @@ async function handleLogout() {
 .nd__empty-icon {
   width: 36px;
   height: 36px;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   opacity: 0.35;
 }
 
 .nd__empty-text {
   font-size: 0.82rem;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   opacity: 0.7;
 }
 
@@ -467,19 +477,19 @@ async function handleLogout() {
   cursor: pointer;
   transition: background-color 0.14s;
   position: relative;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--glass-border);
 }
 
 .nd__item:last-child { border-bottom: none; }
 
-.nd__item:hover { background-color: var(--color-bg); }
+.nd__item:hover { background-color: var(--glass); }
 
 .nd__item--unread {
-  background: rgba(57, 255, 20, 0.028);
-  border-right: 2.5px solid #39FF14;
+  background: rgb(var(--brand-rgb) / 0.05);
+  border-right: 2.5px solid var(--brand-light);
 }
 
-.nd__item--unread:hover { background: rgba(57, 255, 20, 0.05); }
+.nd__item--unread:hover { background: rgb(var(--brand-rgb) / 0.09); }
 
 /* Type icon */
 .nd__icon {
@@ -496,9 +506,10 @@ async function handleLogout() {
 .nd__icon svg { width: 17px; height: 17px; }
 
 .nd__icon--order   { background: rgba(251,191,36,.13); color: #f59e0b; }
-.nd__icon--payment { background: rgba(57,255,20,.1);   color: #39FF14; }
+.nd__icon--payment { background: rgb(var(--brand-rgb) / .14); color: var(--brand-light); }
 .nd__icon--promo   { background: rgba(168,85,247,.12); color: #a855f7; }
 .nd__icon--default { background: rgba(99,102,241,.12); color: #818cf8; }
+[data-theme='light'] .nd__icon--payment { color: var(--brand-dark); }
 
 /* Item content */
 .nd__item-body {
@@ -516,7 +527,7 @@ async function handleLogout() {
 .nd__item-title {
   font-size: 0.83rem;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -526,7 +537,7 @@ async function handleLogout() {
 }
 
 .nd__item-title--unread {
-  color: var(--color-text-primary);
+  color: var(--text-primary);
   font-weight: 700;
 }
 
@@ -539,15 +550,15 @@ async function handleLogout() {
 }
 
 .nd__dot--unread {
-  background: #39FF14;
-  box-shadow: 0 0 0 2px rgba(57,255,20,.15), 0 0 8px rgba(57,255,20,.65);
+  background: var(--brand-light);
+  box-shadow: 0 0 0 2px rgb(var(--brand-rgb) / .15);
 }
 
 .nd__dot--read { background: transparent; }
 
 .nd__item-sub {
   font-size: 0.76rem;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-top: 3px;
   opacity: 0.7;
   overflow: hidden;
@@ -558,7 +569,7 @@ async function handleLogout() {
 
 .nd__item-time {
   font-size: 0.67rem;
-  color: var(--color-text-secondary);
+  color: var(--text-secondary);
   margin-top: 5px;
   display: inline-flex;
   align-items: center;
@@ -575,14 +586,14 @@ async function handleLogout() {
   padding: 0.875rem 1rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--color-brand);
+  color: var(--brand);
   text-decoration: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--glass-border);
   transition: background-color 0.14s;
   letter-spacing: -0.01em;
 }
 
-.nd__footer:hover { background-color: var(--color-bg); }
+.nd__footer:hover { background-color: var(--glass); }
 
 .nd__footer-arrow {
   width: 13px;

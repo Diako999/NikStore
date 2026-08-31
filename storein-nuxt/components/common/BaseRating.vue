@@ -13,7 +13,7 @@
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          :class="[starSize[size], activeValue >= i ? 'text-yellow-400' : 'text-gray-200']"
+          :class="[starSize[size], activeValue >= i ? 'text-yellow-400' : 'text-glass-text-disabled']"
           viewBox="0 0 24 24"
           :fill="activeValue >= i ? 'currentColor' : 'currentColor'"
           stroke="none"
@@ -22,10 +22,10 @@
         </svg>
       </button>
     </div>
-    <span v-if="showValue && modelValue" :class="['font-semibold text-text-secondary', valueSize[size]]">
+    <span v-if="showValue && modelValue" :class="['font-semibold text-glass-text-secondary', valueSize[size]]">
       {{ modelValue.toFixed(1) }}
     </span>
-    <span v-if="count !== undefined" :class="['text-text-secondary', countSize[size]]">
+    <span v-if="count !== undefined" :class="['text-glass-text-secondary', countSize[size]]">
       ({{ formatNumber(count) }})
     </span>
   </div>
