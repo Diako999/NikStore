@@ -115,7 +115,7 @@ describe('ZarinpalGateway', () => {
     it('sends merchantId from settings, description, and callback_url in request body', async () => {
       global.fetch = mockFetch(zarinpalSuccessCreate());
 
-      await gateway.create(10_000, 'خرید عینک', 'http://front/payment/result');
+      await gateway.create(10_000, 'خرید هودی', 'http://front/payment/result');
 
       const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [
         string,
@@ -123,7 +123,7 @@ describe('ZarinpalGateway', () => {
       ];
       const body = JSON.parse(init.body as string) as Record<string, unknown>;
       expect(body.merchant_id).toBe(MERCHANT);
-      expect(body.description).toBe('خرید عینک');
+      expect(body.description).toBe('خرید هودی');
       expect(body.callback_url).toBe('http://front/payment/result');
     });
 

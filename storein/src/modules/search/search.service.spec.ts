@@ -222,7 +222,7 @@ describe('SearchService', () => {
     });
 
     it('logs the search call with sort info', async () => {
-      await service.search({ q: 'عینک', sort: 'mostViewed' });
+      await service.search({ q: 'هودی', sort: 'mostViewed' });
       expect(mockLogger.log).toHaveBeenCalledWith(
         'search',
         expect.objectContaining({ sort: 'mostViewed' }),
@@ -276,13 +276,13 @@ describe('SearchService', () => {
     it('falls back to DB when Redis get throws — search still works', async () => {
       redis.get.mockRejectedValue(new Error('Redis connection refused'));
       productModel.find.mockReturnValue(
-        leanChain([{ name: 'عینک آفتابی', slug: 'sunglasses' }]),
+        leanChain([{ name: 'هودی پرفورمنس', slug: 'hoodie' }]),
       );
       categoryModel.find.mockReturnValue(leanChain([]));
 
-      const res = await service.suggest('عینک');
+      const res = await service.suggest('هودی');
       expect(res.products).toEqual([
-        { name: 'عینک آفتابی', slug: 'sunglasses' },
+        { name: 'هودی پرفورمنس', slug: 'hoodie' },
       ]);
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Redis get failed'),
@@ -293,12 +293,12 @@ describe('SearchService', () => {
       redis.get.mockResolvedValue(null);
       redis.setex.mockRejectedValue(new Error('Redis write error'));
       productModel.find.mockReturnValue(
-        leanChain([{ name: 'لنز', slug: 'lens' }]),
+        leanChain([{ name: 'کاپشن', slug: 'jacket' }]),
       );
       categoryModel.find.mockReturnValue(leanChain([]));
 
-      const res = await service.suggest('لنز');
-      expect(res.products).toEqual([{ name: 'لنز', slug: 'lens' }]);
+      const res = await service.suggest('کاپشن');
+      expect(res.products).toEqual([{ name: 'کاپشن', slug: 'jacket' }]);
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Redis setex failed'),
       );
