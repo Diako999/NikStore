@@ -1,23 +1,23 @@
 <template>
   <div class="w-full max-w-sm mx-auto px-4">
-    <div class="rounded-2xl shadow-modal px-6 py-8" style="background-color: var(--color-card);">
+    <GlassCard padding="lg" radius="24px">
 
       <div class="flex flex-col items-center mb-8">
         <NuxtLink to="/" class="flex flex-col items-center gap-2">
-          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-1" style="background-color: var(--color-brand);">
+          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 bg-glass-brand">
             <svg class="w-8 h-8 text-white" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <rect x="2" y="4" width="18" height="16" rx="8" /><rect x="28" y="4" width="18" height="16" rx="8" /><path d="M20 12 Q24 6 28 12" />
             </svg>
           </div>
-          <span class="text-brand font-black text-xl tracking-tight">{{ settingsStore.siteName }}</span>
+          <span class="text-glass-brand font-black text-xl tracking-tight">{{ settingsStore.siteName }}</span>
         </NuxtLink>
       </div>
 
       <div class="mb-7 text-center">
-        <h1 class="text-xl font-bold text-text-primary mb-3">کد تأیید را وارد کنید</h1>
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium" style="background-color: var(--color-bg); border: 1px solid var(--color-border);">
-          <span style="color: var(--color-text-secondary);">کد ۶ رقمی ارسال شد به</span>
-          <span class="font-bold" style="color: var(--color-text-primary);" dir="ltr">{{ maskedPhone }}</span>
+        <h1 class="text-xl font-bold text-glass-text-primary mb-3">کد تأیید را وارد کنید</h1>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-glass border border-glass-border">
+          <span class="text-glass-text-secondary">کد ۶ رقمی ارسال شد به</span>
+          <span class="font-bold text-glass-text-primary" dir="ltr">{{ maskedPhone }}</span>
         </div>
       </div>
 
@@ -28,37 +28,33 @@
         </Transition>
       </div>
 
-      <button
-        @click="verify"
-        :disabled="otpCode.length < 6 || authStore.loading"
-        class="w-full bg-brand text-white font-bold py-3.5 rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-150 text-base mb-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        <BaseSpinner v-if="authStore.loading" size="sm" color="white" />
-        <span>{{ authStore.loading ? 'در حال بررسی...' : 'تأیید و ورود' }}</span>
-      </button>
+      <GlassButton variant="primary" size="lg" block class="mb-5" :loading="authStore.loading" :disabled="otpCode.length < 6 || authStore.loading" @click="verify">
+        {{ authStore.loading ? 'در حال بررسی...' : 'تأیید و ورود' }}
+      </GlassButton>
 
       <div class="flex items-center justify-center gap-3 text-sm">
-        <button @click="resend" :disabled="cooldown > 0 || authStore.loading" :class="['font-medium transition-colors duration-150', cooldown > 0 ? 'text-text-disabled cursor-not-allowed' : 'text-brand hover:opacity-80']">
+        <button @click="resend" :disabled="cooldown > 0 || authStore.loading" :class="['font-medium transition-colors duration-150', cooldown > 0 ? 'text-glass-text-disabled cursor-not-allowed' : 'text-glass-brand hover:opacity-80']">
           ارسال مجدد کد
         </button>
         <Transition name="fade">
-          <span v-if="cooldown > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums" style="background-color: var(--color-bg); color: var(--color-text-secondary);" dir="ltr">{{ formattedCooldown }}</span>
+          <span v-if="cooldown > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums bg-glass text-glass-text-secondary" dir="ltr">{{ formattedCooldown }}</span>
         </Transition>
       </div>
 
-      <div class="mt-6 pt-5 border-t border-surface-border text-center">
-        <button @click="goBack" class="text-text-secondary text-sm hover:text-brand inline-flex items-center gap-1.5 mx-auto transition-colors duration-150">
+      <div class="mt-6 pt-5 border-t border-glass-border text-center">
+        <button @click="goBack" class="text-glass-text-secondary text-sm hover:text-glass-brand inline-flex items-center gap-1.5 mx-auto transition-colors duration-150">
           <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
           ویرایش شماره موبایل
         </button>
       </div>
-    </div>
+    </GlassCard>
   </div>
 </template>
 
 <script setup>
-import OtpInput  from '~/components/auth/OtpInput.vue'
-import BaseSpinner from '~/components/common/BaseSpinner.vue'
+import OtpInput   from '~/components/auth/OtpInput.vue'
+import GlassCard   from '~/components/glass/GlassCard.vue'
+import GlassButton from '~/components/glass/GlassButton.vue'
 
 definePageMeta({ layout: 'auth', middleware: ['guest'] })
 

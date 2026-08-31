@@ -335,12 +335,14 @@ function timeAgo(iso) {
   gap: 0.875rem;
   padding: 1rem 1.125rem;
   border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-card);
+  border: 1.5px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
   text-align: right;
   width: 100%;
   cursor: pointer;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s, background-color 0.2s;
   overflow: hidden;
 }
 
@@ -480,8 +482,8 @@ function timeAgo(iso) {
   gap: 0.875rem;
   padding: 1rem 1.125rem;
   border-radius: 16px;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-card);
+  border: 1.5px solid var(--glass-border);
+  background: var(--glass);
 }
 
 .nv__sk-icon {

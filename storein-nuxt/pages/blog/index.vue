@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-[var(--color-bg)]">
+  <div class="min-h-screen">
 
     <div class="bg-gradient-to-l from-brand to-brand-dark py-12 text-white">
       <div class="container mx-auto px-4 text-center">
@@ -12,70 +12,65 @@
       <div class="flex flex-col lg:flex-row gap-8">
 
         <aside class="w-full lg:w-64 flex-shrink-0 space-y-5">
-          <div class="bg-card rounded-2xl p-4 border border-[var(--color-border)]">
-            <h3 class="font-bold text-[var(--color-text-primary)] text-sm mb-3">جستجو</h3>
-            <div class="relative">
-              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-disabled)] text-sm">🔍</span>
-              <input
-                v-model="store.filters.search"
-                @input="onSearchInput"
-                type="text"
-                placeholder="جستجو در بلاگ..."
-                class="w-full pr-9 pl-3 py-2 text-sm border border-[var(--color-border)] rounded-xl bg-[var(--color-bg)] text-[var(--color-text-primary)] outline-none focus:border-brand transition-colors"
-              />
-            </div>
-          </div>
+          <GlassCard padding="md">
+            <h3 class="font-bold text-glass-text-primary text-sm mb-3">جستجو</h3>
+            <GlassSearchBar
+              v-model="store.filters.search"
+              placeholder="جستجو در بلاگ..."
+              @update:model-value="onSearchInput"
+            />
+          </GlassCard>
 
-          <div class="bg-card rounded-2xl p-4 border border-[var(--color-border)]">
-            <h3 class="font-bold text-[var(--color-text-primary)] text-sm mb-3">مرتب‌سازی</h3>
+          <GlassCard padding="md">
+            <h3 class="font-bold text-glass-text-primary text-sm mb-3">مرتب‌سازی</h3>
             <div class="space-y-1">
               <button
                 v-for="s in sortOptions" :key="s.value"
                 @click="setSort(s.value)"
-                :class="['flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm transition-all', store.filters.sortBy === s.value ? 'bg-brand text-white' : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg)]']"
+                :class="['flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm transition-all', store.filters.sortBy === s.value ? 'bg-brand text-white' : 'text-glass-text-secondary hover:bg-glass']"
               >
                 <span>{{ s.icon }}</span>{{ s.label }}
               </button>
             </div>
-          </div>
+          </GlassCard>
 
-          <div v-if="store.tags.length" class="bg-card rounded-2xl p-4 border border-[var(--color-border)]">
-            <h3 class="font-bold text-[var(--color-text-primary)] text-sm mb-3">موضوعات</h3>
+          <GlassCard v-if="store.tags.length" padding="md">
+            <h3 class="font-bold text-glass-text-primary text-sm mb-3">موضوعات</h3>
             <div class="flex flex-wrap gap-2">
-              <button @click="clearTag" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', !store.filters.tag ? 'bg-brand text-white border-brand' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]']">همه</button>
-              <button v-for="t in store.tags" :key="t.tag" @click="selectTag(t.tag)" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', store.filters.tag === t.tag ? 'bg-brand text-white border-brand' : 'border-[var(--color-border)] text-[var(--color-text-secondary)]']">
+              <button @click="clearTag" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', !store.filters.tag ? 'bg-brand text-white border-brand' : 'border-glass-border text-glass-text-secondary']">همه</button>
+              <button v-for="t in store.tags" :key="t.tag" @click="selectTag(t.tag)" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', store.filters.tag === t.tag ? 'bg-brand text-white border-brand' : 'border-glass-border text-glass-text-secondary']">
                 #{{ t.tag }} <span class="text-[10px] opacity-70">{{ t.count }}</span>
               </button>
             </div>
-          </div>
+          </GlassCard>
         </aside>
 
         <main class="flex-1 min-w-0">
           <div v-if="store.loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            <div v-for="i in 6" :key="i" class="bg-card rounded-2xl overflow-hidden border border-[var(--color-border)] animate-pulse">
+            <GlassCard v-for="i in 6" :key="i" padding="sm" class="overflow-hidden animate-pulse !p-0">
               <div class="aspect-[16/9] bg-gray-200 dark:bg-gray-700"></div>
               <div class="p-4 space-y-3">
                 <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                 <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
               </div>
-            </div>
+            </GlassCard>
           </div>
 
-          <div v-else-if="!store.posts.length" class="bg-card rounded-2xl border border-[var(--color-border)] flex flex-col items-center py-20 gap-4">
+          <GlassCard v-else-if="!store.posts.length" padding="lg" class="flex flex-col items-center py-20 gap-4">
             <span class="text-5xl">📭</span>
-            <p class="text-[var(--color-text-secondary)] text-center">هنوز مقاله‌ای منتشر نشده.</p>
-          </div>
+            <p class="text-glass-text-secondary text-center">هنوز مقاله‌ای منتشر نشده.</p>
+          </GlassCard>
 
           <div v-else>
-            <p class="text-sm text-[var(--color-text-secondary)] mb-4">{{ store.total }} مقاله یافت شد</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            <p class="text-sm text-glass-text-secondary mb-4">{{ store.total }} مقاله یافت شد</p>
+            <div ref="blogGridRef" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
               <BlogCard v-for="post in store.posts" :key="post._id" :post="post" />
             </div>
             <div v-if="store.totalPages > 1" class="flex justify-center mt-8 gap-2 flex-wrap">
               <button
                 v-for="p in store.totalPages" :key="p"
                 @click="goToPage(p)"
-                :class="['w-9 h-9 rounded-xl text-sm font-medium transition-all border', store.filters.page === p ? 'bg-brand text-white border-brand' : 'bg-card border-[var(--color-border)] text-[var(--color-text-secondary)]']"
+                :class="['w-9 h-9 rounded-xl text-sm font-medium transition-all border', store.filters.page === p ? 'bg-brand text-white border-brand' : 'bg-glass border-glass-border text-glass-text-secondary']"
               >{{ p }}</button>
             </div>
           </div>
@@ -88,6 +83,9 @@
 <script setup>
 import { useDebounceFn } from '@vueuse/core'
 import BlogCard from '~/components/blog/BlogCard.vue'
+import GlassCard from '~/components/glass/GlassCard.vue'
+import GlassSearchBar from '~/components/glass/GlassSearchBar.vue'
+import { useGsapReveal } from '~/composables/useGsapReveal'
 
 definePageMeta({ layout: 'default' })
 const settingsStore = useSettingsStore()
@@ -152,6 +150,14 @@ await Promise.all([
     return null
   }),
 ])
+
+// Fires on mount — the posts above are already resolved via the awaited
+// useAsyncData call, so the grid's cards exist in the DOM by the time this
+// composable takes its children snapshot (unlike a CSR-only fetch-in-onMounted
+// list, where the snapshot would land before the data — see the order-history
+// page for that case).
+const blogGridRef = ref(null)
+useGsapReveal(blogGridRef, { y: 20, stagger: 0.06 })
 
 const onSearchInput = useDebounceFn(() => {
   store.filters.page = 1

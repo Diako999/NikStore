@@ -45,10 +45,11 @@
     />
 
     <!-- Order cards -->
-    <div v-else class="flex flex-col gap-4">
-      <div
+    <div v-else ref="ordersGridRef" class="flex flex-col gap-4">
+      <GlassCard
         v-for="order in orders" :key="order._id"
-        class="rounded-2xl border border-surface-border p-5 transition-all hover:border-brand/30 relative bg-card"
+        padding="lg"
+        class="transition-all hover:border-brand/30 relative"
       >
         <!-- Stretched link — covers the whole card for pointer/keyboard navigation -->
         <NuxtLink
@@ -134,7 +135,7 @@
             لغو سفارش
           </button>
         </div>
-      </div>
+      </GlassCard>
     </div>
 
     <!-- Pagination -->
@@ -161,16 +162,17 @@
         @click.self="cancelTarget = null"
         @keydown.esc="cancelTarget = null"
       >
-        <div
-          class="w-full max-w-sm rounded-2xl border border-surface-border p-6 flex flex-col gap-4 bg-card"
+        <GlassCard
+          padding="lg"
+          class="w-full max-w-sm flex flex-col gap-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="cancel-dialog-title"
         >
-          <h3 id="cancel-dialog-title" class="font-bold text-text-primary text-base">لغو سفارش</h3>
-          <p class="text-text-secondary text-sm leading-6">
+          <h3 id="cancel-dialog-title" class="font-bold text-glass-text-primary text-base">لغو سفارش</h3>
+          <p class="text-glass-text-secondary text-sm leading-6">
             آیا از لغو سفارش
-            <span class="font-bold text-text-primary font-fanum dir-ltr">{{ cancelTarget?.orderNumber }}</span>
+            <span class="font-bold text-glass-text-primary font-fanum dir-ltr">{{ cancelTarget?.orderNumber }}</span>
             مطمئن هستید؟ این عملیات قابل برگشت نیست.
           </p>
           <div class="flex gap-3 mt-2">
@@ -183,12 +185,12 @@
             </button>
             <button
               @click="cancelTarget = null"
-              class="flex-1 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+              class="flex-1 py-2.5 rounded-xl border border-glass-border text-sm text-glass-text-secondary hover:text-glass-text-primary transition-colors"
             >
               انصراف
             </button>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </Teleport>
   </div>
@@ -200,11 +202,12 @@ definePageMeta({ layout: 'default', middleware: ['auth'] })
 useSeoMeta({ title: 'سفارش‌های من', robots: 'noindex,nofollow' })
 
 
-import { ref, onMounted }    from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import { orderService }      from '~/services/order.service'
 import { useUiStore }        from '~/stores/ui.store'
 import { formatPrice, formatDate } from '~/utils/formatters'
 import BaseEmpty from '~/components/common/BaseEmpty.vue'
+import GlassCard from '~/components/glass/GlassCard.vue'
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="%23334155"%3E%3Crect width="48" height="48" rx="8"/%3E%3C/svg%3E'
 
@@ -217,6 +220,27 @@ const activeStatus = ref('')
 const cancelTarget = ref(null)
 const cancelling   = ref(false)
 const copiedId     = ref(null)
+const ordersGridRef = ref(null)
+
+// Order-history reveal: this list is CSR-only (fetched in onMounted, not
+// SSR-prefetched like the blog grid), so the cards don't exist in the DOM
+// yet when a mount-time-only composable like useGsapReveal would take its
+// snapshot — it would find zero children and never animate. Firing the
+// tween manually right after the fetch resolves (and again on every filter
+// change) is the equivalent one-shot fade+rise, just timed correctly.
+async function revealOrders() {
+  if (!import.meta.client) return
+  await nextTick()
+  const el = ordersGridRef.value
+  if (!el || !el.children.length) return
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const { gsap } = await import('gsap')
+  gsap.fromTo(
+    el.children,
+    { opacity: 0, y: 20 },
+    { opacity: 1, y: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out' },
+  )
+}
 
 function copyOrderNumber(id, text) {
   navigator.clipboard.writeText(text).then(() => {
@@ -256,6 +280,7 @@ async function fetchOrders() {
     const { data } = await orderService.getMyOrders(params)
     orders.value     = data.orders ?? []
     totalPages.value = data.totalPages ?? 1
+    revealOrders()
   } catch {
     ui.addToast('خطا در دریافت سفارشات', 'error')
   } finally {

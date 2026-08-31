@@ -9,16 +9,12 @@
           ({{ addresses.length }} از ۱۰)
         </span>
       </h1>
-      <button
-        v-if="addresses.length < 10"
-        @click="openAdd"
-        class="btn-brand text-sm px-4 py-2 flex items-center gap-2"
-      >
+      <GlassButton v-if="addresses.length < 10" variant="primary" size="sm" @click="openAdd">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" d="M12 4v16m8-8H4"/>
         </svg>
         افزودن آدرس
-      </button>
+      </GlassButton>
     </div>
 
     <!-- Loading -->
@@ -38,18 +34,16 @@
 
     <!-- Address cards -->
     <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div
+      <GlassCard
         v-for="addr in addresses" :key="addr._id"
-        :class="[
-          'rounded-2xl border p-5 flex flex-col gap-3 transition-all relative',
-          addr.isDefault ? 'border-brand' : 'border-surface-border',
-        ]"
-        style="background-color: var(--color-card)"
+        padding="lg"
+        :tint="addr.isDefault ? 'accent-gold' : 'default'"
+        class="flex flex-col gap-3 relative"
       >
         <!-- Default badge -->
         <div class="flex items-start justify-between gap-2">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-bold text-text-primary">{{ addr.title }}</span>
+            <span class="text-sm font-bold text-glass-text-primary">{{ addr.title }}</span>
             <span
               v-if="addr.isDefault"
               class="text-xs bg-brand/10 text-brand px-2 py-0.5 rounded-full font-medium"
@@ -69,7 +63,7 @@
             </button>
             <button
               @click="openEdit(addr)"
-              class="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-brand hover:bg-brand/5 transition-colors"
+              class="w-11 h-11 flex items-center justify-center rounded-lg text-glass-text-secondary hover:text-brand hover:bg-brand/5 transition-colors"
               :aria-label="`ویرایش آدرس ${addr.title}`"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -78,7 +72,7 @@
             </button>
             <button
               @click="openDelete(addr)"
-              class="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-error hover:bg-error/5 transition-colors"
+              class="w-11 h-11 flex items-center justify-center rounded-lg text-glass-text-secondary hover:text-error hover:bg-error/5 transition-colors"
               :aria-label="`حذف آدرس ${addr.title}`"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -89,16 +83,16 @@
         </div>
 
         <!-- Address info -->
-        <div class="text-sm text-text-secondary leading-7 border-t border-surface-border pt-3">
-          <p class="text-text-primary font-medium">{{ addr.recipientName }}</p>
+        <div class="text-sm text-glass-text-secondary leading-7 border-t border-glass-border pt-3">
+          <p class="text-glass-text-primary font-medium">{{ addr.recipientName }}</p>
           <p class="font-fanum dir-ltr inline-block">{{ addr.recipientPhone }}</p>
           <p class="mt-1">
             {{ addr.province }}، {{ addr.city }}، {{ addr.street }}
           </p>
           <p>{{ addr.detail }}</p>
-          <p class="text-xs font-fanum mt-1 text-text-disabled">کد پستی: {{ addr.postalCode }}</p>
+          <p class="text-xs font-fanum mt-1 text-glass-text-disabled">کد پستی: {{ addr.postalCode }}</p>
         </div>
-      </div>
+      </GlassCard>
     </div>
 
     <!-- ── Add / Edit Modal ── -->
@@ -111,18 +105,17 @@
           @click.self="closeModal"
         >
           <div
-            class="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border border-surface-border flex flex-col max-h-[calc(90dvh-3.5rem)] sm:max-h-[85vh] mb-14 sm:mb-0"
-            style="background-color: var(--color-card)"
+            class="w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border border-glass-border bg-glass-strong backdrop-blur-xl flex flex-col max-h-[calc(90dvh-3.5rem)] sm:max-h-[85vh] mb-14 sm:mb-0"
             role="dialog"
             aria-modal="true"
             aria-labelledby="address-modal-title"
           >
             <!-- Modal header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-surface-border flex-shrink-0">
-              <h2 id="address-modal-title" class="font-bold text-text-primary">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-glass-border flex-shrink-0">
+              <h2 id="address-modal-title" class="font-bold text-glass-text-primary">
                 {{ editTarget ? 'ویرایش آدرس' : 'افزودن آدرس جدید' }}
               </h2>
-              <button @click="closeModal" class="w-11 h-11 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary transition-colors" aria-label="بستن">
+              <button @click="closeModal" class="w-11 h-11 flex items-center justify-center rounded-lg text-glass-text-secondary hover:text-glass-text-primary transition-colors" aria-label="بستن">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
@@ -144,26 +137,20 @@
                       'px-3 py-1.5 rounded-lg text-xs border transition-colors',
                       form.title === preset
                         ? 'border-brand bg-brand/10 text-brand'
-                        : 'border-surface-border text-text-secondary hover:border-brand/40',
+                        : 'border-glass-border text-glass-text-secondary hover:border-brand/40',
                     ]"
                   >
                     {{ preset }}
                   </button>
                 </div>
-                <input v-model="form.title" type="text" class="form-input" placeholder="مثلاً: خانه، محل کار" maxlength="30" required />
-                <p v-if="errors.title" class="text-error text-xs">{{ errors.title }}</p>
+                <GlassInput v-model="form.title" placeholder="مثلاً: خانه، محل کار" maxlength="30" :error="errors.title" required />
               </div>
 
               <!-- Recipient -->
               <div class="grid grid-cols-2 gap-3">
+                <GlassInput v-model="form.recipientName" label="نام گیرنده" placeholder="نام و نام خانوادگی" maxlength="60" :error="errors.recipientName" required />
                 <div class="flex flex-col gap-1.5">
-                  <label class="form-label">نام گیرنده <span class="text-error">*</span></label>
-                  <input v-model="form.recipientName" type="text" class="form-input" placeholder="نام و نام خانوادگی" maxlength="60" required />
-                  <p v-if="errors.recipientName" class="text-error text-xs">{{ errors.recipientName }}</p>
-                </div>
-                <div class="flex flex-col gap-1.5">
-                  <label class="form-label">تلفن گیرنده <span class="text-error">*</span></label>
-                  <input v-model="form.recipientPhone" type="tel" class="form-input font-fanum" placeholder="09xxxxxxxxx" dir="ltr" maxlength="11" required />
+                  <GlassInput v-model="form.recipientPhone" label="تلفن گیرنده" type="tel" class="font-fanum" dir="ltr" placeholder="09xxxxxxxxx" maxlength="11" :error="errors.recipientPhone" required />
                   <button
                     v-if="authStore.user?.phone && form.recipientPhone !== authStore.user.phone"
                     type="button"
@@ -175,7 +162,6 @@
                     </svg>
                     استفاده از شماره خودم ({{ authStore.user.phone }})
                   </button>
-                  <p v-if="errors.recipientPhone" class="text-error text-xs">{{ errors.recipientPhone }}</p>
                 </div>
               </div>
 
@@ -186,7 +172,7 @@
                   <div class="select-wrapper">
                     <select
                       v-model="form.province"
-                      class="form-input form-select"
+                      class="glass-select"
                       required
                       @change="onProvinceChange"
                     >
@@ -200,7 +186,7 @@
                   <div class="select-wrapper">
                     <select
                       v-model="form.city"
-                      class="form-input form-select"
+                      class="glass-select"
                       required
                       :disabled="!form.province"
                     >
@@ -212,23 +198,16 @@
               </div>
 
               <!-- Street -->
-              <div class="flex flex-col gap-1.5">
-                <label class="form-label">خیابان / بلوار / کوچه <span class="text-error">*</span></label>
-                <input v-model="form.street" type="text" class="form-input" placeholder="خیابان ولیعصر، کوچه بهار" maxlength="100" required />
-              </div>
+              <GlassInput v-model="form.street" label="خیابان / بلوار / کوچه" placeholder="خیابان ولیعصر، کوچه بهار" maxlength="100" required />
 
               <!-- Detail -->
               <div class="flex flex-col gap-1.5">
                 <label class="form-label">جزئیات آدرس <span class="text-error">*</span></label>
-                <textarea v-model="form.detail" class="form-input resize-none" rows="2" placeholder="پلاک، طبقه، واحد..." maxlength="200" required />
+                <textarea v-model="form.detail" class="glass-textarea" rows="2" placeholder="پلاک، طبقه، واحد..." maxlength="200" required />
               </div>
 
               <!-- Postal code -->
-              <div class="flex flex-col gap-1.5">
-                <label class="form-label">کد پستی <span class="text-error">*</span></label>
-                <input v-model="form.postalCode" type="text" class="form-input font-fanum" placeholder="1234567890" dir="ltr" maxlength="10" required />
-                <p v-if="errors.postalCode" class="text-error text-xs">{{ errors.postalCode }}</p>
-              </div>
+              <GlassInput v-model="form.postalCode" label="کد پستی" class="font-fanum" dir="ltr" placeholder="1234567890" maxlength="10" :error="errors.postalCode" required />
 
               <!-- Default toggle -->
               <label class="flex items-center gap-3 cursor-pointer select-none py-1">
@@ -251,28 +230,19 @@
                     ]"
                   />
                 </div>
-                <span class="text-sm text-text-primary">تنظیم به عنوان آدرس پیش‌فرض</span>
+                <span class="text-sm text-glass-text-primary">تنظیم به عنوان آدرس پیش‌فرض</span>
               </label>
 
             </form>
 
             <!-- Modal footer -->
-            <div class="px-6 py-4 border-t border-surface-border flex gap-3 flex-shrink-0">
-              <button
-                type="button"
-                @click="handleSave"
-                :disabled="saving"
-                class="flex-1 btn-brand py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
+            <div class="px-6 py-4 border-t border-glass-border flex gap-3 flex-shrink-0">
+              <GlassButton variant="primary" :loading="saving" :disabled="saving" block @click="handleSave">
                 {{ saving ? 'در حال ذخیره...' : (editTarget ? 'ذخیره تغییرات' : 'افزودن آدرس') }}
-              </button>
-              <button type="button" @click="closeModal" class="px-4 py-3 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors">
+              </GlassButton>
+              <GlassButton variant="secondary" @click="closeModal">
                 انصراف
-              </button>
+              </GlassButton>
             </div>
           </div>
         </div>
@@ -287,8 +257,9 @@
         @click.self="deleteTarget = null"
         @keydown.esc="deleteTarget = null"
       >
-        <div
-          class="w-full max-w-sm rounded-2xl border border-surface-border p-6 flex flex-col gap-4 bg-card"
+        <GlassCard
+          padding="lg"
+          class="w-full max-w-sm flex flex-col gap-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-addr-title"
@@ -300,11 +271,11 @@
               </svg>
             </div>
             <div>
-              <p id="delete-addr-title" class="font-bold text-text-primary">حذف آدرس</p>
-              <p class="text-sm text-text-secondary mt-0.5">«{{ deleteTarget?.title }}»</p>
+              <p id="delete-addr-title" class="font-bold text-glass-text-primary">حذف آدرس</p>
+              <p class="text-sm text-glass-text-secondary mt-0.5">«{{ deleteTarget?.title }}»</p>
             </div>
           </div>
-          <p class="text-sm text-text-secondary leading-6">آیا از حذف این آدرس مطمئن هستید؟ این عملیات قابل برگشت نیست.</p>
+          <p class="text-sm text-glass-text-secondary leading-6">آیا از حذف این آدرس مطمئن هستید؟ این عملیات قابل برگشت نیست.</p>
           <div class="flex gap-3">
             <button
               @click="confirmDelete"
@@ -315,12 +286,12 @@
             </button>
             <button
               @click="deleteTarget = null"
-              class="flex-1 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors"
+              class="flex-1 py-2.5 rounded-xl border border-glass-border text-sm text-glass-text-secondary hover:text-glass-text-primary transition-colors"
             >
               انصراف
             </button>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </Teleport>
 
@@ -338,6 +309,9 @@ import { userService }     from '~/services/user.service'
 import { useAuthStore }    from '~/stores/auth.store'
 import { useUiStore }      from '~/stores/ui.store'
 import BaseEmpty           from '~/components/common/BaseEmpty.vue'
+import GlassCard            from '~/components/glass/GlassCard.vue'
+import GlassButton          from '~/components/glass/GlassButton.vue'
+import GlassInput           from '~/components/glass/GlassInput.vue'
 import { PROVINCE_NAMES, getCities } from '~/data/iran-cities'
 
 const authStore = useAuthStore()
@@ -493,25 +467,32 @@ onMounted(fetchAddresses)
 .form-label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-text-primary);
-}
-.form-input {
-  width: 100%;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.75rem;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-bg);
-  color: var(--color-text-primary);
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-.form-input:focus {
-  border-color: var(--color-brand);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 12%, transparent);
+  color: var(--text-primary);
 }
 .dir-ltr { direction: ltr; }
+
+/* select/textarea — matches GlassInput's shallow-blur, high-contrast recipe
+   (GlassInput itself only renders <input>, see checkout.vue for the same
+   pattern). */
+.glass-select, .glass-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.875rem;
+  border: 1.5px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(8px) saturate(140%);
+  -webkit-backdrop-filter: blur(8px) saturate(140%);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.glass-select:focus, .glass-textarea:focus {
+  border-color: var(--brand-light);
+  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.18);
+}
+.glass-textarea { resize: none; }
 
 .select-wrapper {
   position: relative;
@@ -526,16 +507,16 @@ onMounted(fetchAddresses)
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 5px solid var(--color-text-secondary);
+  border-top: 5px solid var(--text-secondary);
   pointer-events: none;
 }
-.form-select {
+.glass-select {
   appearance: none;
   -webkit-appearance: none;
   padding-left: 2rem;
   cursor: pointer;
 }
-.form-select:disabled {
+.glass-select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

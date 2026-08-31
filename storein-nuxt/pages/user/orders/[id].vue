@@ -33,14 +33,12 @@
     <div v-else class="flex flex-col gap-6">
 
       <!-- ── Header card ── -->
-      <div
-        class="rounded-2xl border border-surface-border p-5 bg-card"
-      >
+      <GlassCard padding="lg">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p class="text-xs text-text-secondary mb-1">شماره سفارش</p>
+            <p class="text-xs text-glass-text-secondary mb-1">شماره سفارش</p>
             <div class="flex items-center gap-2">
-              <p class="text-xl font-black text-text-primary font-fanum dir-ltr">
+              <p class="text-xl font-black text-glass-text-primary font-fanum dir-ltr">
                 {{ order.orderNumber }}
               </p>
               <button
@@ -62,7 +60,7 @@
                 </svg>
               </button>
             </div>
-            <p class="text-sm text-text-secondary mt-1">
+            <p class="text-sm text-glass-text-secondary mt-1">
               ثبت شده در {{ formatDate(order.createdAt) }}
             </p>
           </div>
@@ -89,7 +87,7 @@
                   </svg>
                   <span v-else class="font-fanum">{{ i + 1 }}</span>
                 </div>
-                <p :class="['text-xs text-center leading-tight max-w-14', stepState(step.value) === 'upcoming' ? 'text-text-disabled' : 'text-text-primary font-medium']">
+                <p :class="['text-xs text-center leading-tight max-w-14', stepState(step.value) === 'upcoming' ? 'text-glass-text-disabled' : 'text-glass-text-primary font-medium']">
                   {{ step.label }}
                 </p>
               </div>
@@ -111,15 +109,13 @@
           </svg>
           این سفارش لغو شده است
         </div>
-      </div>
+      </GlassCard>
 
       <!-- ── Items ── -->
-      <div
-        class="rounded-2xl border border-surface-border p-5 bg-card"
-      >
-        <h2 class="font-bold text-text-primary mb-4 pb-3 border-b border-surface-border">
+      <GlassCard padding="lg">
+        <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
           کالاهای سفارش
-          <span class="text-text-secondary font-normal text-sm font-fanum">({{ order.items.length }} کالا)</span>
+          <span class="text-glass-text-secondary font-normal text-sm font-fanum">({{ order.items.length }} کالا)</span>
         </h2>
 
         <div class="flex flex-col divide-y divide-surface-border">
@@ -134,42 +130,40 @@
               @error="e => e.target.src = PLACEHOLDER"
             />
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-text-primary line-clamp-2">{{ item.name }}</p>
+              <p class="text-sm font-medium text-glass-text-primary line-clamp-2">{{ item.name }}</p>
               <div v-if="item.attributes?.length" class="flex flex-wrap gap-1 mt-1">
                 <span
                   v-for="attr in item.attributes" :key="attr.key"
-                  class="text-xs text-text-secondary bg-surface px-2 py-0.5 rounded-md"
+                  class="text-xs text-glass-text-secondary bg-glass px-2 py-0.5 rounded-md"
                 >
                   {{ attr.key }}: {{ attr.value }}
                 </span>
               </div>
               <div class="flex items-center justify-between mt-2">
-                <span class="text-xs text-text-secondary font-fanum">
+                <span class="text-xs text-glass-text-secondary font-fanum">
                   {{ formatNumber(item.quantity) }} عدد × {{ formatPrice(item.price) }}
                 </span>
-                <span class="text-sm font-bold text-text-primary font-fanum">
+                <span class="text-sm font-bold text-glass-text-primary font-fanum">
                   {{ formatPrice(item.price * item.quantity) }}
                 </span>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </GlassCard>
 
       <!-- ── Grid: Summary + Address ── -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Financial summary -->
-        <div
-          class="rounded-2xl border border-surface-border p-5 bg-card"
-        >
-          <h2 class="font-bold text-text-primary mb-4 pb-3 border-b border-surface-border">
+        <GlassCard padding="lg">
+          <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
             خلاصه مالی
           </h2>
           <div class="flex flex-col gap-3 text-sm">
             <div class="flex justify-between">
-              <span class="text-text-secondary">جمع کالاها</span>
-              <span class="font-fanum text-text-primary">{{ formatPrice(order.subtotal) }}</span>
+              <span class="text-glass-text-secondary">جمع کالاها</span>
+              <span class="font-fanum text-glass-text-primary">{{ formatPrice(order.subtotal) }}</span>
             </div>
             <div v-if="order.discount > 0" class="flex justify-between text-success">
               <span>
@@ -178,24 +172,22 @@
               </span>
               <span class="font-fanum">− {{ formatPrice(order.discount) }}</span>
             </div>
-            <div class="flex justify-between font-bold text-base pt-3 border-t border-surface-border">
-              <span class="text-text-primary">مبلغ پرداخت شده</span>
+            <div class="flex justify-between font-bold text-base pt-3 border-t border-glass-border">
+              <span class="text-glass-text-primary">مبلغ پرداخت شده</span>
               <span class="text-brand font-fanum">{{ formatPrice(order.total) }}</span>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         <!-- Shipping address -->
-        <div
-          class="rounded-2xl border border-surface-border p-5 bg-card"
-        >
-          <h2 class="font-bold text-text-primary mb-4 pb-3 border-b border-surface-border">
+        <GlassCard padding="lg">
+          <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
             آدرس تحویل
           </h2>
-          <div class="flex flex-col gap-2 text-sm text-text-secondary leading-6">
+          <div class="flex flex-col gap-2 text-sm text-glass-text-secondary leading-6">
             <div class="flex items-center gap-2">
-              <span class="text-text-primary font-medium">{{ order.shippingAddress.recipientName }}</span>
-              <span class="text-text-disabled">|</span>
+              <span class="text-glass-text-primary font-medium">{{ order.shippingAddress.recipientName }}</span>
+              <span class="text-glass-text-disabled">|</span>
               <span class="font-fanum dir-ltr">{{ order.shippingAddress.recipientPhone }}</span>
             </div>
             <p>
@@ -208,7 +200,7 @@
               کد پستی: {{ order.shippingAddress.postalCode }}
             </p>
           </div>
-        </div>
+        </GlassCard>
       </div>
 
       <!-- ── Cancel button ── -->
@@ -252,6 +244,7 @@ import { useUiStore }        from '~/stores/ui.store'
 import { useSettingsStore } from '~/stores/settings.store'
 import { formatPrice, formatNumber, formatDate } from '~/utils/formatters'
 import BaseEmpty from '~/components/common/BaseEmpty.vue'
+import GlassCard from '~/components/glass/GlassCard.vue'
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="%23334155"%3E%3Crect width="64" height="64" rx="8"/%3E%3C/svg%3E'
 
