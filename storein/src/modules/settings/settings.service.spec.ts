@@ -42,7 +42,7 @@ const DEFAULT_TRUST_ITEMS = [
 
 const defaultDoc = {
   siteName: 'استورین',
-  tagline: 'فروشگاه تخصصی عینک',
+  tagline: 'فروشگاه تخصصی پوشاک',
   logoUrl: '',
   faviconUrl: '',
   description: '',

@@ -35,7 +35,7 @@ interface BannerDocLike extends BannerLike {
 
 const makeBanner = (overrides: Partial<BannerLike> = {}): BannerLike => ({
   _id: new Types.ObjectId(),
-  title: 'بنر آفتابی',
+  title: 'بنر کالکشن پاییزه',
   eyebrow: 'تابستان ۱۴۰۴',
   subtitle: '',
   cta: 'مشاهده محصولات',
