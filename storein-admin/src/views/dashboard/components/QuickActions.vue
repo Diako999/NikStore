@@ -1,18 +1,16 @@
 <template>
-  <div class="admin-card">
-    <h3 class="section-title mb-4">دسترسی سریع</h3>
+  <div class="glass-card">
+    <h3 class="relative section-title mb-4">دسترسی سریع</h3>
 
-    <div class="grid grid-cols-2 sm:grid-cols-6 gap-3">
+    <div class="relative grid grid-cols-2 sm:grid-cols-6 gap-3">
       <RouterLink
         v-for="action in actions"
         :key="action.label"
         :to="action.to"
         :class="[
-          'flex flex-col items-center gap-2 p-4 rounded-xl border-2',
+          'quick-action-tile flex flex-col items-center gap-2 p-4 rounded-xl',
           'transition-all duration-200 text-center group',
-          action.highlight
-            ? 'border-amber-400/60 bg-amber-50/10 hover:border-amber-400 hover:bg-amber-500/10'
-            : 'border-border hover:border-primary/40 hover:bg-primary/5',
+          action.highlight ? 'quick-action-tile--highlight' : '',
         ]"
       >
         <div class="relative">
@@ -92,4 +90,24 @@ const actions = computed(() => [
 .badge-pop-enter-from   { transform: scale(0.4); opacity: 0; }
 .badge-pop-leave-active { transition: transform 0.15s ease, opacity 0.15s ease; }
 .badge-pop-leave-to     { transform: scale(0); opacity: 0; }
+
+/* Glass action tile */
+.quick-action-tile {
+  position: relative;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+}
+.quick-action-tile:hover {
+  background: var(--glass-strong);
+  border-color: rgb(var(--brand-rgb) / 0.4);
+}
+.quick-action-tile--highlight {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+.quick-action-tile--highlight:hover {
+  border-color: rgba(245, 158, 11, 0.65);
+  background: rgba(245, 158, 11, 0.08);
+}
 </style>

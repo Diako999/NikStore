@@ -7,8 +7,8 @@
         <div class="login-brand-icon">
           <img src="/favicon.svg" alt="لوگو نیک" class="w-11 h-11" draggable="false" />
         </div>
-        <h1 class="text-[22px] font-bold text-[#1C1C1C] mt-4 tracking-tight">{{ settingsStore.siteName }}</h1>
-        <p class="text-slate-500 text-sm mt-0.5">پنل مدیریت</p>
+        <h1 class="text-[22px] font-bold text-glass-text-primary mt-4 tracking-tight">{{ settingsStore.siteName }}</h1>
+        <p class="text-glass-text-secondary text-sm mt-0.5">پنل مدیریت</p>
       </div>
 
       <!-- Tabs -->
@@ -130,13 +130,13 @@
       <!-- ── OTP: STEP 2 — code ────────────────────────────── -->
       <div v-else class="space-y-4">
         <div class="login-otp-hint">
-          <svg class="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 text-glass-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
           </svg>
-          <span class="text-slate-600 text-sm leading-6">
+          <span class="text-glass-text-secondary text-sm leading-6">
             کد ۶ رقمی ارسال‌شده به
-            <span class="font-bold text-[#1C1C1C] dir-ltr inline-block">{{ maskedPhone }}</span>
+            <span class="font-bold text-glass-text-primary dir-ltr inline-block">{{ maskedPhone }}</span>
             را وارد کنید
           </span>
         </div>
@@ -158,13 +158,13 @@
         </div>
 
         <div class="text-center text-sm">
-          <span v-if="countdown > 0" class="text-slate-500">
+          <span v-if="countdown > 0" class="text-glass-text-secondary">
             ارسال مجدد تا
-            <span class="font-medium tabular-nums text-slate-600">{{ formattedCountdown }}</span>
+            <span class="font-medium tabular-nums text-glass-text-primary">{{ formattedCountdown }}</span>
           </span>
           <button
             v-else
-            class="text-primary-light hover:text-[#1A3620] font-medium transition-colors"
+            class="text-glass-brand hover:text-glass-brand-dark font-medium transition-colors"
             @click="handleSendOtp"
           >
             ارسال مجدد کد
@@ -180,7 +180,7 @@
         </button>
 
         <button
-          class="w-full text-center text-slate-500 text-sm hover:text-slate-700 transition-colors py-1"
+          class="w-full text-center text-glass-text-secondary text-sm hover:text-glass-text-primary transition-colors py-1"
           @click="otpStep = 'phone'; otpCode = ''; otpError = ''"
         >
           تغییر شماره موبایل
@@ -327,39 +327,40 @@ onUnmounted(() => clearInterval(timer))
 <style scoped>
 .dir-ltr { direction: ltr; }
 
-/* Card */
+/* Card — glass, retokened to respond to the dark/light toggle */
 .login-card {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--glass-strong);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--glass-border);
   border-radius: 24px;
   padding: 36px 32px;
   box-shadow:
-    0 20px 50px rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    0 20px 50px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
+[data-theme='light'] .login-card { box-shadow: var(--glass-shadow); }
 
 /* Brand icon */
 .login-brand-icon {
   width: 76px;
   height: 76px;
-  background: linear-gradient(145deg, rgba(26, 54, 32, 0.12), rgba(26, 54, 32, 0.06));
-  border: 1px solid rgba(26, 54, 32, 0.25);
+  background: linear-gradient(145deg, rgb(var(--brand-rgb) / 0.18), rgb(var(--brand-rgb) / 0.08));
+  border: 1px solid rgb(var(--brand-rgb) / 0.3);
   border-radius: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    0 0 36px rgba(26, 54, 32, 0.15),
-    0 8px 20px rgba(0, 0, 0, 0.08);
+    0 0 36px rgb(var(--brand-rgb) / 0.2),
+    0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* Tabs */
 .login-tab-bar {
   display: flex;
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 4px;
   gap: 4px;
@@ -370,17 +371,17 @@ onUnmounted(() => clearInterval(timer))
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #64748B;
+  color: var(--text-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
 }
-.login-tab:hover:not(.login-tab--active) { color: #334155; }
+.login-tab:hover:not(.login-tab--active) { color: var(--text-primary); }
 .login-tab--active {
-  background: #1A3620;
+  background: var(--brand);
   color: #FFFFFF;
-  box-shadow: 0 2px 10px rgba(26, 54, 32, 0.35);
+  box-shadow: 0 2px 10px rgb(var(--brand-rgb) / 0.35);
 }
 
 /* Error */
@@ -388,45 +389,45 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 12px;
   padding: 10px 14px;
 }
 
 /* Field */
 .login-field { display: flex; flex-direction: column; gap: 6px; }
-.login-label { font-size: 13px; font-weight: 500; color: #6B7280; }
+.login-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
 
 .login-input-wrap {
   position: relative;
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.2s;
 }
 .login-input-wrap:focus-within {
-  border-color: rgba(26, 54, 32, 0.5);
-  background: rgba(26, 54, 32, 0.04);
-  box-shadow: 0 0 0 3px rgba(26, 54, 32, 0.12);
+  border-color: rgb(var(--brand-rgb) / 0.55);
+  background: rgb(var(--brand-rgb) / 0.06);
+  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.14);
 }
 .login-input-wrap--error {
-  border-color: rgba(239, 68, 68, 0.45) !important;
-  background: rgba(239, 68, 68, 0.05) !important;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  background: rgba(239, 68, 68, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 .login-input {
   width: 100%;
   padding: 12px 16px;
   background: transparent;
-  color: #1C1C1C;
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
   font-family: inherit;
 }
-.login-input::placeholder { color: #A8AFA9; }
-.login-field-error { font-size: 12px; color: #DC2626; margin-top: 2px; }
+.login-input::placeholder { color: var(--text-disabled); }
+.login-field-error { font-size: 12px; color: #F87171; margin-top: 2px; }
 
 /* Eye button */
 .login-eye-btn {
@@ -434,7 +435,7 @@ onUnmounted(() => clearInterval(timer))
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6B7280;
+  color: var(--text-secondary);
   background: none;
   border: none;
   cursor: pointer;
@@ -442,13 +443,13 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   transition: color 0.15s;
 }
-.login-eye-btn:hover { color: #1C1C1C; }
+.login-eye-btn:hover { color: var(--text-primary); }
 
 /* Submit button */
 .login-btn {
   width: 100%;
   padding: 13px;
-  background: #1A3620;
+  background: var(--brand);
   color: #FFFFFF;
   font-size: 15px;
   font-weight: 600;
@@ -460,12 +461,12 @@ onUnmounted(() => clearInterval(timer))
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 18px rgba(26, 54, 32, 0.25);
+  box-shadow: 0 4px 18px rgb(var(--brand-rgb) / 0.3);
   font-family: inherit;
 }
 .login-btn:hover:not(:disabled) {
-  background: #122918;
-  box-shadow: 0 6px 26px rgba(26, 54, 32, 0.35);
+  background: var(--brand-dark);
+  box-shadow: 0 6px 26px rgb(var(--brand-rgb) / 0.4);
   transform: translateY(-1px);
 }
 .login-btn:active:not(:disabled) { transform: scale(0.98); box-shadow: none; }
@@ -476,8 +477,8 @@ onUnmounted(() => clearInterval(timer))
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   border-radius: 12px;
   padding: 10px 14px;
   text-align: center;

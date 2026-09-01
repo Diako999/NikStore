@@ -221,8 +221,8 @@
 
     <!-- ── Sticky action bar ──────────────────────────────────── -->
     <div class="sticky bottom-0 z-40 mt-8 -mx-6">
-      <div class="px-6 py-3 border-t border-border flex items-center gap-4"
-           style="background-color: var(--color-card); backdrop-filter: blur(8px); box-shadow: 0 -4px 24px rgba(0,0,0,0.07);">
+      <div class="px-6 py-3 border-t border-glass-border flex items-center gap-4"
+           style="background: var(--glass-strong); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); box-shadow: 0 -4px 24px rgba(0,0,0,0.15);">
 
         <!-- Context (right side in RTL) -->
         <div class="flex items-center gap-3 min-w-0">

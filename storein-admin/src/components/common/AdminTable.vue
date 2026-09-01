@@ -57,7 +57,7 @@
         <tr
           v-for="row in rows"
           :key="row[rowKey]"
-          class="border-b border-border hover:bg-surface/60 dark:hover:bg-slate-700/40 transition-colors duration-100"
+          class="border-b border-border hover:bg-surface/60 transition-colors duration-100"
         >
           <td
             v-for="col in columns"

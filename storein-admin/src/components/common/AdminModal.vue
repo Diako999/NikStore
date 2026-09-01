@@ -9,15 +9,15 @@
 
         <!-- Panel -->
         <div :class="[
-          'relative bg-card rounded-2xl shadow-modal w-full flex flex-col max-h-[90vh]',
+          'glass-surface relative rounded-2xl w-full flex flex-col max-h-[90vh]',
           sizeClass,
         ]">
           <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
-            <h3 class="font-bold text-text-primary text-base">{{ title }}</h3>
+          <div class="relative flex items-center justify-between px-6 py-4 border-b border-glass-border flex-shrink-0">
+            <h3 class="font-bold text-glass-text-primary text-base">{{ title }}</h3>
             <button
               @click="close"
-              class="text-text-disabled hover:text-text-primary p-1 rounded-lg hover:bg-surface transition-colors"
+              class="text-glass-text-secondary hover:text-glass-text-primary p-1 rounded-lg hover:bg-glass transition-colors"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
@@ -26,12 +26,12 @@
           </div>
 
           <!-- Body -->
-          <div class="px-6 py-5 overflow-y-auto flex-1">
+          <div class="relative px-6 py-5 overflow-y-auto flex-1 text-glass-text-primary">
             <slot />
           </div>
 
           <!-- Footer -->
-          <div v-if="$slots.footer" class="px-6 py-4 border-t border-border flex-shrink-0">
+          <div v-if="$slots.footer" class="relative px-6 py-4 border-t border-glass-border flex-shrink-0">
             <slot name="footer" />
           </div>
         </div>

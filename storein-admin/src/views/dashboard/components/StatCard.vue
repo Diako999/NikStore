@@ -3,18 +3,18 @@
     :is="to ? 'RouterLink' : 'div'"
     :to="to"
     :class="[
-      'admin-card flex items-start gap-4 transition-all duration-200',
-      to ? 'hover:shadow-md hover:border-primary/40 cursor-pointer group' : 'hover:shadow-md',
+      'glass-card flex items-start gap-4 transition-all duration-200',
+      to ? 'hover:brightness-110 cursor-pointer group' : '',
     ]"
   >
 
     <!-- Icon circle -->
-    <div :class="['w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl transition-transform', iconBg, to ? 'group-hover:scale-110' : '']">
+    <div :class="['relative w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl transition-transform', iconBg, to ? 'group-hover:scale-110' : '']">
       {{ icon }}
     </div>
 
     <!-- Content -->
-    <div class="flex-1 min-w-0 pt-0.5">
+    <div class="relative flex-1 min-w-0 pt-0.5">
 
       <template v-if="loading">
         <AdminSkeleton height="1rem" width="60%" class="mb-2" />
@@ -39,7 +39,7 @@
             v-if="trend !== undefined && trend !== null"
             :class="[
               'inline-flex items-center gap-0.5 text-xs font-medium px-1.5 py-0.5 rounded-full font-fanum',
-              trend >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700',
+              trend >= 0 ? 'bg-green-500/15 text-green-500' : 'bg-red-500/15 text-red-400',
             ]"
           >
             <span>{{ trend >= 0 ? '↑' : '↓' }}</span>
@@ -67,11 +67,13 @@ const props = defineProps({
   to:       { type: [String, Object], default: null },
 })
 
+// Translucent (not pastel-solid) so the icon tile reads correctly against
+// both the light and dark glass card background.
 const iconBg = computed(() => ({
-  blue:   'bg-blue-100',
-  green:  'bg-green-100',
-  yellow: 'bg-yellow-100',
-  purple: 'bg-purple-100',
-  red:    'bg-red-100',
-}[props.color] ?? 'bg-blue-100'))
+  blue:   'bg-blue-500/15',
+  green:  'bg-green-500/15',
+  yellow: 'bg-yellow-500/15',
+  purple: 'bg-purple-500/15',
+  red:    'bg-red-500/15',
+}[props.color] ?? 'bg-blue-500/15'))
 </script>

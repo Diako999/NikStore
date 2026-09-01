@@ -1,5 +1,5 @@
 <template>
-  <header class="sticky top-0 z-header bg-card border-b border-border flex items-center justify-between px-5 h-[60px] shadow-sm">
+  <header class="anh-bar sticky top-0 z-header flex items-center justify-between px-5 h-[60px]">
 
     <!-- Right: toggle -->
     <div class="flex items-center gap-3">
@@ -194,6 +194,14 @@ function timeAgo(iso) {
 </script>
 
 <style scoped>
+/* ── Topbar chrome — glass (translucent + blur), tokenized ────────────── */
+.anh-bar {
+  background: var(--glass-strong);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--glass-border);
+}
+
 /* ── Dropdown animation ─────────────────────────────────────── */
 .dropdown-enter-active { transition: opacity 0.15s ease, transform 0.15s ease; }
 .dropdown-leave-active { transition: opacity 0.1s ease,  transform 0.1s ease; }
@@ -213,10 +221,10 @@ function timeAgo(iso) {
   display: flex; align-items: center; justify-content: center;
   padding: 0 3px;
   line-height: 1;
-  border: 1.5px solid var(--color-card, #1e2030);
+  border: 1.5px solid var(--glass-strong);
 }
 
-/* ── Dropdown panel ─────────────────────────────────────────── */
+/* ── Dropdown panel — glass ────────────────────────────────────── */
 .anh {
   position: absolute;
   left: 0; top: calc(100% + 10px);
@@ -224,8 +232,10 @@ function timeAgo(iso) {
   max-width: calc(100vw - 1rem);
   border-radius: 18px;
   overflow: hidden;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid var(--glass-border);
   box-shadow:
     0 24px 60px rgba(0,0,0,.35),
     0 8px 20px rgba(0,0,0,.2),

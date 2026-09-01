@@ -8,14 +8,14 @@
         @click.self="$emit('update:modelValue', false)"
       >
         <div
-          class="relative w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col overflow-hidden"
-          style="background-color: var(--color-card); max-height: 90vh;"
+          class="glass-surface w-full max-w-3xl flex flex-col overflow-hidden"
+          style="max-height: 90vh;"
         >
 
           <!-- ── Header ─────────────────────────────────────── -->
-          <div class="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
+          <div class="relative flex items-center justify-between px-6 py-4 border-b border-glass-border flex-shrink-0">
             <div class="flex items-center gap-3 min-w-0">
-              <h2 class="font-bold text-text-primary text-base truncate">{{ product?.name }}</h2>
+              <h2 class="font-bold text-glass-text-primary text-base truncate">{{ product?.name }}</h2>
               <span :class="statusClass(product?.status)" class="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">
                 {{ statusLabel(product?.status) }}
               </span>
@@ -34,7 +34,7 @@
               </RouterLink>
               <button
                 @click="$emit('update:modelValue', false)"
-                class="w-8 h-8 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface transition-colors flex items-center justify-center"
+                class="w-8 h-8 rounded-lg text-text-secondary hover:text-text-primary hover:bg-glass transition-colors flex items-center justify-center"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
@@ -44,12 +44,12 @@
           </div>
 
           <!-- ── Loading ────────────────────────────────────── -->
-          <div v-if="loading" class="flex-1 flex items-center justify-center py-20">
+          <div v-if="loading" class="relative flex-1 flex items-center justify-center py-20">
             <div class="w-8 h-8 border-[3px] border-primary border-t-transparent rounded-full animate-spin"/>
           </div>
 
           <!-- ── Body ──────────────────────────────────────── -->
-          <div v-else-if="detail" class="flex-1 overflow-y-auto">
+          <div v-else-if="detail" class="relative flex-1 overflow-y-auto">
             <div class="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-0">
 
               <!-- Left: Images -->
@@ -207,7 +207,7 @@
           </div>
 
           <!-- ── Footer ─────────────────────────────────────── -->
-          <div v-if="detail" class="flex-shrink-0 border-t border-border px-6 py-3 flex items-center justify-between text-xs text-text-disabled">
+          <div v-if="detail" class="relative flex-shrink-0 border-t border-glass-border px-6 py-3 flex items-center justify-between text-xs text-text-disabled">
             <span dir="ltr">ID: {{ detail._id }}</span>
             <span>ایجاد: {{ formatDate(detail.createdAt) }}</span>
           </div>

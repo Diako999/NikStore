@@ -45,10 +45,27 @@ import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 import AdminSkeleton from '@/components/common/AdminSkeleton.vue'
 import { formatNumber } from '@/utils/formatters'
+import { useThemeMode } from '@/composables/useThemeMode'
+import { resolveThemeColor } from '@/utils/chartTheme'
 
 const props = defineProps({
   data:    { type: Array,   default: () => [] },
   loading: { type: Boolean, default: false },
+})
+
+// Bug fix: this chart used to hardcode a blue (#1B4F8A) unrelated to the
+// brand green. Resolve --brand/--text-secondary to literal colors (Chart.js
+// needs real strings, not CSS var refs) — mode.value is read here purely so
+// this computed re-runs and re-resolves when the theme toggles.
+const { mode } = useThemeMode()
+const themeColors = computed(() => {
+  void mode.value
+  return {
+    brand:     resolveThemeColor('--brand', '#3D8B52'),
+    brandSoft: resolveThemeColor('--brand', '#3D8B52', 0.1),
+    axis:      resolveThemeColor('--text-secondary', '#94A3B8'),
+    grid:      resolveThemeColor('--glass-border', '#F1F5F9'),
+  }
 })
 
 const hasData = computed(() => props.data?.length > 0)
@@ -69,12 +86,12 @@ const chartData = computed(() => ({
     {
       label:               'درآمد (تومان)',
       data:                props.data.map(d => d.revenue ?? 0),
-      borderColor:         '#1B4F8A',
-      backgroundColor:     'rgba(27, 79, 138, 0.08)',
+      borderColor:         themeColors.value.brand,
+      backgroundColor:     themeColors.value.brandSoft,
       borderWidth:         2.5,
       pointRadius:         4,
       pointHoverRadius:    6,
-      pointBackgroundColor:'#1B4F8A',
+      pointBackgroundColor:themeColors.value.brand,
       fill:                true,
       tension:             0.4,
       yAxisID:             'y',
@@ -114,12 +131,12 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       grid:  { display: false },
-      ticks: { font: { size: 11 }, color: '#94A3B8' },
+      ticks: { font: { size: 11 }, color: themeColors.value.axis },
     },
     y: {
       position: 'right',
-      grid:     { color: '#F1F5F9', drawBorder: false },
-      ticks:    { font: { size: 11 }, color: '#94A3B8', callback: v => formatNumber(v) },
+      grid:     { color: themeColors.value.grid, drawBorder: false },
+      ticks:    { font: { size: 11 }, color: themeColors.value.axis, callback: v => formatNumber(v) },
     },
     y1: {
       position: 'left',

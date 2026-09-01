@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-surface flex">
+  <div class="admin-layout-root min-h-screen flex">
 
     <!-- Mobile overlay -->
     <Transition name="fade">
@@ -55,4 +55,13 @@ onMounted(initTheme)
 <style scoped>
 .fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
 .fade-enter-from,  .fade-leave-to      { opacity: 0; }
+
+/* Calm, mostly-solid root — cohesive with the aurora palette (same base
+   tone as --page-bg) but deliberately NOT the busy full mesh, which is
+   reserved for the login screen. A faint radial brand tint keeps it from
+   reading as a flat, disconnected surface. */
+.admin-layout-root {
+  background-color: rgb(var(--bg-rgb));
+  background-image: radial-gradient(120% 60% at 100% 0%, rgb(var(--brand-rgb) / 0.05), transparent 60%);
+}
 </style>

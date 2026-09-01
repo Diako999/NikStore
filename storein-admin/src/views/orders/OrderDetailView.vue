@@ -45,11 +45,11 @@
       <!-- Customer + Financial summary -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-        <div class="admin-card">
-          <h3 class="section-title mb-4 flex items-center gap-2">
+        <div class="glass-card">
+          <h3 class="relative section-title mb-4 flex items-center gap-2">
             <span>👤</span> اطلاعات مشتری
           </h3>
-          <dl class="space-y-2.5 text-sm">
+          <dl class="relative space-y-2.5 text-sm">
             <div class="flex justify-between">
               <dt class="text-text-secondary">نام:</dt>
               <dd class="font-medium text-text-primary">
@@ -69,11 +69,11 @@
           </dl>
         </div>
 
-        <div class="admin-card">
-          <h3 class="section-title mb-4 flex items-center gap-2">
+        <div class="glass-card">
+          <h3 class="relative section-title mb-4 flex items-center gap-2">
             <span>💰</span> خلاصه مالی
           </h3>
-          <dl class="space-y-2.5 text-sm">
+          <dl class="relative space-y-2.5 text-sm">
             <div class="flex justify-between">
               <dt class="text-text-secondary">جمع اقلام:</dt>
               <dd class="font-fanum font-medium">
@@ -98,11 +98,11 @@
       </div>
 
       <!-- Shipping address -->
-      <div class="admin-card">
-        <h3 class="section-title mb-3 flex items-center gap-2">
+      <div class="glass-card">
+        <h3 class="relative section-title mb-3 flex items-center gap-2">
           <span>📍</span> آدرس تحویل
         </h3>
-        <div class="text-sm text-text-secondary leading-7">
+        <div class="relative text-sm text-text-secondary leading-7">
           <p>
             <span class="font-medium text-text-primary">
               {{ order.shippingAddress?.province }}، {{ order.shippingAddress?.city }}
@@ -130,12 +130,12 @@
       </div>
 
       <!-- Order items -->
-      <div class="admin-card">
-        <h3 class="section-title mb-4 flex items-center gap-2">
+      <div class="glass-card">
+        <h3 class="relative section-title mb-4 flex items-center gap-2">
           <span>📦</span> اقلام سفارش
           <span class="text-text-disabled font-normal text-xs font-fanum">({{ order.items?.length }} کالا)</span>
         </h3>
-        <div class="space-y-3">
+        <div class="relative space-y-3">
           <div
             v-for="item in order.items"
             :key="item.variantId"

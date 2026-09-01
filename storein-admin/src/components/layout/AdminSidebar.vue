@@ -2,7 +2,6 @@
   <!-- ═══ Desktop Sidebar ═══════════════════════════════════════════════════════ -->
   <aside
     :class="['sb', ui.sidebarCollapsed ? 'sb--sm' : 'sb--lg', 'hidden lg:flex']"
-    :style="activeSidebarBg ? { background: activeSidebarBg } : {}"
   >
     <div class="sb-glow" aria-hidden="true" />
 
@@ -98,7 +97,6 @@
   <!-- ═══ Mobile Drawer ════════════════════════════════════════════════════════ -->
   <aside
     :class="['mob', ui.sidebarMobileOpen && 'mob--open', 'lg:hidden']"
-    :style="activeSidebarBg ? { background: activeSidebarBg } : {}"
   >
     <div class="sb-glow" aria-hidden="true" />
 
@@ -179,7 +177,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUiStore }       from '@/stores/ui.store'
 import { useAuthStore }     from '@/stores/auth.store'
 import { useSettingsStore } from '@/stores/settings.store'
-import { useAdminTheme }    from '@/composables/useAdminTheme'
 import { logger }           from '@/utils/logger'
 
 const route  = useRoute()
@@ -187,8 +184,11 @@ const router = useRouter()
 const ui     = useUiStore()
 const auth   = useAuthStore()
 const settingsStore = useSettingsStore()
-const { sidebarBg } = useAdminTheme()
-const activeSidebarBg = computed(() => sidebarBg.value)
+// NOTE: the admin's own sidebar intentionally does NOT read useAdminTheme's
+// sidebarBg — that composable previews the merchant-configurable *storefront*
+// sidebar color (set via views/settings/ThemeView.vue) and must never leak
+// into the admin panel's own fixed design-system chrome. See CLAUDE.md /
+// retheme brief bug #1.
 
 // ── Icons ───────────────────────────────────────────────────────────────────
 const ICONS = {
@@ -277,14 +277,16 @@ async function logout() {
 </script>
 
 <style scoped>
-/* ═══ Base ══════════════════════════════════════════════════════════════════ */
+/* ═══ Base — glass chrome, tokenized (bug #3: was hardcoded hex, disconnected
+   from the design-system tokens) ═════════════════════════════════════════ */
 .sb {
   position: fixed; top: 0; right: 0; height: 100%;
   z-index: 50;
   flex-direction: column;
-  background: #171717;
-  background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%);
-  border-left: 1px solid rgba(255,255,255,0.05);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-left: 1px solid var(--glass-border);
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
@@ -296,7 +298,7 @@ async function logout() {
   position: absolute;
   top: -80px; right: -80px;
   width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(61,92,68,0.10) 0%, transparent 60%);
+  background: radial-gradient(circle, rgb(var(--brand-rgb) / 0.14) 0%, transparent 60%);
   pointer-events: none;
   z-index: 0;
 }
@@ -309,18 +311,18 @@ async function logout() {
   gap: 0.875rem;
   padding: 0 1rem;
   min-height: 68px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--glass-border);
   flex-shrink: 0;
 }
 .sb-head__icon {
   width: 40px; height: 40px;
-  background: linear-gradient(145deg, #3D5C44 0%, #2C4A33 60%, #1A3620 100%);
+  background: linear-gradient(145deg, var(--brand-light) 0%, var(--brand) 60%, var(--brand-dark) 100%);
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   box-shadow:
-    0 0 0 1px rgba(61,92,68,0.25),
-    0 4px 20px rgba(61,92,68,0.35),
+    0 0 0 1px rgb(var(--brand-rgb) / 0.25),
+    0 4px 20px rgb(var(--brand-rgb) / 0.35),
     0 1px 3px rgba(0,0,0,0.4);
 }
 .sb-head__text {
@@ -328,7 +330,7 @@ async function logout() {
   overflow: hidden; min-width: 0;
 }
 .sb-head__name {
-  color: #F5F5F5;
+  color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 700;
   white-space: nowrap;
@@ -344,9 +346,9 @@ async function logout() {
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #3D5C44;
-  background: rgba(61,92,68,0.1);
-  border: 1px solid rgba(61,92,68,0.22);
+  color: var(--brand-light);
+  background: rgb(var(--brand-rgb) / 0.1);
+  border: 1px solid rgb(var(--brand-rgb) / 0.22);
   padding: 2px 8px;
   border-radius: 5px;
 }
@@ -371,11 +373,11 @@ async function logout() {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #5C5C5C;
+  color: var(--text-disabled);
 }
 .sb-sep__dot {
   width: 20px; height: 1px;
-  background: rgba(255,255,255,0.05);
+  background: var(--glass-border);
   margin: 1rem auto 0.45rem;
 }
 
@@ -387,7 +389,7 @@ async function logout() {
   padding: 0.65rem 0.9rem;
   border-radius: 10px;
   position: relative;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   font-size: 0.8125rem;
   font-weight: 500;
   text-decoration: none;
@@ -396,22 +398,22 @@ async function logout() {
   overflow: visible;
 }
 .nav-item:hover {
-  background: rgba(255,255,255,0.045);
-  color: #D4D4D4;
+  background: var(--glass);
+  color: var(--text-primary);
 }
-.nav-item:hover .nav-ico { color: #A3A3A3; }
+.nav-item:hover .nav-ico { color: var(--text-secondary); }
 
 /* ── Active ── */
 .nav-item--on {
-  background: linear-gradient(135deg, rgba(61,92,68,0.16) 0%, rgba(61,92,68,0.04) 100%);
-  color: #F5F5F5;
+  background: linear-gradient(135deg, rgb(var(--brand-rgb) / 0.18) 0%, rgb(var(--brand-rgb) / 0.05) 100%);
+  color: var(--text-primary);
 }
 .nav-item--on::before {
   content: '';
   position: absolute;
   left: 0; top: 6px; bottom: 6px;
   width: 3px;
-  background: linear-gradient(180deg, #3D5C44 0%, #1A3620 100%);
+  background: linear-gradient(180deg, var(--brand-light) 0%, var(--brand-dark) 100%);
   border-radius: 0 3px 3px 0;
 }
 .nav-item--on::after {
@@ -419,16 +421,16 @@ async function logout() {
   position: absolute;
   inset: 0;
   border-radius: 10px;
-  border: 1px solid rgba(61,92,68,0.15);
+  border: 1px solid rgb(var(--brand-rgb) / 0.18);
   pointer-events: none;
 }
 .nav-item--on .nav-ico {
-  color: #3D5C44;
-  filter: drop-shadow(0 0 6px rgba(61,92,68,0.5));
+  color: var(--brand-light);
+  filter: drop-shadow(0 0 6px rgb(var(--brand-rgb) / 0.5));
 }
 .nav-item--on .nav-lbl {
   font-weight: 600;
-  color: #F5F5F5;
+  color: var(--text-primary);
 }
 
 /* Active glow ring (collapsed) */
@@ -436,15 +438,15 @@ async function logout() {
   position: absolute;
   inset: 2px;
   border-radius: 8px;
-  border: 1px solid rgba(61,92,68,0.35);
-  box-shadow: inset 0 0 10px rgba(61,92,68,0.12);
+  border: 1px solid rgb(var(--brand-rgb) / 0.35);
+  box-shadow: inset 0 0 10px rgb(var(--brand-rgb) / 0.12);
   pointer-events: none;
 }
 
 .nav-ico {
   width: 18px; height: 18px;
   flex-shrink: 0;
-  color: #5C5C5C;
+  color: var(--text-disabled);
   transition: color 0.15s ease, filter 0.15s ease;
 }
 .nav-lbl { flex: 1; overflow: hidden; text-overflow: ellipsis; }
@@ -455,8 +457,10 @@ async function logout() {
   right: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
-  background: #232323;
-  color: #D4D4D4;
+  background: var(--glass-strong);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  color: var(--text-primary);
   font-size: 0.72rem;
   font-weight: 500;
   padding: 0.3rem 0.75rem;
@@ -465,8 +469,8 @@ async function logout() {
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.15s ease;
-  border: 1px solid rgba(61,92,68,0.15);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5), 0 0 0 1px rgba(61,92,68,0.05);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 1px rgb(var(--brand-rgb) / 0.05);
   z-index: 9999;
 }
 .nav-item:hover .nav-tip,
@@ -475,7 +479,7 @@ async function logout() {
 /* ═══ Footer ════════════════════════════════════════════════════════════════ */
 .sb-foot {
   position: relative; z-index: 1;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid var(--glass-border);
   padding: 0.75rem 0.75rem 0.875rem;
   flex-shrink: 0;
 }
@@ -489,25 +493,25 @@ async function logout() {
   padding: 0.6rem 0.875rem;
   margin-bottom: 0.625rem;
   border-radius: 10px;
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.04);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
 }
 .sb-user__av {
   width: 32px; height: 32px;
-  background: linear-gradient(135deg, #2A2A2A 0%, #1A1A1A 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px rgba(61,92,68,0.22), 0 2px 10px rgba(0,0,0,0.45);
+  box-shadow: 0 0 0 1px rgb(var(--brand-rgb) / 0.22), 0 2px 10px rgba(0,0,0,0.35);
 }
 .sb-user__info {
   display: flex; flex-direction: column; min-width: 0; gap: 3px;
 }
 .sb-user__phone {
   font-size: 0.7rem;
-  color: #8A8A8A;
+  color: var(--text-secondary);
   direction: ltr;
-  font-family: 'IRANSansFaNum', monospace;
+  font-family: var(--font-fanum);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .sb-user__role {
@@ -518,8 +522,8 @@ async function logout() {
   border-radius: 5px;
   width: fit-content;
 }
-.sb-user__role--admin { background: rgba(61,92,68,0.16); color: #3D5C44; }
-.sb-user__role--mgr   { background: rgba(245,158,11,0.12); color: #FBBF24; }
+.sb-user__role--admin { background: rgb(var(--brand-rgb) / 0.18); color: var(--brand-light); }
+.sb-user__role--mgr   { background: rgba(245,158,11,0.14); color: #FBBF24; }
 
 /* Online pulse dot */
 .sb-user__pulse {
@@ -541,7 +545,7 @@ async function logout() {
   display: flex; align-items: center; gap: 0.8rem;
   padding: 0.56rem 0.9rem;
   border-radius: 9px;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   text-decoration: none;
@@ -550,9 +554,9 @@ async function logout() {
   transition: background 0.15s ease, color 0.15s ease;
   white-space: nowrap; position: relative;
 }
-.foot-btn:hover { background: rgba(255,255,255,0.045); color: #D4D4D4; }
-.foot-btn:hover .nav-ico { color: #A3A3A3; }
-.foot-btn--out:hover { background: rgba(239,68,68,0.07); color: #F87171; }
+.foot-btn:hover { background: var(--glass); color: var(--text-primary); }
+.foot-btn:hover .nav-ico { color: var(--text-secondary); }
+.foot-btn--out:hover { background: rgba(239,68,68,0.1); color: #F87171; }
 .foot-btn--out:hover .nav-ico { color: #F87171; }
 
 /* ═══ Mobile ════════════════════════════════════════════════════════════════ */
@@ -560,8 +564,10 @@ async function logout() {
   position: fixed; top: 0; right: 0; height: 100%;
   z-index: 50; width: 268px;
   display: flex; flex-direction: column;
-  background: linear-gradient(180deg, #1a1a1a 0%, #141414 100%);
-  border-left: 1px solid rgba(255,255,255,0.05);
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-left: 1px solid var(--glass-border);
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
@@ -573,12 +579,12 @@ async function logout() {
   display: flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
   border-radius: 8px;
-  color: #6B6B6B;
+  color: var(--text-secondary);
   background: transparent; border: none; cursor: pointer;
   flex-shrink: 0;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.mob-close:hover { background: rgba(255,255,255,0.06); color: #D4D4D4; }
+.mob-close:hover { background: var(--glass); color: var(--text-primary); }
 
 /* ═══ Transition ════════════════════════════════════════════════════════════ */
 .ft-enter-active, .ft-leave-active { transition: opacity 0.12s ease; }
