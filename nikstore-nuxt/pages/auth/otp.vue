@@ -2,14 +2,12 @@
   <div class="w-full max-w-sm mx-auto px-4">
     <GlassCard padding="lg" radius="24px">
 
+      <!-- Wordmark already shown in layouts/auth.vue's header above — just
+           the mark here, linked home, to avoid repeating it twice on one
+           short screen. -->
       <div class="flex flex-col items-center mb-8">
-        <NuxtLink to="/" class="flex flex-col items-center gap-2">
-          <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 bg-glass-brand">
-            <svg class="w-8 h-8 text-white" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="18" height="16" rx="8" /><rect x="28" y="4" width="18" height="16" rx="8" /><path d="M20 12 Q24 6 28 12" />
-            </svg>
-          </div>
-          <span class="text-glass-brand font-black text-xl tracking-tight">{{ settingsStore.siteName }}</span>
+        <NuxtLink to="/">
+          <img :src="settingsStore.logoUrl || '/nik-logo.png'" :alt="settingsStore.siteName" class="h-14 w-14 object-contain rounded-full" />
         </NuxtLink>
       </div>
 

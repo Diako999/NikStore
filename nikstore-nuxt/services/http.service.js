@@ -35,6 +35,34 @@ http.interceptors.request.use(
   (error) => Promise.reject(error),
 )
 
+// Raw HTTP status text (or a total absence of a message) reaching a call
+// site verbatim — e.g. call sites across the app do
+// `err.response?.data?.message || 'خطای پیش‌فرض فارسی'`, so an English
+// string here always wins over their Farsi fallback. These are infra/proxy
+// failures (backend unreachable, gateway timeout, no response at all) —
+// never a deliberately-worded message from the backend's own exception
+// filter — so it's always safe to replace them with a localized one.
+const RAW_STATUS_MESSAGES = new Set([
+  'bad gateway', 'service unavailable', 'gateway timeout',
+  'internal server error', 'network error',
+])
+
+function localizeNetworkError(error) {
+  if (!error.response) {
+    // No response at all — DNS/timeout/CORS/connection refused.
+    error.message = 'خطا در برقراری ارتباط با سرور. اتصال اینترنت خود را بررسی کنید'
+    return
+  }
+  const status  = error.response.status
+  const current = (error.response.data?.message || '').toString().trim().toLowerCase()
+  if (status >= 500 && (!current || RAW_STATUS_MESSAGES.has(current))) {
+    error.response.data = {
+      ...(error.response.data || {}),
+      message: 'سرور موقتاً در دسترس نیست. لطفاً بعداً دوباره تلاش کنید',
+    }
+  }
+}
+
 // Response interceptor
 http.interceptors.response.use(
   (response) => {
@@ -49,6 +77,8 @@ http.interceptors.response.use(
     return response
   },
   async (error) => {
+    localizeNetworkError(error)
+
     const status          = error.response?.status
     const url             = error.config?.url ?? 'unknown'
     const originalRequest = error.config

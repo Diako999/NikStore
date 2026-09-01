@@ -17,8 +17,15 @@
   body {
     direction: rtl;
     font-family: var(--font-family);
-    background-color: var(--color-body-bg, var(--color-bg));
-    color: var(--color-text-primary);
+    /* Theme-aware tokens (glass-theme.css) — NOT the old static --color-bg/
+       --color-text-primary, which are dark-only and never flip with
+       [data-theme="light"]. This @layer base rule is emitted after
+       glass-theme.css's unlayered `html, body { background: var(--page-bg) }`
+       rule in the compiled stylesheet, so an unthemed background-color here
+       would win the cascade and permanently mask the light-theme gradient
+       with a dark solid color. */
+    background-color: rgb(var(--bg-rgb));
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     transition: background-color 0.2s ease, color 0.2s ease;

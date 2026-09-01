@@ -29,7 +29,9 @@
                 @click="setSort(s.value)"
                 :class="['flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm transition-all', store.filters.sortBy === s.value ? 'bg-brand text-white' : 'text-glass-text-secondary hover:bg-glass']"
               >
-                <span>{{ s.icon }}</span>{{ s.label }}
+                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path :d="s.icon" />
+                </svg>{{ s.label }}
               </button>
             </div>
           </GlassCard>
@@ -125,10 +127,13 @@ useHead({
   }),
 })
 
+// Outlined stroke-path icons (viewBox 0 0 24 24) — matches the simple
+// line-icon language used everywhere else (header/cart/search icons)
+// instead of raw platform emoji, which render inconsistently across OSes.
 const sortOptions = [
-  { value: 'newest',  icon: '🕐', label: 'جدیدترین' },
-  { value: 'oldest',  icon: '📅', label: 'قدیمی‌ترین' },
-  { value: 'popular', icon: '🔥', label: 'محبوب‌ترین' },
+  { value: 'newest',  icon: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', label: 'جدیدترین' },
+  { value: 'oldest',  icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5', label: 'قدیمی‌ترین' },
+  { value: 'popular', icon: 'M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518L21.75 6M21.75 6h-5.25M21.75 6v5.25', label: 'محبوب‌ترین' },
 ]
 
 // ── SSR: pre-fetch posts and tags ───────────────────────────────
