@@ -1,12 +1,12 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Storein — VPS Initial Setup (Ubuntu 22.04 / 24.04)
+# NikStore — VPS Initial Setup (Ubuntu 22.04 / 24.04)
 # Run once as root: bash setup.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
 echo "══════════════════════════════════════════"
-echo " Storein VPS Setup"
+echo " NikStore VPS Setup"
 echo "══════════════════════════════════════════"
 
 # ── System update ─────────────────────────────────────────────────────────────
@@ -55,13 +55,13 @@ ufw allow 4000/tcp
 ufw --force enable
 
 # ── Directories ───────────────────────────────────────────────────────────────
-mkdir -p /var/www/storein
+mkdir -p /var/www/nikstore
 mkdir -p /var/log/pm2
 
 echo ""
 echo "══════════════════════════════════════════"
 echo " Setup complete! Next steps:"
 echo "══════════════════════════════════════════"
-echo "1. git clone https://github.com/sabervalimohamadi/storein-glasses.git /var/www/storein"
+echo "1. git clone https://github.com/Diako999/NikStore.git /var/www/nikstore"
 echo "2. Create .env files from deploy/*.env.example"
-echo "3. bash /var/www/storein/deploy/deploy.sh --first-run"
+echo "3. bash /var/www/nikstore/deploy/deploy.sh --first-run"

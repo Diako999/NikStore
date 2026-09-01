@@ -1,12 +1,12 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Storein — MongoDB Backup Script
-# نصب cron: crontab -e → 0 3 * * * bash /var/www/storein/deploy/backup.sh
+# NikStore — MongoDB Backup Script
+# نصب cron: crontab -e → 0 3 * * * bash /var/www/nikstore/deploy/backup.sh
 # هر شب ساعت ۳ صبح اجرا می‌شود
 # ─────────────────────────────────────────────────────────────────────────────
 
-BACKUP_DIR="/var/backups/storein-mongo"
-DB_NAME="storein"
+BACKUP_DIR="/var/backups/nikstore-mongo"
+DB_NAME="nikstore"
 KEEP_DAYS=7
 DATE=$(date +%Y-%m-%d_%H-%M)
 BACKUP_PATH="$BACKUP_DIR/$DATE"

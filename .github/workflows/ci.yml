@@ -20,29 +20,29 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: storein/package-lock.json
+          cache-dependency-path: nikstore/package-lock.json
 
       - name: Install dependencies
-        working-directory: storein
+        working-directory: nikstore
         run: npm ci
 
       - name: Lint
-        working-directory: storein
+        working-directory: nikstore
         run: npm run lint
 
       - name: Unit tests
-        working-directory: storein
+        working-directory: nikstore
         run: npm run test:cov
 
       - name: E2E tests
-        working-directory: storein
+        working-directory: nikstore
         run: npm run test:e2e -- --forceExit
         # No MongoDB/Redis service needed — MongoMemoryServer + ioredis-mock
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          directory: storein/coverage
+          directory: nikstore/coverage
           flags: backend
         continue-on-error: true
 
@@ -56,20 +56,20 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: storein-admin/package-lock.json
+          cache-dependency-path: nikstore-admin/package-lock.json
 
       - name: Install admin deps
-        working-directory: storein-admin
+        working-directory: nikstore-admin
         run: npm ci
 
       - name: Lint admin
-        working-directory: storein-admin
+        working-directory: nikstore-admin
         run: npm run lint || true
 
       - name: Install nuxt deps
-        working-directory: storein-nuxt
+        working-directory: nikstore-nuxt
         run: npm ci
 
       - name: Lint nuxt
-        working-directory: storein-nuxt
+        working-directory: nikstore-nuxt
         run: npm run lint || true

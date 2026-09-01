@@ -1,4 +1,4 @@
-# STOREIN — گزارش جامع پیشرفت پروژه
+# NIKSTORE — گزارش جامع پیشرفت پروژه
 
 > آخرین بروزرسانی: ۱۴۰۴/۰۳/۲۹ | نوشته‌شده پس از خواندن کامل سورس‌کد
 
@@ -6,13 +6,13 @@
 
 ## ۱. معماری کلی پروژه
 
-پروژه Storein یک فروشگاه اینترنتی کامل است که از سه سرویس مستقل تشکیل شده و روی Railway دپلوی می‌شود:
+پروژه NikStore یک فروشگاه اینترنتی کامل است که از سه سرویس مستقل تشکیل شده و روی Railway دپلوی می‌شود:
 
 ```
-storein-new/
-├── storein/          ← Backend  (NestJS 11 + TypeScript)
-├── storein-admin/    ← Admin Panel (Vue 3 + Vite)
-├── storein-nuxt/     ← Storefront (Nuxt 3 — جایگزین storein-front)
+nikstore-new/
+├── nikstore/          ← Backend  (NestJS 11 + TypeScript)
+├── nikstore-admin/    ← Admin Panel (Vue 3 + Vite)
+├── nikstore-nuxt/     ← Storefront (Nuxt 3 — جایگزین nikstore-front)
 ├── docs/             ← بکاپ MongoDB + فونت‌های ایران‌سنس
 ├── docker-compose.yml
 └── .github/workflows/ci.yml
@@ -36,7 +36,7 @@ storein-new/
 
 ---
 
-## ۲. بخش Backend (`storein/`)
+## ۲. بخش Backend (`nikstore/`)
 
 ### ماژول‌های پیاده‌سازی‌شده (۲۵ ماژول)
 
@@ -93,7 +93,7 @@ storein-new/
 
 ---
 
-## ۳. پنل مدیریت (`storein-admin/`)
+## ۳. پنل مدیریت (`nikstore-admin/`)
 
 ### صفحات پیاده‌سازی‌شده
 
@@ -147,9 +147,9 @@ storein-new/
 
 ---
 
-## ۴. فرانت‌اند مشتری (`storein-nuxt/`)
+## ۴. فرانت‌اند مشتری (`nikstore-nuxt/`)
 
-> **نکته مهم:** `storein-front` (Vue 3 SPA با Vite) با `storein-nuxt` (Nuxt 3 Hybrid SSR/CSR) جایگزین شد. دلیل اصلی: SEO، کش سرورساید، و حذف Express server.js جداگانه.
+> **نکته مهم:** `nikstore-front` (Vue 3 SPA با Vite) با `nikstore-nuxt` (Nuxt 3 Hybrid SSR/CSR) جایگزین شد. دلیل اصلی: SEO، کش سرورساید، و حذف Express server.js جداگانه.
 
 ### Hybrid Rendering
 
@@ -343,8 +343,8 @@ middleware/guest.ts       ← redirect به / اگر قبلاً لاگین شد�
 |-------|------|
 | `5b9b4b7` | Fix فرم آدرس: دکمه Save بالای mobile nav، دراپ‌داون استان/شهر |
 | `4030819` | mostViewed sort، redesign notification bell dropdown، fix search DTO |
-| `a1a325f` | **مهاجرت کامل Nuxt 3**: ساختار کامل storein-nuxt با تمام صفحات |
-| `f1306f8` | **حذف storein-front** + real-time pending counts در admin dashboard |
+| `a1a325f` | **مهاجرت کامل Nuxt 3**: ساختار کامل nikstore-nuxt با تمام صفحات |
+| `f1306f8` | **حذف nikstore-front** + real-time pending counts در admin dashboard |
 
 ---
 
@@ -352,7 +352,7 @@ middleware/guest.ts       ← redirect به / اگر قبلاً لاگین شد�
 
 ### Checkout (بازنویسی کامل)
 
-فایل `storein-nuxt/pages/checkout.vue` خراب بود (PowerShell 5.1 متن پارسی را به `?????` تبدیل کرد). از صفر بازنویسی شد:
+فایل `nikstore-nuxt/pages/checkout.vue` خراب بود (PowerShell 5.1 متن پارسی را به `?????` تبدیل کرد). از صفر بازنویسی شد:
 
 - ویزارد ۳ مرحله‌ای با state machine ساده
 - دراپ‌داون استان → شهر (cascading) با `iran-cities.js`
@@ -426,7 +426,7 @@ function incrementPendingReviews() { pendingReviewsCount.value++ }
 
 ## ۸. متغیرهای محیطی
 
-**Backend (`storein/.env`):**
+**Backend (`nikstore/.env`):**
 ```env
 PORT=3001
 MONGODB_URI=mongodb+srv://...
@@ -435,19 +435,19 @@ JWT_SECRET=...
 JWT_REFRESH_SECRET=...
 KAVENEGAR_API_KEY=...
 ZARINPAL_MERCHANT_ID=...
-FRONTEND_URL=https://storein.ir
-ADMIN_URL=https://admin.storein.ir
+FRONTEND_URL=https://nikstore.ir
+ADMIN_URL=https://admin.nikstore.ir
 ```
 
-**Admin (`storein-admin/.env`):**
+**Admin (`nikstore-admin/.env`):**
 ```env
-VITE_API_BASE_URL=https://api.storein.ir
+VITE_API_BASE_URL=https://api.nikstore.ir
 ```
 
-**Frontend (`storein-nuxt/.env`):**
+**Frontend (`nikstore-nuxt/.env`):**
 ```env
-NUXT_PUBLIC_SITE_URL=https://storein.ir
-API_INTERNAL_URL=https://api.storein.ir
+NUXT_PUBLIC_SITE_URL=https://nikstore.ir
+API_INTERNAL_URL=https://api.nikstore.ir
 ```
 
 ---
@@ -462,10 +462,10 @@ API_INTERNAL_URL=https://api.storein.ir
 - Upload coverage به Codecov
 
 **Job 2 — Frontend Lint:**
-- lint storein-admin (non-blocking: `|| true`)
-- lint storein-nuxt (non-blocking: `|| true`)
+- lint nikstore-admin (non-blocking: `|| true`)
+- lint nikstore-nuxt (non-blocking: `|| true`)
 
-> قبلاً storein-front lint داشت — با مهاجرت به Nuxt، به storein-nuxt تغییر یافت.
+> قبلاً nikstore-front lint داشت — با مهاجرت به Nuxt، به nikstore-nuxt تغییر یافت.
 
 ---
 
@@ -488,8 +488,8 @@ API_INTERNAL_URL=https://api.storein.ir
 
 | سرویس | وضعیت |
 |--------|--------|
-| Backend (`storein/`) | ✅ Production-ready — دپلوی روی Railway |
-| Admin Panel (`storein-admin/`) | ✅ Production-ready — real-time، badge، notifications |
-| Storefront (`storein-nuxt/`) | ✅ کد کامل — نیاز به تست کامل روی Railway |
+| Backend (`nikstore/`) | ✅ Production-ready — دپلوی روی Railway |
+| Admin Panel (`nikstore-admin/`) | ✅ Production-ready — real-time، badge، notifications |
+| Storefront (`nikstore-nuxt/`) | ✅ کد کامل — نیاز به تست کامل روی Railway |
 
-> آخرین کامیت: `f1306f8` — Remove storein-front: replaced by storein-nuxt (Nuxt 3)
+> آخرین کامیت: `f1306f8` — Remove nikstore-front: replaced by nikstore-nuxt (Nuxt 3)

@@ -1,11 +1,11 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Storein — Health Check
-# نصب cron: crontab -e → */5 * * * * bash /var/www/storein/deploy/healthcheck.sh
+# NikStore — Health Check
+# نصب cron: crontab -e → */5 * * * * bash /var/www/nikstore/deploy/healthcheck.sh
 # هر ۵ دقیقه یک بار بررسی می‌کند
 # ─────────────────────────────────────────────────────────────────────────────
 
-LOG="/var/log/storein-health.log"
+LOG="/var/log/nikstore-health.log"
 TIMESTAMP="[$(date '+%Y-%m-%d %H:%M')]"
 
 check_service() {
@@ -19,9 +19,9 @@ check_service() {
     fi
 }
 
-check_service "nik-backend"    "http://localhost:3001/api/v1/health"
-check_service "nik-storefront" "http://localhost:3000/"
-check_service "nik-admin"      "http://localhost:4001/"
+check_service "nikstore-backend"  "http://localhost:3001/api/v1/health"
+check_service "nikstore-nuxt"     "http://localhost:3000/"
+check_service "nikstore-admin"    "http://localhost:4001/"
 
 if ! mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
     echo "$TIMESTAMP ⚠️  MongoDB DOWN → restarting..." >> "$LOG"

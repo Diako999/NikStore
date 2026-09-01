@@ -16,7 +16,7 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
-storein/logs/
+nikstore/logs/
 
 # Editor
 .vscode/
@@ -32,16 +32,16 @@ storein/logs/
 Thumbs.db
 
 # NestJS
-storein/dist/
+nikstore/dist/
 
 # Vite / frontend
-storein-front/dist/
+nikstore-front/dist/
 
 # Uploaded media (local dev only — use CDN/S3 in production)
-# storein/uploads/
+# nikstore/uploads/
 
 # Admin panel build output
-storein-admin/dist/
+nikstore-admin/dist/
 
 # Cloudflared tunnel binaries and config
 cloudflared*.exe

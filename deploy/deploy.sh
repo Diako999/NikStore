@@ -1,18 +1,18 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Storein — Deploy / Update Script
+# NikStore — Deploy / Update Script
 # Usage:
 #   bash deploy.sh              → pull latest + rebuild + reload PM2
 #   bash deploy.sh --first-run  → also registers PM2 startup on first deploy
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
-APP_DIR="/var/www/storein"
+APP_DIR="/var/www/nikstore"
 FIRST_RUN=false
 [[ "$1" == "--first-run" ]] && FIRST_RUN=true
 
 echo "══════════════════════════════════════════"
-echo " Storein Deploy  $(date '+%Y-%m-%d %H:%M')"
+echo " NikStore Deploy  $(date '+%Y-%m-%d %H:%M')"
 echo "══════════════════════════════════════════"
 
 cd "$APP_DIR"
@@ -20,17 +20,17 @@ echo ">>> Pulling latest code..."
 git pull origin master
 
 echo ">>> Building backend..."
-cd "$APP_DIR/storein"
+cd "$APP_DIR/nikstore"
 npm ci --prefer-offline
 npm run build
 
 echo ">>> Building Nuxt..."
-cd "$APP_DIR/storein-nuxt"
+cd "$APP_DIR/nikstore-nuxt"
 npm ci --prefer-offline
 npm run build
 
 echo ">>> Building admin..."
-cd "$APP_DIR/storein-admin"
+cd "$APP_DIR/nikstore-admin"
 npm ci --prefer-offline
 npm run build
 
@@ -42,7 +42,7 @@ if $FIRST_RUN; then
   pm2 startup systemd -u root --hp /root | tail -1 | bash
 
   echo ">>> Setting up cron jobs..."
-  (crontab -l 2>/dev/null; echo "0 3 * * * bash $APP_DIR/deploy/backup.sh >> /var/log/storein-backup.log 2>&1") | crontab -
+  (crontab -l 2>/dev/null; echo "0 3 * * * bash $APP_DIR/deploy/backup.sh >> /var/log/nikstore-backup.log 2>&1") | crontab -
   (crontab -l 2>/dev/null; echo "*/5 * * * * bash $APP_DIR/deploy/healthcheck.sh") | crontab -
   bash "$APP_DIR/deploy/setup-logrotate.sh"
   echo "Cron jobs configured ✓"

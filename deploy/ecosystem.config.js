@@ -1,13 +1,13 @@
-const APP_DIR = '/var/www/storein'
+const APP_DIR = '/var/www/nikstore'
 
 module.exports = {
   apps: [
     {
-      name:    'nik-backend',
-      cwd:     `${APP_DIR}/storein`,
+      name:    'nikstore-backend',
+      cwd:     `${APP_DIR}/nikstore`,
       script:  'node',
       args:    'dist/main',
-      env_file: `${APP_DIR}/storein/.env`,
+      env_file: `${APP_DIR}/nikstore/.env`,
       instances:            1,
       autorestart:          true,
       watch:                false,
@@ -19,11 +19,11 @@ module.exports = {
       out_file:   '/var/log/pm2/backend-out.log',
     },
     {
-      name:    'nik-storefront',
-      cwd:     `${APP_DIR}/storein-nuxt`,
+      name:    'nikstore-nuxt',
+      cwd:     `${APP_DIR}/nikstore-nuxt`,
       script:  'node',
       args:    '.output/server/index.mjs',
-      env_file: `${APP_DIR}/storein-nuxt/.env`,
+      env_file: `${APP_DIR}/nikstore-nuxt/.env`,
       env: { PORT: 3000 },
       instances:            1,
       autorestart:          true,
@@ -33,8 +33,8 @@ module.exports = {
       out_file:   '/var/log/pm2/nuxt-out.log',
     },
     {
-      name:    'nik-admin',
-      cwd:     `${APP_DIR}/storein-admin`,
+      name:    'nikstore-admin',
+      cwd:     `${APP_DIR}/nikstore-admin`,
       script:  'node',
       args:    'server.js',
       env: {
