@@ -1,5 +1,8 @@
 ﻿<template>
-  <nav class="hidden md:block border-t border-glass-border" style="background-color: var(--glass);">
+  <nav
+    class="app-header-nav hidden md:block"
+    :class="transparent ? 'app-header-nav--transparent' : 'app-header-nav--glass'"
+  >
     <div class="container-main flex items-center h-11 gap-1">
 
       <!-- Quick links -->
@@ -96,6 +99,8 @@ import { logger } from '~/utils/logger'
 
 const CTX = 'AppHeaderNav'
 
+defineProps({ transparent: { type: Boolean, default: false } })
+
 const route         = useRoute()
 const categoryStore = useCategoryStore()
 const { categories } = storeToRefs(categoryStore)
@@ -129,6 +134,21 @@ function onLeave() {
 </script>
 
 <style scoped>
+.app-header-nav {
+  border-top: 1px solid var(--glass-border);
+  transition: background-color 300ms ease, border-color 300ms ease;
+}
+.app-header-nav--glass {
+  background-color: var(--glass);
+}
+.app-header-nav--transparent {
+  background-color: transparent;
+  border-top-color: transparent;
+}
+.app-header-nav--transparent :deep(a) {
+  text-shadow: 0 1px 6px rgba(0, 0, 0, .55);
+}
+
 .nav-drop-panel {
   background: var(--glass-strong);
   backdrop-filter: blur(24px) saturate(160%);

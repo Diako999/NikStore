@@ -15,14 +15,8 @@
       <GlassAuroraScene class="hero-prod__aurora" />
 
       <GlassHeroBanner :image="imgSrc" class="hero-prod__banner">
-        <span class="hero-prod__eyebrow">پیشنهاد ویژه</span>
         <h1 class="hero-prod__title">{{ product.name }}</h1>
-        <div class="hero-prod__price-row">
-          <span v-if="comparePrice > price" class="hero-prod__compare font-fanum">
-            {{ formatPrice(comparePrice) }}
-          </span>
-          <span class="hero-prod__price font-fanum">{{ formatPrice(price) }} <small>تومان</small></span>
-        </div>
+        <p class="hero-prod__price font-fanum">{{ formatPrice(price) }} <small>تومان</small></p>
 
         <GlassButton :loading="buying" @click="handleBuyNow">
           خرید فوری
@@ -84,7 +78,6 @@ const featuredVariant = computed(() => {
 })
 
 const price = computed(() => featuredVariant.value?.price ?? product.value?.finalPrice ?? product.value?.minPrice ?? 0)
-const comparePrice = computed(() => featuredVariant.value?.comparePrice ?? product.value?.minPrice ?? 0)
 
 async function handleBuyNow() {
   if (!product.value || buying.value) return
@@ -149,35 +142,11 @@ onMounted(async () => {
   z-index: 1;
 }
 
-.hero-prod__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
-  background: var(--glass-strong);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 12px;
-  position: relative;
-  z-index: 3;
-}
-.hero-prod__eyebrow::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--brand-light);
-}
-
 .hero-prod__title {
-  font-size: 1.15rem;
-  line-height: 1.4;
-  font-weight: 700;
-  margin: 0 0 10px;
+  font-size: 1.375rem;
+  line-height: 1.35;
+  font-weight: 800;
+  margin: 0 0 8px;
   position: relative;
   z-index: 3;
   display: -webkit-box;
@@ -186,20 +155,17 @@ onMounted(async () => {
   overflow: hidden;
 }
 @media (min-width: 768px) {
-  .hero-prod__title { font-size: 1.6rem; }
+  .hero-prod__title { font-size: 2rem; }
 }
 
-.hero-prod__price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 16px;
+.hero-prod__price {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0 0 16px;
   position: relative;
   z-index: 3;
 }
-.hero-prod__price { font-size: 16px; font-weight: 700; }
 .hero-prod__price small { font-size: 11px; font-weight: 500; opacity: 0.75; }
-.hero-prod__compare { font-size: 12px; opacity: 0.6; text-decoration: line-through; }
 
 .hero-prod__btn-ico { width: 16px; height: 16px; }
 </style>

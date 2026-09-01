@@ -44,7 +44,7 @@ const MostViewed      = defineAsyncComponent(() => import('~/components/home/Mos
 const LatestBlogPosts = defineAsyncComponent(() => import('~/components/home/LatestBlogPosts.vue'))
 const TrustStrip      = defineAsyncComponent(() => import('~/components/home/TrustStrip.vue'))
 
-definePageMeta({ layout: 'default' })
+definePageMeta({ layout: 'default', hasHero: true })
 
 const config        = useRuntimeConfig()
 const settingsStore = useSettingsStore()

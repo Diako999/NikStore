@@ -201,6 +201,7 @@ onMounted(async () => {
 /* ── Products ──────────────────────────────────────── */
 .mv__products {
   display: flex;
+  align-items: flex-start;
   gap: 0.75rem;
   overflow-x: auto;
   padding: 0.25rem 0.375rem 0.375rem;

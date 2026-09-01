@@ -217,6 +217,7 @@ onMounted(() => onScroll())
 /* ── Scroll area ──────────────────────────────────── */
 .prow__scroll {
   display: flex;
+  align-items: flex-start;
   gap: 0.75rem;
   overflow-x: auto;
   padding: 0.5rem 0.125rem 0.75rem;
