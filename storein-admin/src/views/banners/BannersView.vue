@@ -105,17 +105,16 @@
                   {{ banner.cta }}
                 </span>
               </div>
-              <!-- tiny glasses svg -->
+              <!-- tiny badge svg -->
               <div class="opacity-[0.15] flex-shrink-0 ml-1">
-                <svg v-if="banner.glasses === 'sun'" width="36" height="18" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5">
-                  <rect x="6" y="26" width="64" height="40" rx="20"/>
-                  <rect x="110" y="26" width="64" height="40" rx="20"/>
-                  <path d="M70 46 Q90 32 110 46"/>
+                <svg v-if="banner.badgeType === 'sale'" width="36" height="18" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5">
+                  <circle cx="55" cy="32" r="15"/>
+                  <circle cx="125" cy="58" r="15"/>
+                  <path d="M150 18 L30 72"/>
                 </svg>
-                <svg v-else-if="banner.glasses === 'rx'" width="36" height="18" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5">
-                  <circle cx="48" cy="46" r="34"/>
-                  <circle cx="132" cy="46" r="34"/>
-                  <path d="M82 46 Q90 34 98 46"/>
+                <svg v-else-if="banner.badgeType === 'new'" width="36" height="18" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5">
+                  <path d="M48 20 Q54 42 76 46 Q54 50 48 72 Q42 50 20 46 Q42 42 48 20 Z"/>
+                  <path d="M132 34 Q136 48 150 50 Q136 52 132 66 Q128 52 114 50 Q128 48 132 34 Z"/>
                 </svg>
               </div>
             </div>
@@ -268,11 +267,11 @@
                 <div>
                   <h3 class="text-sm font-semibold text-text-secondary uppercase tracking-wide mb-3">تزیین SVG</h3>
                   <div class="grid grid-cols-4 gap-2">
-                    <button v-for="g in glassesOptions" :key="g.value"
-                      @click="form.glasses = g.value"
+                    <button v-for="g in badgeOptions" :key="g.value"
+                      @click="form.badgeType = g.value"
                       :class="[
                         'flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-xs font-medium',
-                        form.glasses === g.value
+                        form.badgeType === g.value
                           ? 'border-primary bg-primary/5 text-primary'
                           : 'border-border text-text-secondary hover:border-border/60',
                       ]">
@@ -378,19 +377,21 @@
                     <div v-else class="absolute inset-0"
                          :style="{ background: `linear-gradient(135deg, ${form.bgFrom || '#0F3D73'} 0%, ${form.bgTo || '#1B4F8A'} 100%)` }">
                     </div>
-                    <div v-if="!form.imageUrl && form.glasses !== 'none'"
+                    <div v-if="!form.imageUrl && form.badgeType !== 'none'"
                          class="absolute left-0 top-1/2 -translate-y-1/2 opacity-[0.13] pointer-events-none scale-[0.6] origin-left">
-                      <svg v-if="form.glasses === 'sun'" width="340" height="200" viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
-                        <rect x="10" y="60" width="140" height="80" rx="40"/>
-                        <rect x="190" y="60" width="140" height="80" rx="40"/>
-                        <path d="M150 100 Q170 72 190 100"/><path d="M10 82 Q0 82 0 100"/><path d="M330 82 Q340 82 340 100"/>
+                      <svg v-if="form.badgeType === 'sale'" width="340" height="200" viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
+                        <circle cx="90" cy="90" r="60"/>
+                        <circle cx="250" cy="140" r="60"/>
+                        <path d="M300 40 L40 170"/>
                       </svg>
-                      <svg v-else-if="form.glasses === 'rx'" width="340" height="200" viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
-                        <circle cx="100" cy="100" r="76"/><circle cx="240" cy="100" r="76"/>
-                        <path d="M176 100 Q170 72 164 100"/><path d="M24 60 Q6 44 0 54"/><path d="M316 60 Q334 44 340 54"/>
+                      <svg v-else-if="form.badgeType === 'new'" width="340" height="200" viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
+                        <path d="M90 40 Q104 96 170 108 Q104 120 90 176 Q76 120 10 108 Q76 96 90 40 Z"/>
+                        <path d="M260 70 Q268 100 300 108 Q268 116 260 146 Q252 116 220 108 Q252 100 260 70 Z"/>
                       </svg>
                       <svg v-else width="200" height="200" viewBox="0 0 280 280" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
-                        <circle cx="140" cy="140" r="110"/><circle cx="140" cy="140" r="60"/><circle cx="140" cy="140" r="20"/>
+                        <path d="M140 30 L140 250"/>
+                        <path d="M40 80 L240 200"/>
+                        <path d="M240 80 L40 200"/>
                       </svg>
                     </div>
                     <div class="absolute inset-0 flex items-center px-6 z-10">
@@ -437,22 +438,21 @@
                         </svg>
                       </span>
                     </div>
-                    <div v-if="!form.imageUrl && form.glasses !== 'none'"
+                    <div v-if="!form.imageUrl && form.badgeType !== 'none'"
                          class="opacity-[0.13] pointer-events-none flex-shrink-0 z-10">
-                      <svg v-if="form.glasses === 'sun'" width="90" height="45" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
-                        <rect x="6" y="26" width="64" height="40" rx="20"/>
-                        <rect x="110" y="26" width="64" height="40" rx="20"/>
-                        <path d="M70 46 Q90 32 110 46"/>
-                        <path d="M6 38 Q0 38 0 50"/>
-                        <path d="M174 38 Q180 38 180 50"/>
+                      <svg v-if="form.badgeType === 'sale'" width="90" height="45" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
+                        <circle cx="55" cy="32" r="15"/>
+                        <circle cx="125" cy="58" r="15"/>
+                        <path d="M150 18 L30 72"/>
                       </svg>
-                      <svg v-else-if="form.glasses === 'rx'" width="90" height="45" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
-                        <circle cx="48" cy="46" r="34"/>
-                        <circle cx="132" cy="46" r="34"/>
-                        <path d="M82 46 Q90 34 98 46"/>
+                      <svg v-else-if="form.badgeType === 'new'" width="90" height="45" viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5" stroke-linecap="round">
+                        <path d="M48 20 Q54 42 76 46 Q54 50 48 72 Q42 50 20 46 Q42 42 48 20 Z"/>
+                        <path d="M132 34 Q136 48 150 50 Q136 52 132 66 Q128 52 114 50 Q128 48 132 34 Z"/>
                       </svg>
                       <svg v-else width="60" height="60" viewBox="0 0 280 280" fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
-                        <circle cx="140" cy="140" r="110"/><circle cx="140" cy="140" r="60"/><circle cx="140" cy="140" r="20"/>
+                        <path d="M140 30 L140 250"/>
+                        <path d="M40 80 L240 200"/>
+                        <path d="M240 80 L40 200"/>
                       </svg>
                     </div>
                     <div v-if="!form.isActive" class="absolute inset-0 bg-black/50 z-20 flex items-center justify-center">
@@ -571,11 +571,11 @@ function countByType(type) {
 }
 
 // ── Form ───────────────────────────────────────────────────
-const glassesOptions = [
-  { value: 'sun',  icon: '😎', label: 'آفتابی' },
-  { value: 'rx',   icon: '🤓', label: 'طبی' },
-  { value: 'lens', icon: '🔍', label: 'لنز' },
-  { value: 'none', icon: '✕',  label: 'بدون' },
+const badgeOptions = [
+  { value: 'sale',   icon: '🏷️', label: 'حراج' },
+  { value: 'new',    icon: '✨', label: 'جدید' },
+  { value: 'season', icon: '🍂', label: 'فصلی' },
+  { value: 'none',   icon: '✕',  label: 'بدون' },
 ]
 
 const defaultForm = () => ({
@@ -590,7 +590,7 @@ const defaultForm = () => ({
   accent:         '#FFD700',
   imageUrl:       '',
   mobileImageUrl: '',
-  glasses:        'sun',
+  badgeType:      'sale',
   isActive:       true,
 })
 
@@ -638,7 +638,7 @@ function openEdit(banner) {
     accent:         banner.accent         ?? '#FFD700',
     imageUrl:       banner.imageUrl       ?? '',
     mobileImageUrl: banner.mobileImageUrl ?? '',
-    glasses:        banner.glasses        ?? 'sun',
+    badgeType:      banner.badgeType      ?? 'sale',
     isActive:       banner.isActive       ?? true,
   })
   modalOpen.value = true
@@ -665,7 +665,7 @@ async function saveModal() {
       accent:         form.accent,
       imageUrl:       form.imageUrl.trim(),
       mobileImageUrl: form.mobileImageUrl.trim(),
-      glasses:        form.glasses,
+      badgeType:      form.badgeType,
       isActive:       form.isActive,
     }
 
