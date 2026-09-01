@@ -263,6 +263,19 @@ function validatePhone(p) {
   return /^09\d{9}$/.test(p)
 }
 
+// Only a genuine 401 means the credentials themselves were rejected by the backend.
+// Any other failure (no response at all, 404 on the endpoint, 5xx, etc.) means the
+// request never got a real answer from the auth logic — telling the admin "wrong
+// password" in that case is actively misleading, so we surface an honest
+// connection/server-error message instead.
+const CONNECTION_ERROR_MSG = 'خطا در اتصال به سرور — لطفاً بعداً دوباره تلاش کنید'
+
+function resolveCredentialErrorMessage(e, fallback) {
+  if (e.response?.status !== 401) return CONNECTION_ERROR_MSG
+  const msg = e.response?.data?.message
+  return Array.isArray(msg) ? msg[0] : (msg ?? fallback)
+}
+
 async function handlePasswordLogin() {
   phoneError.value    = ''
   passwordError.value = ''
@@ -277,8 +290,7 @@ async function handlePasswordLogin() {
     router.push(route.query.redirect ?? '/dashboard')
   } catch (e) {
     if (e.isAdminError) { errorMsg.value = e.message; return }
-    const msg = e.response?.data?.message
-    errorMsg.value = Array.isArray(msg) ? msg[0] : (msg ?? 'شماره یا رمز عبور اشتباه است')
+    errorMsg.value = resolveCredentialErrorMessage(e, 'شماره یا رمز عبور اشتباه است')
   }
 }
 
@@ -314,6 +326,10 @@ async function handleVerifyOtp() {
       errorMsg.value = e.message
       otpStep.value  = 'phone'
       otpCode.value  = ''
+      return
+    }
+    if (e.response?.status !== 401) {
+      errorMsg.value = CONNECTION_ERROR_MSG
       return
     }
     const msg = e.response?.data?.message
