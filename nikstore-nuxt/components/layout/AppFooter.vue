@@ -267,6 +267,16 @@ if (!store.siteName) {
 }
 [data-theme='light'] .site-footer {
   background: linear-gradient(180deg, color-mix(in srgb, var(--brand-dark) 92%, black) 0%, color-mix(in srgb, var(--brand-dark) 100%, black) 100%);
+  /* The footer's surface stays dark green in BOTH themes (only the shade
+     changes above) — but --text-primary/--text-secondary are globally
+     theme-reactive and flip to the *light*-theme (dark, low-contrast)
+     values here, since the rest of the page goes light. Pin them back to
+     the dark-surface-appropriate values for everything painted inside the
+     footer (headings, .footer-link, .footer-muted, contact rows, social
+     icons all read these two custom properties) so links stay readable
+     against the always-dark footer background. */
+  --text-primary: #F5F7F3;
+  --text-secondary: #C3D2C7;
 }
 
 /* ── Top glow line ─────────────────────────────── */

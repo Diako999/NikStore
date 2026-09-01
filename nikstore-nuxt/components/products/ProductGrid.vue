@@ -36,7 +36,17 @@
       />
     </div>
 
-    <!-- Empty state -->
+    <!-- Fetch failed — distinct from a genuine zero-result empty state -->
+    <BaseEmpty
+      v-else-if="error"
+      icon="📡"
+      title="ارتباط با سرور برقرار نشد"
+      subtitle="مشکلی در دریافت محصولات پیش آمد. لطفاً اتصال خود را بررسی و دوباره تلاش کنید"
+      action="تلاش دوباره"
+      @action="$emit('retry')"
+    />
+
+    <!-- Empty state — fetch succeeded, genuinely zero results -->
     <BaseEmpty
       v-else
       icon="🛍️"
@@ -63,7 +73,12 @@ defineProps({
   products:      { type: Array,   default: () => [] },
   loading:       { type: Boolean, default: false },
   skeletonCount: { type: Number,  default: 12 },
+  // True when the last fetch itself failed (network/5xx) rather than
+  // succeeding with zero matches — shows a distinct offline/error state.
+  error:         { type: Boolean, default: false },
 })
+
+defineEmits(['retry'])
 
 const router         = useRouter()
 const wishlistStore = useWishlistStore()

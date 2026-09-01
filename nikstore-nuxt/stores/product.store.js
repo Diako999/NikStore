@@ -10,6 +10,11 @@ export const useProductStore = defineStore('product', () => {
   const total          = ref(0)
   const page           = ref(1)
   const limit          = ref(24)
+  // True only when the last fetchProducts() call itself failed (network
+  // error / non-2xx) — distinct from a successful fetch that genuinely
+  // returned zero results. Lets the UI tell "no products match your
+  // filters" apart from "we couldn't reach the server."
+  const error          = ref(false)
 
   const filters = reactive({
     sortBy:   'newest',
@@ -24,6 +29,7 @@ export const useProductStore = defineStore('product', () => {
   // ── Fetch products ─────────────────────────────────────────────
   async function fetchProducts(extraParams = {}) {
     loading.value = true
+    error.value   = false
     try {
       const params = {
         page:   page.value,
@@ -42,10 +48,11 @@ export const useProductStore = defineStore('product', () => {
       const { data } = await productService.getAll(params)
       products.value = data?.products ?? data?.items ?? []
       total.value    = data?.total ?? 0
-    } catch (error) {
-      logger.error('product: fetchProducts failed', error, {}, 'ProductStore')
+    } catch (err) {
+      logger.error('product: fetchProducts failed', err, {}, 'ProductStore')
       products.value = []
       total.value    = 0
+      error.value    = true
     } finally {
       loading.value = false
     }
@@ -114,7 +121,7 @@ export const useProductStore = defineStore('product', () => {
   const totalPages = computed(() => Math.ceil(total.value / limit.value))
 
   return {
-    products, currentProduct, loading, total, page, limit, filters,
+    products, currentProduct, loading, total, page, limit, filters, error,
     fetchProducts, fetchProductBySlug,
     setFilter, resetFilters, setPage,
     toQueryParams, fromQueryParams,

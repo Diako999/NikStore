@@ -1,8 +1,12 @@
 <template>
   <div class="container-main py-8 min-h-[70vh]">
 
-    <!-- Sticky mobile total bar (UXID-016) -->
-    <div v-if="checkoutItems.length" class="sticky top-14 z-10 lg:hidden bg-glass backdrop-blur-md border-b border-glass-border px-4 py-2.5 flex justify-between items-center text-sm -mx-4 mb-4">
+    <!-- Sticky mobile total bar (UXID-016). top-28 (112px) clears the
+         sticky global header's real mobile height (h-14 main row + its
+         own mobile search row = 110px) — top-14 (56px, only the main
+         row) left this bar sticking *inside* the header's own band, so
+         the header (higher z-index) fully covered it on scroll. -->
+    <div v-if="checkoutItems.length" class="sticky top-28 z-10 lg:hidden bg-glass backdrop-blur-md border-b border-glass-border px-4 py-2.5 flex justify-between items-center text-sm -mx-4 mb-4">
       <span class="text-glass-text-secondary">مبلغ قابل پرداخت</span>
       <span class="font-fanum font-black text-glass-brand text-base">{{ formatPrice(checkoutTotal) }}</span>
     </div>

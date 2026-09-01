@@ -14,20 +14,15 @@
     </nav>
 
     <GlassCard padding="md" class="mb-4">
-      <GlassSearchBar
-        v-model="searchInput"
-        placeholder="جستجوی محصول، برند یا دسته‌بندی..."
-        class="mb-3"
-        @submit="onSearchSubmit"
-      />
       <div class="flex items-center gap-3 flex-wrap">
         <svg class="w-5 h-5 text-glass-brand flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
         </svg>
-        <div>
+        <div v-if="searchQuery">
           <span class="text-glass-text-secondary text-sm">نتایج جستجو برای: </span>
           <span class="text-glass-text-primary font-bold text-lg">«{{ searchQuery }}»</span>
         </div>
+        <span v-else class="text-glass-text-secondary text-sm">کلمه‌ای برای جستجو وارد کنید</span>
         <span v-if="!loading && searchQuery" class="text-glass-text-secondary text-sm font-fanum mr-auto">
           <span class="text-glass-text-primary font-bold">{{ formatNumber(total) }}</span> کالا
         </span>
@@ -132,7 +127,6 @@ import ProductGrid      from '~/components/products/ProductGrid.vue'
 import BasePagination   from '~/components/common/BasePagination.vue'
 import http             from '~/services/http.service'
 import GlassCard        from '~/components/glass/GlassCard.vue'
-import GlassSearchBar   from '~/components/glass/GlassSearchBar.vue'
 import GlassInput       from '~/components/glass/GlassInput.vue'
 
 definePageMeta({ layout: 'default' })
@@ -141,7 +135,6 @@ const route  = useRoute()
 const router = useRouter()
 const ui     = useUiStore()
 
-const searchInput   = ref('')
 const products      = ref([])
 const loading       = ref(false)
 const total         = ref(0)
@@ -191,25 +184,17 @@ onMounted(async () => {
   priceMin.value    = route.query.minPrice ? Number(route.query.minPrice) : null
   priceMax.value    = route.query.maxPrice ? Number(route.query.maxPrice) : null
   inStock.value     = route.query.inStock === 'true'
-  searchInput.value = searchQuery.value
   await fetchSearch()
 })
 
-watch(searchQuery, async (q) => {
+watch(searchQuery, async () => {
   currentPage.value   = 1
   selectedAttrs.value = []
   priceMin.value      = null
   priceMax.value      = null
   inStock.value       = false
-  searchInput.value   = q
   await fetchSearch()
 })
-
-function onSearchSubmit(q) {
-  const query = String(q ?? searchInput.value).trim()
-  if (!query) return
-  router.push({ path: '/search', query: { q: query } })
-}
 
 function onSortChange() {
   currentPage.value = 1

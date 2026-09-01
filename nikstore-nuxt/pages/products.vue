@@ -28,7 +28,12 @@
           @open-filter="mobileFilterOpen = true"
         />
         <ActiveFilters :filters="productStore.filters" @remove="removeFilter" @clear-all="clearAllFilters" />
-        <ProductGrid :products="productStore.products" :loading="productStore.loading" />
+        <ProductGrid
+          :products="productStore.products"
+          :loading="productStore.loading"
+          :error="productStore.error"
+          @retry="productStore.fetchProducts()"
+        />
         <BasePagination
           :model-value="productStore.page"
           :total-pages="productStore.totalPages"
@@ -113,16 +118,26 @@ await useAsyncData('products-list', async () => {
     ...(productStore.filters.maxPrice          ? { maxPrice:      productStore.filters.maxPrice                  } : {}),
     ...(productStore.filters.inStock           ? { inStock:       true                                           } : {}),
   }
-  const res = await $fetch('/api/v1/products', { params })
-  const d   = res?.data ?? res
-  productStore.products = d?.products ?? d?.items ?? []
-  productStore.total    = d?.total ?? 0
+  try {
+    const res = await $fetch('/api/v1/products', { params })
+    const d   = res?.data ?? res
+    productStore.products = d?.products ?? d?.items ?? []
+    productStore.total    = d?.total ?? 0
+    productStore.error    = false
+  } catch {
+    // Swallow here — the onMounted fallback below re-fetches client-side
+    // (via productStore.fetchProducts(), which sets productStore.error)
+    // whenever products.length is still 0, covering this failure too.
+  }
   return null
 })
 
 onMounted(async () => {
-  await categoryStore.fetchCategories()
-  wishlistStore.fetchWishlist()
+  // Non-critical (category tree isn't required to browse products) — must
+  // not throw here, or the rest of this hook (wishlist + the SSR-miss
+  // product fallback fetch below) never runs when the backend is down.
+  await categoryStore.fetchCategories().catch(() => {})
+  wishlistStore.fetchWishlist().catch(() => {})
   if (!productStore.products.length) {
     productStore.fromQueryParams(route.query)
     await productStore.fetchProducts()

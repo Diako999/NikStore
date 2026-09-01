@@ -83,7 +83,7 @@ const cartStore     = useCartStore()
 const settingsStore = useSettingsStore()
 
 onMounted(async () => {
-  categoryStore.fetchCategories()
+  categoryStore.fetchCategories().catch(() => {})
   if (authStore.isLoggedIn) {
     authStore.fetchProfile().catch(() => {})
     cartStore.fetchCart().catch(() => {})

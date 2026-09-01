@@ -94,6 +94,18 @@ useHead({
 onMounted(() => settingsStore.fetchSettings())
 
 // ── Splash gate ───────────────────────────────────────────────────
+// Normal path: wait for auth init + settings fetch + a minimum splash
+// duration, then dismiss. Both settingsStore.fetchSettings() and
+// auth.initAuth() (plugins/auth.client.ts) already swallow their own
+// errors, so this shouldn't hang — but if anything upstream ever does
+// stall (a slow/hanging request, a route whose extra onMounted work
+// throws before this watch's chain resolves, etc.), the splash must
+// never stay stuck forever blocking the whole page's clicks. The
+// safety-net timeout below guarantees a dismissal no matter what.
+if (import.meta.client) {
+  setTimeout(() => uiStore.markAppReady(), 6000)
+}
+
 watch(
   () => auth.initialized,
   async (initialized) => {

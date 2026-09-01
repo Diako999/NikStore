@@ -9,7 +9,7 @@
     <AnnouncementBar />
     <AppHeader />
 
-    <main id="main-content" class="flex-1 pb-14 md:pb-0">
+    <main id="main-content" class="flex-1 pb-14 md:pb-0 main-min-h">
       <slot />
     </main>
 
@@ -22,6 +22,24 @@
     <AppPwaInstall />
   </div>
 </template>
+
+<style scoped>
+/* On short pages (e.g. an empty cart) the flex-grow on <main> can't push
+   the footer below the fold — the footer's own natural height already
+   exceeds the viewport on its own, so there's no "leftover" flex space to
+   distribute. Without this, the footer's brand/tagline block (which sits
+   near its top, not its bottom) can render partly underneath the fixed
+   mobile tab bar (AppMobileNav, h-14 = 56px) on initial paint, before the
+   user has scrolled at all. Guaranteeing this floor keeps the footer below
+   the tab bar's band by default; on longer pages content already exceeds
+   it, so this is a no-op there. Desktop has no fixed tab bar, so it's
+   mobile-only. */
+@media (max-width: 767px) {
+  .main-min-h {
+    min-height: calc(100dvh - 56px);
+  }
+}
+</style>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
