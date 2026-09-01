@@ -22,7 +22,7 @@ interface BannerLike {
   accent: string;
   imageUrl: string;
   mobileImageUrl: string;
-  glasses: string;
+  badgeType: string;
   type: string;
   isActive: boolean;
   sortOrder: number;
@@ -45,7 +45,7 @@ const makeBanner = (overrides: Partial<BannerLike> = {}): BannerLike => ({
   accent: '#FFD700',
   imageUrl: '',
   mobileImageUrl: '',
-  glasses: 'sun',
+  badgeType: 'sale',
   type: 'hero',
   isActive: true,
   sortOrder: 0,

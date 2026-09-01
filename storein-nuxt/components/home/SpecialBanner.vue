@@ -20,31 +20,26 @@
         <div class="sb-card__mesh" aria-hidden="true" />
 
         <!-- Decorative SVG (no image) -->
-        <div v-if="!banner.imageUrl && banner.glasses !== 'none'"
+        <div v-if="!banner.imageUrl && banner.badgeType !== 'none'"
              class="sb-card__deco" aria-hidden="true">
-          <svg v-if="banner.glasses === 'sun'" width="220" height="110"
+          <svg v-if="banner.badgeType === 'sale'" width="220" height="110"
                viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5"
                stroke-linecap="round" stroke-linejoin="round">
-            <rect x="6" y="26" width="64" height="40" rx="20"/>
-            <rect x="110" y="26" width="64" height="40" rx="20"/>
-            <path d="M70 46 Q90 32 110 46"/>
-            <path d="M6 38 Q0 38 0 50"/>
-            <path d="M174 38 Q180 38 180 50"/>
+            <circle cx="55" cy="32" r="15"/>
+            <circle cx="125" cy="58" r="15"/>
+            <path d="M150 18 L30 72"/>
           </svg>
-          <svg v-else-if="banner.glasses === 'rx'" width="220" height="110"
+          <svg v-else-if="banner.badgeType === 'new'" width="220" height="110"
                viewBox="0 0 180 90" fill="none" stroke="white" stroke-width="5"
                stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="48" cy="46" r="34"/>
-            <circle cx="132" cy="46" r="34"/>
-            <path d="M82 46 Q90 34 98 46"/>
-            <path d="M14 24 Q4 16 0 22"/>
-            <path d="M166 24 Q176 16 180 22"/>
+            <path d="M48 20 Q54 42 76 46 Q54 50 48 72 Q42 50 20 46 Q42 42 48 20 Z"/>
+            <path d="M132 34 Q136 48 150 50 Q136 52 132 66 Q128 52 114 50 Q128 48 132 34 Z"/>
           </svg>
           <svg v-else width="120" height="120" viewBox="0 0 280 280"
                fill="none" stroke="white" stroke-width="8" stroke-linecap="round">
-            <circle cx="140" cy="140" r="110"/>
-            <circle cx="140" cy="140" r="60"/>
-            <circle cx="140" cy="140" r="20"/>
+            <path d="M140 30 L140 250"/>
+            <path d="M40 80 L240 200"/>
+            <path d="M240 80 L40 200"/>
           </svg>
         </div>
 

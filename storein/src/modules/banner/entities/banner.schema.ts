@@ -22,8 +22,10 @@ export class Banner {
   // separate crop for mobile (≤767 px); falls back to imageUrl when empty
   @Prop({ default: '' }) mobileImageUrl: string;
 
-  @Prop({ enum: ['sun', 'rx', 'lens', 'none'], default: 'sun' })
-  glasses: string;
+  // decorative SVG badge shown on the banner: 'sale' (tag/percent),
+  // 'new' (sparkle), 'season' (seasonal/snowflake), or 'none'
+  @Prop({ enum: ['sale', 'new', 'season', 'none'], default: 'sale' })
+  badgeType: string;
 
   // 'hero' = main hero slider  |  'promo' = two-column promotional cards
   @Prop({ enum: ['hero', 'promo'], default: 'hero' }) type: string;

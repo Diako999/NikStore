@@ -24,7 +24,7 @@ export class CreateBannerDto {
   @IsOptional() @IsString() imageUrl?: string;
   @IsOptional() @IsString() mobileImageUrl?: string;
 
-  @IsOptional() @IsIn(['sun', 'rx', 'lens', 'none']) glasses?: string;
+  @IsOptional() @IsIn(['sale', 'new', 'season', 'none']) badgeType?: string;
   @IsOptional() @IsIn(['hero', 'promo']) type?: string;
   @IsOptional() @IsBoolean() isActive?: boolean;
   @IsOptional() @IsNumber() sortOrder?: number;

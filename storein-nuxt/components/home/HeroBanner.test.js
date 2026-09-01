@@ -26,7 +26,7 @@ const makeSlide = (overrides = {}) => ({
   accent:         '#FFD700',
   imageUrl:       '',
   mobileImageUrl: '',
-  glasses:        'sun',
+  badgeType:      'sale',
   ...overrides,
 })
 

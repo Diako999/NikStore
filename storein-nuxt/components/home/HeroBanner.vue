@@ -27,36 +27,27 @@
         <!-- Dot-mesh texture overlay -->
         <div class="hero__mesh" aria-hidden="true" />
 
-        <!-- Decorative glasses SVG when no image -->
-        <div v-if="!slides[current].imageUrl && slides[current].glasses !== 'none'"
+        <!-- Decorative badge SVG when no image -->
+        <div v-if="!slides[current].imageUrl && slides[current].badgeType !== 'none'"
              class="hero__deco" aria-hidden="true">
-          <svg v-if="slides[current].glasses === 'sun'" width="420" height="260"
+          <svg v-if="slides[current].badgeType === 'sale'" width="420" height="260"
                viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="6"
                stroke-linecap="round" stroke-linejoin="round">
-            <rect x="10" y="60" width="140" height="80" rx="40"/>
-            <rect x="190" y="60" width="140" height="80" rx="40"/>
-            <path d="M150 100 Q170 72 190 100"/>
-            <path d="M10 82 Q0 82 0 100"/>
-            <path d="M330 82 Q340 82 340 100"/>
+            <circle cx="90" cy="90" r="60"/>
+            <circle cx="250" cy="140" r="60"/>
+            <path d="M300 40 L40 170"/>
           </svg>
-          <svg v-else-if="slides[current].glasses === 'rx'" width="420" height="260"
+          <svg v-else-if="slides[current].badgeType === 'new'" width="420" height="260"
                viewBox="0 0 340 200" fill="none" stroke="white" stroke-width="6"
                stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="100" cy="100" r="76"/>
-            <circle cx="240" cy="100" r="76"/>
-            <path d="M176 100 Q170 72 164 100"/>
-            <path d="M24 60 Q6 44 0 54"/>
-            <path d="M316 60 Q334 44 340 54"/>
+            <path d="M90 40 Q104 96 170 108 Q104 120 90 176 Q76 120 10 108 Q76 96 90 40 Z"/>
+            <path d="M260 70 Q268 100 300 108 Q268 116 260 146 Q252 116 220 108 Q252 100 260 70 Z"/>
           </svg>
           <svg v-else width="280" height="280" viewBox="0 0 280 280"
                fill="none" stroke="white" stroke-width="6" stroke-linecap="round">
-            <circle cx="140" cy="140" r="110"/>
-            <circle cx="140" cy="140" r="60"/>
-            <circle cx="140" cy="140" r="20"/>
-            <line x1="140" y1="0" x2="140" y2="40" stroke-width="4"/>
-            <line x1="140" y1="240" x2="140" y2="280" stroke-width="4"/>
-            <line x1="0" y1="140" x2="40" y2="140" stroke-width="4"/>
-            <line x1="240" y1="140" x2="280" y2="140" stroke-width="4"/>
+            <path d="M140 30 L140 250"/>
+            <path d="M40 80 L240 200"/>
+            <path d="M240 80 L40 200"/>
           </svg>
         </div>
 
