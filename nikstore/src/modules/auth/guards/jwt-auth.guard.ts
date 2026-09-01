@@ -25,9 +25,21 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return isPublic ? true : super.canActivate(ctx);
   }
 
-  handleRequest(err: Error | null, user: UserDocument | false): UserDocument {
+  // Signature must structurally match the base `IAuthGuard.handleRequest`
+  // (`<TUser = any>(err: any, user: any, info: any, context: ExecutionContext, status?: any) => TUser`)
+  // — narrowing it to `(err: Error | null, user: UserDocument | false): UserDocument`
+  // is not assignable to that generic base signature because `UserDocument`
+  // can't satisfy an arbitrary `TUser`. A function type with fewer parameters
+  // is assignable to one declaring more (extra call-site args are simply
+  // ignored), so the trailing `info`/`context`/`status` params can be omitted
+  // as long as the method stays generic over `TUser`.
+  handleRequest<TUser = UserDocument>(
+    err: unknown,
+    user: TUser | false,
+  ): TUser {
     if (err || !user) {
-      this.logger.warn('JWT auth failed', { error: err?.message });
+      const message = err instanceof Error ? err.message : undefined;
+      this.logger.warn('JWT auth failed', { error: message });
       throw new UnauthorizedException('لطفاً وارد حساب کاربری خود شوید');
     }
     return user;

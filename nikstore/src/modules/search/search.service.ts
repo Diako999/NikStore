@@ -19,7 +19,7 @@ const HISTORY_KEY = (uid: string) => `search:history:${uid}`;
 const HISTORY_MAX = 10;
 const SUGGEST_TTL = 300;
 
-interface SuggestResult {
+export interface SuggestResult {
   products: { name: string; slug: string }[];
   categories: { name: string; slug: string }[];
 }

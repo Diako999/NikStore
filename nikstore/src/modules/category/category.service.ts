@@ -12,15 +12,24 @@ import { Product, ProductDocument } from '../product/entities/product.schema';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
-interface CategoryWithCount extends CategoryDocument {
+/**
+ * Plain (lean) shape of a category — `.lean()` queries return plain data
+ * objects, not live Mongoose documents, so these response types describe the
+ * actual runtime shape instead of `CategoryDocument` (which pulls in ~45
+ * Document-only methods a plain object doesn't have). Exported so controller
+ * methods that return them get a nameable return type in the emitted `.d.ts`.
+ */
+type LeanCategory = Category & { _id: Types.ObjectId };
+
+export interface CategoryWithCount extends LeanCategory {
   productsCount: number;
 }
 
-interface CategoryTreeNode extends CategoryWithCount {
+export interface CategoryTreeNode extends CategoryWithCount {
   children: CategoryTreeNode[];
 }
 
-interface CategoryRootWithStock extends CategoryDocument {
+export interface CategoryRootWithStock extends LeanCategory {
   totalStock: number;
   productsCount: number;
 }

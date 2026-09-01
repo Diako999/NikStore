@@ -77,8 +77,13 @@ export class NotificationService {
         body: notif.body,
         data: notif.data,
         isRead: notif.isRead,
-        createdAt: (notif as NotificationDocument & { createdAt: Date })
-          .createdAt,
+        // `@Schema({ timestamps: true })` adds `createdAt` at runtime; not
+        // reflected on the `Notification` class, so the intermediate
+        // `unknown` cast is needed (see `OrderWithTimestamps` in order.service.ts
+        // for the same pattern).
+        createdAt: (
+          notif as unknown as NotificationDocument & { createdAt: Date }
+        ).createdAt,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

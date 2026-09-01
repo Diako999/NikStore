@@ -81,9 +81,13 @@ export class ReviewService {
           productName: product?.name ?? 'محصول',
           rating: review.rating,
           userName: (user as UserDocument)?.firstName?.trim() || 'کاربر',
+          // `@Schema({ timestamps: true })` adds `createdAt` at runtime; not
+          // reflected on the `Review` class, so the intermediate `unknown`
+          // cast is needed (see `OrderWithTimestamps` in order.service.ts for
+          // the same pattern).
           createdAt:
             (
-              review as ReviewDocument & WithTimestamps
+              review as unknown as ReviewDocument & WithTimestamps
             ).createdAt?.toISOString() ?? new Date().toISOString(),
         });
       })

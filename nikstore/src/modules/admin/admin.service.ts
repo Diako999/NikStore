@@ -51,7 +51,7 @@ interface AverageOrderValueGroup {
   avg: number;
 }
 
-interface DashboardStats {
+export interface DashboardStats {
   users: {
     total: number;
     active: number;
@@ -71,7 +71,7 @@ interface DashboardStats {
   generatedAt: string;
 }
 
-interface OrderStatsResult {
+export interface OrderStatsResult {
   thisMonth: number;
   today: number;
   avgOrderValue: number;

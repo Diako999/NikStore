@@ -144,7 +144,9 @@ export class UserService {
     isBlocked?: string,
     role?: string,
   ): Promise<{
-    items: (UserDocument & { isBlocked: boolean })[];
+    // `.lean()` results are plain data objects, not live Mongoose documents —
+    // this describes the actual shape returned, not `UserDocument`.
+    items: (User & { _id: Types.ObjectId; isBlocked: boolean })[];
     total: number;
   }> {
     const skip = (page - 1) * limit;
@@ -176,7 +178,9 @@ export class UserService {
   }
 
   async findById(userId: string): Promise<
-    UserDocument & {
+    // Plain (lean) shape, not `UserDocument` — see `findAll` above.
+    User & {
+      _id: Types.ObjectId;
       isBlocked: boolean;
       ordersCount: number;
       totalSpent: number;
@@ -238,9 +242,11 @@ export class UserService {
     return { items: reviews, total, totalPages: Math.ceil(total / limit) };
   }
 
+  // `user.toObject()` returns a plain object, not a live document — see
+  // `findAll` above.
   async toggleBlock(
     userId: string,
-  ): Promise<UserDocument & { isBlocked: boolean }> {
+  ): Promise<User & { _id: Types.ObjectId; isBlocked: boolean }> {
     if (!Types.ObjectId.isValid(userId))
       throw new BadRequestException('شناسه کاربر معتبر نیست');
     const user = await this.userModel.findById(userId);
