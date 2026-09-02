@@ -52,3 +52,6 @@ docs/
 
 # Railway CLI pull artifacts
 .railway-config-pull-*/
+
+# Local git worktrees (agent-managed, not part of history)
+.worktrees/
