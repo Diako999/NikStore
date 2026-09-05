@@ -2,7 +2,6 @@
   <button
     type="button"
     class="theme-toggle"
-    :style="{ bottom: offset }"
     :aria-label="mode === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'"
     @click="toggle"
   >
@@ -15,18 +14,15 @@
 <script setup>
 import AppIcon from '~/components/icons/AppIcon.vue'
 
-defineProps({
-  offset: { type: String, default: '122px' },
-})
-
 const { mode, toggle } = useTheme()
 </script>
 
 <style scoped>
 .theme-toggle {
   position: fixed;
-  inset-inline-end: 18px;
-  z-index: 40;
+  top: max(14px, env(safe-area-inset-top));
+  inset-inline-end: 14px;
+  z-index: 60;
   width: 42px;
   height: 42px;
   border-radius: 50%;

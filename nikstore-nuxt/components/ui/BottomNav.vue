@@ -1,16 +1,24 @@
 <template>
   <nav ref="navEl" class="bottomnav">
-    <div ref="blobEl" class="nav-blob" aria-hidden="true" />
     <NuxtLink
       v-for="(tab, i) in tabs"
       :key="tab.to"
-      :ref="(el) => setItemRef(el, i)"
       :to="tab.to"
       class="nav-item"
       :class="{ 'nav-item--active': isActive(tab) }"
     >
       <span v-if="tab.badge" class="nav-item__cbadge">{{ toPersianDigits(tab.badge) }}</span>
-      <AppIcon :name="tab.icon" :size="21" :stroke-width="2" />
+
+      <span ref="wrapEls" class="nav-item__icon-wrap">
+        <span class="nav-item__icon nav-item__icon--base">
+          <AppIcon :name="tab.icon" :size="20" :stroke-width="2" />
+        </span>
+        <span ref="liquidEls" class="nav-item__icon nav-item__icon--liquid">
+          <AppIcon :name="tab.icon" :size="20" :stroke-width="2" />
+          <span class="nav-item__meniscus" />
+        </span>
+      </span>
+
       <span>{{ tab.label }}</span>
     </NuxtLink>
   </nav>
@@ -47,70 +55,76 @@ const activeIndex = computed(() => {
 })
 
 const navEl = ref(null)
-const blobEl = ref(null)
-const itemEls = []
-function setItemRef(el, i) {
-  if (el) itemEls[i] = el.$el ?? el
-}
+const wrapEls = ref([])
+const liquidEls = ref([])
 
 let gsapInstance = null
-let hasPositioned = false
+let previousIndex = null
 
-async function moveBlobTo(index, animate) {
+function setFillImmediate(el, fillPercent) {
+  el.style.setProperty('--fill', `${fillPercent}%`)
+  const wave = Math.sin(((100 - fillPercent) / 100) * Math.PI)
+  el.style.setProperty('--meniscus-opacity', wave.toFixed(3))
+}
+
+async function drainAndFill(nextIndex, animate) {
   await nextTick()
-  const nav = navEl.value
-  const target = itemEls[index]
-  const blob = blobEl.value
-  if (!nav || !target || !blob) return
-
-  // getBoundingClientRect is always in real viewport (LTR) space even on an
-  // RTL page, so plain left-based math here is direction-correct without
-  // any RTL-specific handling.
-  const navRect = nav.getBoundingClientRect()
-  const itemRect = target.getBoundingClientRect()
-  const size = 46
-  const centerX = itemRect.left - navRect.left + itemRect.width / 2
-  const left = centerX - size / 2
+  const nextLiquid = liquidEls.value[nextIndex]
+  if (!nextLiquid) return
 
   if (!animate || !gsapInstance) {
-    if (gsapInstance) gsapInstance.set(blob, { left, width: size, opacity: 1 })
-    else blob.style.left = `${left}px`
-    hasPositioned = true
+    tabs.value.forEach((_, i) => {
+      const el = liquidEls.value[i]
+      if (el) setFillImmediate(el, i === nextIndex ? 0 : 100)
+    })
+    previousIndex = nextIndex
     return
   }
 
-  const fromLeft = gsapInstance.getProperty(blob, 'left')
-  const fromCenter = fromLeft + size / 2
-  const travel = centerX - fromCenter
-  const stretch = Math.min(Math.abs(travel) * 0.6, 34)
-  const midLeft = travel > 0 ? fromLeft : fromLeft - stretch
+  const gsap = gsapInstance
+  const prevLiquid = previousIndex !== null ? liquidEls.value[previousIndex] : null
+  const prevWrap = previousIndex !== null ? wrapEls.value[previousIndex] : null
+  const nextWrap = wrapEls.value[nextIndex]
 
-  const tl = gsapInstance.timeline()
-  tl.to(blob, {
-    left: midLeft,
-    width: size + stretch,
-    duration: 0.22,
+  const fillState = { fill: 100 }
+  if (prevLiquid) {
+    const drainState = { fill: 0 }
+    gsap.to(drainState, {
+      fill: 100,
+      duration: 0.4,
+      ease: 'power2.in',
+      onUpdate: () => setFillImmediate(prevLiquid, drainState.fill),
+    })
+    gsap.to(prevWrap, { scaleY: 0.92, scaleX: 1.05, duration: 0.18, ease: 'power1.out' })
+    gsap.to(prevWrap, { scaleY: 1, scaleX: 1, duration: 0.3, delay: 0.18, ease: 'power2.out' })
+  }
+
+  gsap.to(fillState, {
+    fill: 0,
+    duration: 0.46,
     ease: 'power2.out',
+    onUpdate: () => setFillImmediate(nextLiquid, fillState.fill),
+    onComplete: () => {
+      gsap.fromTo(
+        nextWrap,
+        { scaleY: 1.22, scaleX: 0.88 },
+        { scaleY: 1, scaleX: 1, duration: 0.5, ease: 'elastic.out(1, 0.55)' },
+      )
+    },
   })
-  tl.to(blob, {
-    left,
-    width: size,
-    duration: 0.36,
-    ease: 'elastic.out(1, 0.55)',
-  })
+
+  previousIndex = nextIndex
 }
 
 onMounted(async () => {
   const { gsap } = await import('gsap')
   gsapInstance = gsap
-  gsap.set(blobEl.value, { width: 46, opacity: 0 })
-  await moveBlobTo(activeIndex.value, false)
-  gsap.to(blobEl.value, { opacity: 1, duration: 0.3 })
+  await drainAndFill(activeIndex.value, false)
 })
 
 watch(activeIndex, (index) => {
-  if (!hasPositioned) return
-  moveBlobTo(index, true)
+  if (previousIndex === null) return
+  drainAndFill(index, true)
 })
 </script>
 
@@ -135,36 +149,52 @@ watch(activeIndex, (index) => {
   -webkit-backdrop-filter: blur(22px) saturate(160%);
 }
 
-.nav-blob {
-  position: absolute;
-  top: 4px;
-  left: 0;
-  height: 40px;
-  border-radius: 20px;
-  background: radial-gradient(120% 140% at 50% 20%, rgba(110, 176, 130, .35), rgba(61, 139, 82, .16) 70%, transparent 100%);
-  border: 1px solid rgba(110, 176, 130, .3);
-  pointer-events: none;
-  will-change: transform, width;
-}
-[data-theme='light'] .nav-blob {
-  background: radial-gradient(120% 140% at 50% 20%, rgba(61, 139, 82, .22), rgba(61, 139, 82, .08) 70%, transparent 100%);
-  border-color: rgba(45, 107, 62, .28);
-}
-
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   position: relative;
-  z-index: 1;
   color: var(--text-disabled);
-  transition: color .25s ease;
 }
-.nav-item span:last-child { font-size: 9.5px; font-weight: 600; }
+.nav-item span:last-child { font-size: 9.5px; font-weight: 600; transition: color .3s ease; }
+.nav-item--active span:last-child { color: var(--brand-light); }
+[data-theme='light'] .nav-item--active span:last-child { color: var(--brand-dark); }
 
-.nav-item--active { color: var(--brand-light); }
-[data-theme='light'] .nav-item--active { color: var(--brand-dark); }
+.nav-item__icon-wrap {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  transform-origin: bottom center;
+}
+.nav-item__icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.nav-item__icon--base { color: var(--text-disabled); }
+
+.nav-item__icon--liquid {
+  --fill: 100%;
+  color: #6EB082;
+  clip-path: inset(var(--fill) -4px -4px -4px);
+  filter: drop-shadow(0 0 3px rgba(110, 176, 130, .6));
+}
+[data-theme='light'] .nav-item__icon--liquid {
+  color: #2D6B3E;
+  filter: drop-shadow(0 0 3px rgba(45, 107, 62, .45));
+}
+
+.nav-item__meniscus {
+  position: absolute;
+  inset-inline: -4px;
+  top: var(--fill);
+  height: 2px;
+  transform: translateY(-1px);
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, #E7C878, #FBEFC8, #E7C878, transparent);
+  opacity: var(--meniscus-opacity, 0);
+}
 
 .nav-item__cbadge {
   position: absolute;

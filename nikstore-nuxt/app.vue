@@ -3,12 +3,15 @@
   <ClientOnly>
     <AppSplash v-if="showSplash" @done="showSplash = false" />
   </ClientOnly>
+  <ThemeToggle />
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
 </template>
 
 <script setup>
+import ThemeToggle from '~/components/ui/ThemeToggle.vue'
+
 // data-theme drives every glass/color token in assets/styles/theme.css.
 // useHead renders it server-side from the theme cookie so there is no
 // flash-of-wrong-theme on first paint / before hydration.

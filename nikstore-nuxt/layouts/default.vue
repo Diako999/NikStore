@@ -1,14 +1,12 @@
 <template>
   <div class="page">
     <slot />
-    <ThemeToggle />
     <BottomNav :cart-count="cartStore.totalCount" />
   </div>
 </template>
 
 <script setup>
 import BottomNav from '~/components/ui/BottomNav.vue'
-import ThemeToggle from '~/components/ui/ThemeToggle.vue'
 import { useCartStore } from '~/stores/cart.store'
 
 const cartStore = useCartStore()
