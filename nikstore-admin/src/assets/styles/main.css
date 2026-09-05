@@ -1,5 +1,4 @@
-@import './variables.css';
-@import './glass-theme.css';
+@import './theme.css';
 @import './fonts.css';
 
 @tailwind base;
@@ -7,117 +6,53 @@
 @tailwind utilities;
 
 @layer base {
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html {
-    direction: rtl;
-    font-family: var(--font-sans);
-    font-size: 14px;
-    scroll-behavior: smooth;
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
+
+  html {
+    font-size: 16px;
+  }
+
   body {
-    background-color: var(--color-surface);
-    color: var(--color-text-primary);
+    direction: rtl;
+    font-family: 'Vazirmatn', Tahoma, sans-serif;
+    color: var(--text-primary);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
+    transition: background-color .2s ease, color .2s ease;
   }
-  a { text-decoration: none; color: inherit; }
-  img { max-width: 100%; display: block; }
-  input, button, select, textarea { font-family: var(--font-sans); }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
+  }
+
+  input,
+  button,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: #fff;
+  }
 }
 
 @layer components {
-  .page-title    { @apply text-xl font-bold text-text-primary; }
-  .section-title { @apply text-base font-bold text-text-primary; }
-
-  .admin-card {
-    @apply bg-card rounded-xl shadow-card border border-border p-5;
+  .container-main {
+    max-width: 1600px;
+    margin-inline: auto;
   }
-
-  .field-label {
-    @apply block text-sm font-medium text-text-primary mb-1.5;
-  }
-  .field-input {
-    @apply w-full border border-border rounded-lg px-3 py-2.5 text-sm
-           text-text-primary bg-card outline-none
-           focus:border-primary focus:ring-2 focus:ring-primary/15
-           placeholder:text-text-disabled transition-all duration-150;
-  }
-  .field-error { @apply text-error text-xs mt-1; }
-
-  .status-badge {
-    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
-  }
-
-  .font-fanum { font-family: var(--font-fanum); }
-
-  .scrollbar-hide::-webkit-scrollbar { display: none; }
-  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-  /* ── Glass surface — shared chrome for glass-treated cards/panels ──────────
-     Conceptually mirrors nikstore-nuxt's GlassCard.vue recipe: a dual-
-     background trick (flat --glass-strong fill on the padding-box, a
-     diagonal brand-tinted gradient on the border-box) plus a diagonal sheen
-     layer. Reserved for chrome/KPI/modal surfaces — NEVER apply to
-     AdminTable/AdminInput/AdminSelect/AdminTextarea/AdminDatePicker or any
-     dense data surface, which must stay flat/opaque per the retheme spec. */
-  .glass-surface {
-    position: relative;
-    overflow: hidden;
-    border: 1.5px solid transparent;
-    border-radius: var(--radius-lg);
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    background:
-      linear-gradient(var(--glass-strong), var(--glass-strong)) padding-box,
-      linear-gradient(150deg, var(--glass-border), transparent 55%, rgb(var(--brand-rgb) / 0.35)) border-box;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
-  }
-  [data-theme='light'] .glass-surface { box-shadow: var(--glass-shadow); }
-  .glass-surface::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 42%);
-  }
-  [data-theme='light'] .glass-surface::before {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 45%);
-  }
-
-  /* Padded glass card — KPI tiles / summary cards (a glass-chrome drop-in
-     replacement for .admin-card in the specific views the retheme calls
-     out; .admin-card itself stays flat since it's shared by dense forms). */
-  .glass-card {
-    @apply glass-surface p-5;
-  }
-
-  /* Glass pill dock — wraps pagination controls */
-  .glass-pill-dock {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 5px;
-    border-radius: 9999px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
-  }
-}
-
-/* ── vue3-persian-datetime-picker: force input text visible ──────────────────
-   The library CSS doesn't set text color, and WebKit browsers may use
-   -webkit-text-fill-color separately from `color`. Both must be set.
-   CSS variable resolves to the theme's primary text color (#1C1C1C).
-   ─────────────────────────────────────────────────────────────────────────── */
-.vpd-input-group > input {
-  color: var(--color-text-primary) !important;
-  -webkit-text-fill-color: var(--color-text-primary) !important;
-  caret-color: var(--color-text-primary) !important;
-  opacity: 1 !important;
-}
-.vpd-input-group > input::placeholder {
-  color: var(--color-text-disabled) !important;
-  -webkit-text-fill-color: var(--color-text-disabled) !important;
-  opacity: 1 !important;
 }

@@ -1,8 +1,17 @@
-// Client-only: restores session from HttpOnly refresh-token cookie on app start.
-// Runs before any page/middleware so auth.initialized is true by first navigation.
+import { useAuthStore } from '~/stores/auth.store'
+import { authService } from '~/services/auth.service'
+
+// Silently re-hydrates the session from the httpOnly refresh cookie on
+// app start, so isLoggedIn is accurate before route middleware runs
+// instead of only becoming true after the first 401-triggered refresh.
 export default defineNuxtPlugin(async () => {
   const auth = useAuthStore()
-  if (!auth.initialized) {
-    await auth.initAuth()
+
+  try {
+    const { data } = await authService.refresh()
+    auth.token = data.accessToken
+    await auth.fetchMe()
+  } catch {
+    // No valid session — stay logged out, nothing to do.
   }
 })

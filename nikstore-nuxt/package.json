@@ -16,19 +16,12 @@
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.12.0",
     "@pinia/nuxt": "^0.9.0",
-    "@vueuse/core": "^14.3.0",
-    "@vueuse/nuxt": "^14.3.0",
     "axios": "^1.16.1",
-    "dayjs": "^1.11.21",
-    "express": "^5.2.1",
     "gsap": "^3.15.0",
-    "http-proxy-middleware": "^4.1.1",
-    "motion-v": "^2.4.0",
+    "isomorphic-dompurify": "^4.1.0",
     "nuxt": "^3.13.0",
     "pinia": "^2.2.0",
-    "socket.io-client": "^4.8.3",
-    "tailwindcss-rtl": "^0.9.0",
-    "three": "^0.185.1"
+    "tailwindcss-rtl": "^0.9.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

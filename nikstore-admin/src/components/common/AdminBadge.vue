@@ -1,27 +1,64 @@
 <template>
-  <span :class="['status-badge', variantClasses, sizeClass]">
+  <span class="admin-badge" :class="`admin-badge--${variant}`">
     <slot />
   </span>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-
-const props = defineProps({
-  variant: { type: String, default: 'gray' },
-  size:    { type: String, default: 'md' },
+defineProps({
+  variant: { type: String, default: 'neutral' }, // pending | success | danger | neutral
 })
-
-const variantClasses = computed(() => ({
-  success: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  warning: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-  error:   'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  info:    'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  gray:    'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
-  navy:    'bg-primary/10 text-primary',
-}[props.variant] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300'))
-
-const sizeClass = computed(() =>
-  props.size === 'sm' ? 'text-[10px] px-2 py-0.5' : 'text-xs px-2.5 py-1'
-)
 </script>
+
+<style scoped>
+.admin-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.admin-badge--neutral {
+  color: var(--text-secondary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+
+.admin-badge--pending {
+  color: #7A5410;
+  background: rgba(231, 175, 66, .28);
+  border: 1px solid rgba(231, 175, 66, .5);
+}
+[data-theme='dark'] .admin-badge--pending {
+  color: #FBEFC8;
+  background: rgba(231, 175, 66, .18);
+  border: 1px solid rgba(231, 175, 66, .4);
+}
+
+.admin-badge--success {
+  color: var(--brand-dark);
+  background: rgba(110, 176, 130, .22);
+  border: 1px solid rgba(110, 176, 130, .45);
+}
+[data-theme='dark'] .admin-badge--success {
+  color: var(--brand-light);
+  background: rgba(110, 176, 130, .16);
+  border: 1px solid rgba(110, 176, 130, .35);
+}
+
+.admin-badge--danger {
+  color: #B84440;
+  background: rgba(217, 83, 79, .16);
+  border: 1px solid rgba(217, 83, 79, .38);
+}
+[data-theme='dark'] .admin-badge--danger {
+  color: #F2938F;
+  background: rgba(217, 83, 79, .18);
+  border: 1px solid rgba(217, 83, 79, .4);
+}
+</style>

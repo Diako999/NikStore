@@ -1,227 +1,152 @@
 <template>
-  <div class="space-y-5">
-
-    <!-- Back + order number + status badge -->
-    <div class="flex items-center gap-3">
-      <button @click="$router.back()"
-        class="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-text-secondary hover:border-primary hover:text-primary transition-colors flex-shrink-0">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-        </svg>
-      </button>
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-3 flex-wrap">
-          <h1 class="page-title font-fanum" dir="ltr">{{ order?.orderNumber ?? '...' }}</h1>
-          <AdminBadge v-if="order" :variant="ORDER_STATUSES[order.status]?.color ?? 'gray'" size="md">
-            {{ ORDER_STATUSES[order.status]?.label ?? order.status }}
-          </AdminBadge>
-        </div>
-        <p v-if="order" class="text-text-secondary text-xs mt-0.5 font-fanum">
-          ثبت شده در: {{ formatDateTime(order.createdAt) }}
-        </p>
+  <div class="order-detail">
+    <div class="order-detail__head">
+      <div>
+        <h1 class="order-detail__title">سفارش {{ order?.orderNumber || '' }}</h1>
+        <AdminBadge v-if="order" :variant="ORDER_STATUS_BADGE[order.status] || 'neutral'">
+          {{ ORDER_STATUS_LABELS[order.status] || order.status }}
+        </AdminBadge>
       </div>
+      <router-link to="/orders">
+        <AdminButton variant="secondary" size="sm">بازگشت به فهرست</AdminButton>
+      </router-link>
     </div>
 
-    <!-- Loading skeleton -->
-    <div v-if="loading" class="space-y-4">
-      <AdminSkeleton height="160px" class="rounded-xl" />
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AdminSkeleton height="140px" class="rounded-xl" />
-        <AdminSkeleton height="140px" class="rounded-xl" />
-      </div>
-      <AdminSkeleton height="200px" class="rounded-xl" />
-    </div>
+    <div v-if="loadError" class="order-detail__error">{{ loadError }}</div>
 
-    <template v-else-if="order">
-
-      <!-- Status updater -->
-      <OrderStatusUpdater
-        :current-status="order.status"
-        :order-id="order._id"
-        :loading="updatingStatus"
-        @updated="updateStatus"
-      />
-
-      <!-- Customer + Financial summary -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <div class="glass-card">
-          <h3 class="relative section-title mb-4 flex items-center gap-2">
-            <span>👤</span> اطلاعات مشتری
-          </h3>
-          <dl class="relative space-y-2.5 text-sm">
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">نام:</dt>
-              <dd class="font-medium text-text-primary">
-                {{ order.userId?.firstName }} {{ order.userId?.lastName }}
-              </dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">تلفن:</dt>
-              <dd class="font-fanum font-medium" dir="ltr">{{ order.userId?.phone }}</dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">روش پرداخت:</dt>
-              <dd class="font-medium">
-                {{ order.paymentMethod === 'wallet' ? 'کیف پول' : 'درگاه پرداخت آنلاین' }}
-              </dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="glass-card">
-          <h3 class="relative section-title mb-4 flex items-center gap-2">
-            <span>💰</span> خلاصه مالی
-          </h3>
-          <dl class="relative space-y-2.5 text-sm">
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">جمع اقلام:</dt>
-              <dd class="font-fanum font-medium">
-                {{ formatPrice(order.total + (order.discount ?? 0)) }}
-              </dd>
-            </div>
-            <div v-if="order.discount > 0" class="flex justify-between">
-              <dt class="text-success">
-                تخفیف کوپن
-                <span v-if="order.couponCode" class="font-mono text-xs bg-green-100 px-1 rounded ml-1">
-                  {{ order.couponCode }}
-                </span>:
-              </dt>
-              <dd class="text-success font-fanum font-medium">- {{ formatPrice(order.discount) }}</dd>
-            </div>
-            <div class="flex justify-between border-t border-border pt-2">
-              <dt class="font-bold text-text-primary">مبلغ پرداختی:</dt>
-              <dd class="font-black text-primary font-fanum text-base">{{ formatPrice(order.total) }}</dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-
-      <!-- Shipping address -->
-      <div class="glass-card">
-        <h3 class="relative section-title mb-3 flex items-center gap-2">
-          <span>📍</span> آدرس تحویل
-        </h3>
-        <div class="relative text-sm text-text-secondary leading-7">
-          <p>
-            <span class="font-medium text-text-primary">
-              {{ order.shippingAddress?.province }}، {{ order.shippingAddress?.city }}
-            </span>
-            — {{ order.shippingAddress?.street }}
-          </p>
-          <p v-if="order.shippingAddress?.detail" class="text-text-secondary">
-            {{ order.shippingAddress.detail }}
-          </p>
-          <p class="mt-1 flex flex-wrap gap-4">
-            <span>
-              کد پستی:
-              <span class="font-fanum font-medium text-text-primary" dir="ltr">{{ order.shippingAddress?.postalCode }}</span>
-            </span>
-            <span>
-              گیرنده:
-              <span class="font-medium text-text-primary">{{ order.shippingAddress?.recipientName }}</span>
-            </span>
-            <span>
-              تلفن گیرنده:
-              <span class="font-fanum font-medium text-text-primary" dir="ltr">{{ order.shippingAddress?.recipientPhone }}</span>
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Order items -->
-      <div class="glass-card">
-        <h3 class="relative section-title mb-4 flex items-center gap-2">
-          <span>📦</span> اقلام سفارش
-          <span class="text-text-disabled font-normal text-xs font-fanum">({{ order.items?.length }} کالا)</span>
-        </h3>
-        <div class="relative space-y-3">
-          <div
-            v-for="item in order.items"
-            :key="item.variantId"
-            class="flex items-center gap-4 py-3 border-b border-border last:border-none"
-          >
-            <img
-              :src="item.thumbnail" :alt="item.name"
-              class="w-14 h-14 rounded-xl object-contain border border-border bg-surface flex-shrink-0 p-1"
-              @error="e => (e.target.style.opacity = '0')"
-            />
-            <div class="flex-1 min-w-0">
-              <p class="font-medium text-text-primary text-sm truncate">{{ item.name }}</p>
-              <div class="flex flex-wrap gap-2 mt-0.5">
-                <p class="text-text-secondary text-xs font-fanum">
-                  {{ formatPrice(item.price) }} × {{ item.quantity }} عدد
-                </p>
-                <span v-if="item.attributes?.length"
-                  class="text-xs text-text-disabled">
-                  ({{ item.attributes.map(a => a.value).join(' / ') }})
-                </span>
+    <div v-if="order" class="order-detail__grid">
+      <div class="order-detail__main">
+        <AdminCard title="اقلام سفارش" flush>
+          <AdminTable :columns="itemColumns" :rows="order.items || []">
+            <template #cell-name="{ row }">
+              <div class="order-detail__item-cell">
+                <img v-if="row.thumbnail" :src="row.thumbnail" class="order-detail__item-thumb" alt="">
+                <div>
+                  <div class="order-detail__item-name">{{ row.name }}</div>
+                  <div v-if="row.attributes?.length" class="order-detail__item-attrs">
+                    {{ row.attributes.map((a) => `${a.name}: ${a.value}`).join(' / ') }}
+                  </div>
+                </div>
               </div>
-            </div>
-            <span class="font-black text-text-primary font-fanum flex-shrink-0">
-              {{ formatPrice(item.price * item.quantity) }}
-            </span>
+            </template>
+            <template #cell-price="{ value }">{{ formatPrice(value) }}</template>
+            <template #cell-quantity="{ value }">{{ value }}</template>
+          </AdminTable>
+        </AdminCard>
+
+        <AdminCard title="آدرس ارسال">
+          <div v-if="order.shippingAddress" class="order-detail__address">
+            <p>{{ order.shippingAddress.recipientName }} — {{ order.shippingAddress.recipientPhone }}</p>
+            <p>{{ order.shippingAddress.province }}، {{ order.shippingAddress.city }}</p>
+            <p>{{ order.shippingAddress.street }}</p>
+            <p>{{ order.shippingAddress.detail }}</p>
+            <p>کد پستی: {{ order.shippingAddress.postalCode }}</p>
           </div>
-        </div>
+        </AdminCard>
       </div>
 
-    </template>
+      <div class="order-detail__side">
+        <AdminCard title="خلاصه مالی">
+          <div class="order-detail__summary-row">
+            <span>جمع جزء</span>
+            <span>{{ formatPrice(order.subtotal) }}</span>
+          </div>
+          <div class="order-detail__summary-row">
+            <span>تخفیف</span>
+            <span>{{ formatPrice(order.discount) }}</span>
+          </div>
+          <div class="order-detail__summary-row order-detail__summary-row--total">
+            <span>مبلغ نهایی</span>
+            <span>{{ formatPrice(order.total) }}</span>
+          </div>
+          <p v-if="order.couponCode" class="order-detail__coupon">کد تخفیف: {{ order.couponCode }}</p>
+          <p v-if="order.note" class="order-detail__note">یادداشت مشتری: {{ order.note }}</p>
+          <p v-if="order.cancelReason" class="order-detail__note">دلیل لغو: {{ order.cancelReason }}</p>
+        </AdminCard>
 
-    <!-- Not found -->
-    <div v-else-if="!loading" class="admin-card text-center py-16 text-text-disabled">
-      <div class="text-5xl mb-3">🔍</div>
-      <p>سفارش یافت نشد</p>
+        <AdminCard title="تغییر وضعیت">
+          <div v-if="availableTransitions.length" class="order-detail__transitions">
+            <AdminButton
+              v-for="next in availableTransitions"
+              :key="next"
+              variant="secondary"
+              size="sm"
+              :loading="updating"
+              @click="changeStatus(next)"
+            >
+              {{ ORDER_STATUS_LABELS[next] }}
+            </AdminButton>
+          </div>
+          <p v-else class="order-detail__no-transitions">این سفارش در وضعیت نهایی است</p>
+        </AdminCard>
+      </div>
     </div>
-
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute }                    from 'vue-router'
-import { orderService }                from '@/services/order.service'
-import { useUiStore }                  from '@/stores/ui.store'
-import { formatPrice, formatDateTime } from '@/utils/formatters'
-import { ORDER_STATUSES }              from '@/utils/constants'
-
-import OrderStatusUpdater from './components/OrderStatusUpdater.vue'
-import AdminBadge    from '@/components/common/AdminBadge.vue'
-import AdminSkeleton from '@/components/common/AdminSkeleton.vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import { orderService } from '../../services/order.service'
+import { formatPrice } from '../../utils/format'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_BADGE, ORDER_TRANSITIONS } from '../../constants/orderStatus'
 
 const route = useRoute()
-const ui    = useUiStore()
+const order = ref(null)
+const loadError = ref('')
+const updating = ref(false)
 
-const order          = ref(null)
-const loading        = ref(true)
-const updatingStatus = ref(false)
+const itemColumns = [
+  { key: 'name', label: 'کالا' },
+  { key: 'price', label: 'قیمت واحد', align: 'end' },
+  { key: 'quantity', label: 'تعداد', align: 'center', width: '90px' },
+]
 
-async function fetchOrder() {
-  loading.value = true
+const availableTransitions = computed(() => ORDER_TRANSITIONS[order.value?.status] || [])
+
+async function load() {
+  loadError.value = ''
   try {
-    const { data } = await orderService.getById(route.params.id)
+    const { data } = await orderService.adminGet(route.params.id)
     order.value = data
-    document.title = `${data.orderNumber} | ادمین نیک`
-  } catch {
-    ui.addToast('خطا در بارگذاری سفارش', 'error')
-  } finally {
-    loading.value = false
+  } catch (error) {
+    loadError.value = error.response?.data?.message || 'دریافت سفارش با خطا مواجه شد'
   }
 }
 
-async function updateStatus(newStatus) {
-  if (!order.value || newStatus === order.value.status) return
-  updatingStatus.value = true
+async function changeStatus(status) {
+  updating.value = true
   try {
-    const { data } = await orderService.updateStatus(order.value._id, newStatus)
-    order.value = data
-    ui.addToast(`وضعیت سفارش به «${ORDER_STATUSES[newStatus]?.label}» تغییر کرد`, 'success')
-  } catch (err) {
-    ui.addToast(err.response?.data?.message ?? 'خطا در تغییر وضعیت', 'error')
+    await orderService.updateStatus(route.params.id, { status })
+    await load()
   } finally {
-    updatingStatus.value = false
+    updating.value = false
   }
 }
 
-onMounted(fetchOrder)
-onUnmounted(() => { document.title = 'نیک | پنل مدیریت' })
+onMounted(load)
 </script>
+
+<style scoped>
+.order-detail { display: flex; flex-direction: column; gap: 20px; }
+.order-detail__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.order-detail__title { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.order-detail__error { padding: 12px 16px; border-radius: 12px; background: rgba(214, 87, 87, .12); color: #d65757; font-size: 13px; }
+.order-detail__grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+@media (max-width: 960px) { .order-detail__grid { grid-template-columns: 1fr; } }
+.order-detail__main, .order-detail__side { display: flex; flex-direction: column; gap: 16px; }
+.order-detail__item-cell { display: flex; align-items: center; gap: 10px; }
+.order-detail__item-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; background: var(--glass); }
+.order-detail__item-name { font-weight: 600; color: var(--text-primary); font-size: 13px; }
+.order-detail__item-attrs { font-size: 11px; color: var(--text-secondary); }
+.order-detail__address { font-size: 13px; color: var(--text-primary); line-height: 2; }
+.order-detail__summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-secondary); padding: 6px 0; }
+.order-detail__summary-row--total { font-weight: 700; color: var(--text-primary); border-top: 1px solid var(--glass-border); margin-top: 4px; padding-top: 10px; }
+.order-detail__coupon, .order-detail__note { font-size: 12px; color: var(--text-secondary); margin-top: 10px; }
+.order-detail__transitions { display: flex; flex-wrap: wrap; gap: 8px; }
+.order-detail__no-transitions { font-size: 12.5px; color: var(--text-secondary); }
+</style>

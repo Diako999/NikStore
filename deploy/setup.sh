@@ -51,7 +51,6 @@ echo ">>> Configuring UFW..."
 ufw allow ssh
 ufw allow 80/tcp
 ufw allow 443/tcp
-ufw allow 4000/tcp
 ufw --force enable
 
 # ── Directories ───────────────────────────────────────────────────────────────

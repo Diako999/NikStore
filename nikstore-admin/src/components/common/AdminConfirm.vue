@@ -1,30 +1,49 @@
 <template>
-  <AdminModal :modelValue="modelValue" :title="title" size="sm" persistent>
-    <p class="text-text-secondary text-sm leading-6">{{ message }}</p>
+  <AdminModal v-model="open" :title="title" width="400px" :close-on-backdrop="!loading">
+    <p class="admin-confirm__message">{{ message }}</p>
     <template #footer>
-      <div class="flex gap-3 justify-end">
-        <AdminButton variant="ghost" @click="$emit('update:modelValue', false)">
-          انصراف
-        </AdminButton>
-        <AdminButton :variant="confirmVariant" :loading="loading" @click="$emit('confirm')">
-          {{ confirmLabel }}
-        </AdminButton>
-      </div>
+      <AdminButton variant="secondary" size="sm" :disabled="loading" @click="handleCancel">
+        {{ cancelText }}
+      </AdminButton>
+      <AdminButton
+        :variant="danger ? 'danger' : 'primary'"
+        size="sm"
+        :loading="loading"
+        @click="$emit('confirm')"
+      >
+        {{ confirmText }}
+      </AdminButton>
     </template>
   </AdminModal>
 </template>
 
 <script setup>
-import AdminModal  from './AdminModal.vue'
+import AdminModal from './AdminModal.vue'
 import AdminButton from './AdminButton.vue'
 
 defineProps({
-  modelValue:     { type: Boolean, default: false },
-  title:          { type: String,  default: 'تأیید عملیات' },
-  message:        { type: String,  default: 'آیا از انجام این عملیات مطمئن هستید؟' },
-  confirmLabel:   { type: String,  default: 'تأیید' },
-  confirmVariant: { type: String,  default: 'danger' },
-  loading:        { type: Boolean, default: false },
+  title: { type: String, default: 'تایید عملیات' },
+  message: { type: String, default: 'آیا از انجام این عملیات مطمئن هستید؟' },
+  confirmText: { type: String, default: 'تایید' },
+  cancelText: { type: String, default: 'انصراف' },
+  danger: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
 })
-defineEmits(['update:modelValue', 'confirm'])
+
+const emit = defineEmits(['confirm', 'cancel'])
+
+const open = defineModel({ type: Boolean, default: false })
+
+function handleCancel() {
+  emit('cancel')
+  open.value = false
+}
 </script>
+
+<style scoped>
+.admin-confirm__message {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+</style>

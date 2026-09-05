@@ -1,6 +1,7 @@
-// Protects routes that require login.
-// auth.client.ts plugin runs first (async) so auth.initialized is true here.
+import { useAuthStore } from '~/stores/auth.store'
+
 export default defineNuxtRouteMiddleware((to) => {
+  if (import.meta.server) return
   const auth = useAuthStore()
   if (!auth.isLoggedIn) {
     return navigateTo({ path: '/auth/login', query: { redirect: to.fullPath } })

@@ -1,387 +1,404 @@
 <template>
-  <div class="space-y-5">
-
-    <!-- Back + header -->
-    <div class="flex items-center justify-between gap-4 flex-wrap">
-      <div class="flex items-center gap-3">
-        <button @click="$router.back()"
-          class="w-9 h-9 rounded-lg border border-border flex items-center
-                 justify-center text-text-secondary hover:border-primary
-                 hover:text-primary transition-colors flex-shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor"
-               stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-        <div>
-          <h1 class="page-title">
-            {{ user
-              ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'کاربر'
-              : '...' }}
-          </h1>
-          <p v-if="user" class="text-text-secondary text-xs mt-0.5 font-fanum" dir="ltr">
-            {{ user.phone }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Block / Unblock button -->
-      <AdminButton v-if="user && !user.isAdmin"
-        :variant="user.isBlocked ? 'secondary' : 'danger'"
-        :loading="blockLoading"
-        @click="toggleBlock">
-        {{ user.isBlocked ? '🔓 رفع مسدودی' : '🔒 مسدود کردن' }}
-      </AdminButton>
+  <div class="user-detail">
+    <div class="user-detail__head">
+      <RouterLink :to="{ name: 'users' }" class="user-detail__back">
+        <AppIcon name="arrow" :size="16" class="user-detail__back-icon" />
+        بازگشت به کاربران
+      </RouterLink>
     </div>
 
-    <!-- Loading skeleton -->
-    <div v-if="loading" class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AdminSkeleton height="160px" class="rounded-xl" />
-        <AdminSkeleton height="160px" class="rounded-xl" />
-      </div>
-      <AdminSkeleton height="120px" class="rounded-xl" />
-      <AdminSkeleton height="200px" class="rounded-xl" />
-    </div>
+    <div v-if="loading" class="user-detail__loading">در حال بارگذاری...</div>
+    <div v-else-if="!user" class="user-detail__error">کاربر یافت نشد</div>
 
-    <template v-else-if="user">
-
-      <!-- Info + Stats row -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <!-- User info card -->
-        <div class="admin-card">
-          <h3 class="section-title mb-4 flex items-center gap-2">
-            <span>👤</span> اطلاعات کاربر
-          </h3>
-
-          <div class="flex items-center gap-4 mb-4 pb-4 border-b border-border">
-            <div :class="[
-              'w-14 h-14 rounded-full flex items-center justify-center',
-              'text-xl font-black flex-shrink-0',
-              user.isBlocked ? 'bg-red-100 text-red-600'
-                             : 'bg-primary/10 text-primary',
-            ]">
-              {{ (user.firstName?.[0] ?? user.phone?.[2] ?? '؟').toUpperCase() }}
-            </div>
-            <div>
-              <p class="font-bold text-text-primary">
-                {{ user.firstName ?? '—' }} {{ user.lastName ?? '' }}
-              </p>
-              <div class="flex items-center gap-2 mt-1">
-                <AdminBadge
-                  :variant="user.isBlocked ? 'error' : 'success'"
-                  size="sm">
-                  {{ user.isBlocked ? 'مسدود' : 'فعال' }}
-                </AdminBadge>
-                <AdminBadge v-if="user.isAdmin" variant="navy" size="sm">
-                  ادمین
-                </AdminBadge>
-              </div>
-            </div>
+    <template v-else>
+      <AdminCard>
+        <div class="user-detail__profile">
+          <div class="user-detail__avatar">
+            <AppIcon name="person" :size="28" />
           </div>
-
-          <dl class="space-y-2.5 text-sm">
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">شماره موبایل:</dt>
-              <dd class="font-fanum font-medium" dir="ltr">{{ user.phone }}</dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">تاریخ عضویت:</dt>
-              <dd class="font-fanum">{{ formatDate(user.createdAt) }}</dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="text-text-secondary">آخرین فعالیت:</dt>
-              <dd class="font-fanum">{{ formatDate(user.updatedAt) }}</dd>
-            </div>
-          </dl>
-        </div>
-
-        <!-- Purchase stats card -->
-        <div class="admin-card">
-          <h3 class="section-title mb-4 flex items-center gap-2">
-            <span>📊</span> آمار خرید
-          </h3>
-          <div class="grid grid-cols-2 gap-4">
-
-            <div class="text-center p-4 rounded-xl bg-primary/5 border border-primary/10">
-              <p class="text-3xl font-black text-primary font-fanum">
-                {{ formatNumber(user.ordersCount ?? 0) }}
-              </p>
-              <p class="text-text-secondary text-xs mt-1">تعداد سفارشات</p>
-            </div>
-
-            <div class="text-center p-4 rounded-xl bg-success/5 border border-success/10">
-              <p class="text-lg font-black text-success font-fanum leading-tight">
-                {{ formatPrice(user.totalSpent ?? 0) }}
-              </p>
-              <p class="text-text-secondary text-xs mt-1">مجموع خرید</p>
-            </div>
-
-            <div class="col-span-2 text-center p-3 rounded-xl bg-surface border border-border">
-              <p class="text-sm font-bold text-text-primary font-fanum">
-                میانگین هر سفارش:
-                {{
-                  (user.ordersCount ?? 0) > 0
-                    ? formatPrice(Math.round((user.totalSpent ?? 0) / user.ordersCount))
-                    : '—'
-                }}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Addresses -->
-      <div v-if="user.addresses?.length" class="admin-card">
-        <h3 class="section-title mb-4 flex items-center gap-2">
-          <span>📍</span>
-          آدرس‌ها
-          <span class="text-text-disabled font-normal text-xs font-fanum">
-            ({{ user.addresses.length }})
-          </span>
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div v-for="addr in user.addresses" :key="addr._id"
-               :class="[
-                 'p-4 rounded-xl border text-sm',
-                 addr.isDefault
-                   ? 'border-primary/30 bg-primary/5'
-                   : 'border-border',
-               ]">
-            <div class="flex items-center gap-2 mb-1.5">
-              <p class="font-bold text-text-primary">{{ addr.title }}</p>
-              <AdminBadge v-if="addr.isDefault" variant="navy" size="sm">
-                پیش‌فرض
+          <div class="user-detail__info">
+            <h1 class="user-detail__name">
+              {{ fullName || 'بدون نام' }}
+              <AdminBadge :variant="user.isBlocked ? 'danger' : 'success'">
+                {{ user.isBlocked ? 'مسدود' : 'فعال' }}
               </AdminBadge>
+            </h1>
+            <dl class="user-detail__meta">
+              <div>
+                <dt>موبایل</dt>
+                <dd class="user-detail__ltr">{{ user.phone }}</dd>
+              </div>
+              <div v-if="user.email">
+                <dt>ایمیل</dt>
+                <dd class="user-detail__ltr">{{ user.email }}</dd>
+              </div>
+              <div>
+                <dt>تاریخ عضویت</dt>
+                <dd>{{ formatDate(user.createdAt) }}</dd>
+              </div>
+            </dl>
+          </div>
+          <AdminButton
+            :variant="user.isBlocked ? 'primary' : 'danger'"
+            :loading="toggling"
+            @click="confirmOpen = true"
+          >
+            {{ user.isBlocked ? 'رفع مسدودی' : 'مسدودسازی کاربر' }}
+          </AdminButton>
+        </div>
+      </AdminCard>
+
+      <div class="user-detail__stats">
+        <AdminCard class="stat-card">
+          <p class="stat-card__label">تعداد سفارش‌ها</p>
+          <p class="stat-card__value">{{ formatNumber(user.ordersCount) }}</p>
+        </AdminCard>
+        <AdminCard class="stat-card">
+          <p class="stat-card__label">مجموع خرید</p>
+          <p class="stat-card__value">{{ formatToman(user.totalSpent) }}</p>
+        </AdminCard>
+        <AdminCard class="stat-card">
+          <p class="stat-card__label">تعداد آدرس‌ها</p>
+          <p class="stat-card__value">{{ formatNumber(user.addresses?.length) }}</p>
+        </AdminCard>
+      </div>
+
+      <AdminCard title="آدرس‌ها">
+        <div v-if="!user.addresses?.length" class="user-detail__empty">
+          آدرسی ثبت نشده است
+        </div>
+        <div v-else class="user-detail__addresses">
+          <div v-for="addr in user.addresses" :key="addr._id" class="address-item">
+            <div class="address-item__head">
+              <span class="address-item__title">{{ addr.title }}</span>
+              <AdminBadge v-if="addr.isDefault" variant="success">پیش‌فرض</AdminBadge>
             </div>
-            <p class="text-text-secondary leading-6">
-              {{ addr.province }}، {{ addr.city }}، {{ addr.street }}
+            <p class="address-item__text">
+              {{ addr.province }}، {{ addr.city }}، {{ addr.street }} — {{ addr.detail }}
             </p>
-            <p class="text-text-disabled text-xs mt-1 flex gap-3">
-              <span>{{ addr.recipient }}</span>
-              <span class="font-fanum" dir="ltr">{{ addr.phone }}</span>
+            <p class="address-item__recipient">
+              گیرنده: {{ addr.recipientName }} — <span class="user-detail__ltr">{{ addr.recipientPhone }}</span>
             </p>
           </div>
         </div>
-      </div>
+      </AdminCard>
 
-      <!-- Recent orders -->
-      <div v-if="recentOrders.length" class="admin-card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="section-title flex items-center gap-2">
-            <span>📦</span> سفارشات اخیر
-          </h3>
-          <RouterLink :to="{ name: 'orders' }"
-            class="text-primary text-xs hover:underline">
-            مشاهده همه سفارشات
-          </RouterLink>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm text-right">
-            <thead class="bg-surface border-b border-border">
-              <tr>
-                <th class="px-3 py-2 text-text-secondary font-medium">شماره</th>
-                <th class="px-3 py-2 text-text-secondary font-medium text-center">وضعیت</th>
-                <th class="px-3 py-2 text-text-secondary font-medium text-center">مبلغ</th>
-                <th class="px-3 py-2 text-text-secondary font-medium">تاریخ</th>
-                <th class="px-3 py-2 w-10"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in recentOrders" :key="order._id"
-                  class="border-b border-border hover:bg-surface/50">
-                <td class="px-3 py-2.5 font-fanum text-primary
-                           text-xs font-bold" dir="ltr">
-                  {{ order.orderNumber }}
-                </td>
-                <td class="px-3 py-2.5 text-center">
-                  <AdminBadge
-                    :variant="ORDER_STATUSES[order.status]?.color ?? 'gray'"
-                    size="sm">
-                    {{ ORDER_STATUSES[order.status]?.label ?? order.status }}
-                  </AdminBadge>
-                </td>
-                <td class="px-3 py-2.5 text-center font-fanum font-medium">
-                  {{ formatPrice(order.total) }}
-                </td>
-                <td class="px-3 py-2.5 text-text-secondary text-xs font-fanum">
-                  {{ formatDate(order.createdAt) }}
-                </td>
-                <td class="px-3 py-2.5">
-                  <RouterLink
-                    :to="{ name: 'order-detail', params: { id: order._id } }"
-                    class="text-text-secondary hover:text-primary transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
-                         stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path stroke-linecap="round"
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0
-                           8.268 2.943 9.542 7-1.274 4.057-5.064
-                           7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                  </RouterLink>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- User reviews -->
-      <div class="admin-card">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="section-title flex items-center gap-2">
-            <span>⭐</span> نظرات کاربر
-            <span class="text-text-disabled font-normal text-xs font-fanum">
-              ({{ reviewsTotal }})
+      <AdminCard title="نظرات کاربر" flush>
+        <AdminTable :columns="reviewColumns" :rows="reviews" :loading="loadingReviews">
+          <template #cell-productId="{ value }">
+            {{ value?.name || '—' }}
+          </template>
+          <template #cell-rating="{ value }">
+            <span class="user-detail__rating">
+              <AppIcon name="star" :size="14" filled />
+              {{ value }}
             </span>
-          </h3>
-        </div>
-
-        <!-- Empty -->
-        <div v-if="!reviewsLoading && userReviews.length === 0"
-             class="text-center py-8 text-text-disabled text-sm">
-          این کاربر هنوز نظری ثبت نکرده است
-        </div>
-
-        <!-- List -->
-        <div v-else class="space-y-3">
-          <div v-for="review in userReviews" :key="review._id"
-               class="p-4 rounded-xl border border-border bg-surface/40 text-sm">
-
-            <!-- Product + status -->
-            <div class="flex items-center justify-between gap-3 mb-2 flex-wrap">
-              <div class="flex items-center gap-3 min-w-0">
-                <img :src="review.productId?.thumbnail"
-                     class="w-9 h-9 rounded-lg object-contain border border-border bg-surface flex-shrink-0"
-                     @error="e => e.target.style.opacity='0'" />
-                <span class="font-medium text-text-primary truncate">
-                  {{ review.productId?.name ?? '—' }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2 flex-shrink-0">
-                <!-- Stars -->
-                <span v-for="i in 5" :key="i"
-                  :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-300'"
-                  class="text-sm leading-none">★</span>
-                <AdminBadge
-                  :variant="REVIEW_STATUSES[review.status]?.color ?? 'gray'"
-                  size="sm">
-                  {{ REVIEW_STATUSES[review.status]?.label ?? review.status }}
-                </AdminBadge>
-              </div>
-            </div>
-
-            <!-- Title + body -->
-            <p v-if="review.title" class="font-bold text-text-primary mb-1">
-              {{ review.title }}
-            </p>
-            <p class="text-text-secondary leading-6 line-clamp-3">{{ review.body }}</p>
-
-            <!-- Date + verified -->
-            <div class="flex items-center gap-3 mt-2 text-xs text-text-disabled">
-              <span class="font-fanum">{{ formatDate(review.createdAt) }}</span>
-              <span v-if="review.isVerifiedPurchase"
-                    class="flex items-center gap-1 text-success">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
-                </svg>
-                خرید تأیید شده
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
+          </template>
+          <template #cell-status="{ value }">
+            <AdminBadge :variant="reviewStatusVariant(value)">
+              {{ reviewStatusLabel(value) }}
+            </AdminBadge>
+          </template>
+          <template #cell-createdAt="{ value }">
+            {{ formatDate(value) }}
+          </template>
+          <template #empty>این کاربر هنوز نظری ثبت نکرده است</template>
+        </AdminTable>
+        <AdminPagination
+          v-if="reviewsTotal > reviewsLimit"
+          v-model:page="reviewsPage"
+          :page-size="reviewsLimit"
+          :total="reviewsTotal"
+        />
+      </AdminCard>
     </template>
 
-    <!-- 404 state -->
-    <div v-else-if="!loading"
-         class="text-center py-20 text-text-disabled">
-      کاربر یافت نشد
-    </div>
-
+    <AdminConfirm
+      v-model="confirmOpen"
+      :title="user?.isBlocked ? 'رفع مسدودی کاربر' : 'مسدودسازی کاربر'"
+      :message="confirmMessage"
+      :confirm-text="user?.isBlocked ? 'رفع مسدودی' : 'مسدودسازی'"
+      :danger="!user?.isBlocked"
+      :loading="toggling"
+      @confirm="toggleBlock"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute }     from 'vue-router'
-import { userService }  from '@/services/user.service'
-import { orderService } from '@/services/order.service'
-import { useUiStore }   from '@/stores/ui.store'
-import { formatPrice, formatNumber, formatDate } from '@/utils/formatters'
-import { ORDER_STATUSES, REVIEW_STATUSES } from '@/utils/constants'
-
-import AdminBadge    from '@/components/common/AdminBadge.vue'
-import AdminButton   from '@/components/common/AdminButton.vue'
-import AdminSkeleton from '@/components/common/AdminSkeleton.vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminPagination from '../../components/common/AdminPagination.vue'
+import AdminConfirm from '../../components/common/AdminConfirm.vue'
+import AppIcon from '../../components/icons/AppIcon.vue'
+import { userService } from '../../services/user.service'
 
 const route = useRoute()
-const ui    = useUiStore()
+const userId = route.params.id
 
-const user           = ref(null)
-const recentOrders   = ref([])
-const userReviews    = ref([])
-const reviewsTotal   = ref(0)
-const reviewsLoading = ref(false)
-const loading        = ref(true)
-const blockLoading   = ref(false)
+const user = ref(null)
+const loading = ref(true)
+const confirmOpen = ref(false)
+const toggling = ref(false)
 
-async function fetchUser() {
+const reviews = ref([])
+const reviewsTotal = ref(0)
+const reviewsPage = ref(1)
+const reviewsLimit = 10
+const loadingReviews = ref(true)
+
+const reviewColumns = [
+  { key: 'productId', label: 'محصول' },
+  { key: 'rating', label: 'امتیاز' },
+  { key: 'title', label: 'عنوان' },
+  { key: 'status', label: 'وضعیت' },
+  { key: 'createdAt', label: 'تاریخ' },
+]
+
+const fullName = computed(() =>
+  [user.value?.firstName, user.value?.lastName].filter(Boolean).join(' '),
+)
+
+const confirmMessage = computed(() => {
+  if (!user.value) return ''
+  const name = fullName.value || user.value.phone
+  return user.value.isBlocked
+    ? `آیا مسدودیت "${name}" برداشته شود؟`
+    : `آیا "${name}" مسدود شود؟ این کاربر دیگر نمی‌تواند وارد حساب خود شود.`
+})
+
+function formatDate(value) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString('fa-IR')
+}
+
+function formatNumber(value) {
+  if (value === undefined || value === null) return '۰'
+  return Number(value).toLocaleString('fa-IR')
+}
+
+function formatToman(value) {
+  if (!value) return '۰ تومان'
+  return `${Number(value).toLocaleString('fa-IR')} تومان`
+}
+
+function reviewStatusLabel(status) {
+  return { pending: 'در انتظار', approved: 'تایید‌شده', rejected: 'رد‌شده' }[status] || status
+}
+
+function reviewStatusVariant(status) {
+  return { pending: 'pending', approved: 'success', rejected: 'danger' }[status] || 'neutral'
+}
+
+async function loadUser() {
   loading.value = true
   try {
-    const { data } = await userService.getById(route.params.id)
+    const { data } = await userService.getUser(userId)
     user.value = data
-    document.title = `${data.firstName ?? data.phone} | ادمین نیک`
   } catch {
-    ui.addToast('خطا در بارگذاری کاربر', 'error')
+    user.value = null
   } finally {
     loading.value = false
   }
 }
 
-async function fetchRecentOrders() {
+async function loadReviews() {
+  loadingReviews.value = true
   try {
-    const { data } = await orderService.getAll({
-      page: 1, limit: 5,
-      userId: route.params.id,
+    const { data } = await userService.getUserReviews(userId, {
+      page: reviewsPage.value,
+      limit: reviewsLimit,
     })
-    recentOrders.value = data?.items ?? []
-  } catch { /* non-critical */ }
-}
-
-async function fetchUserReviews() {
-  reviewsLoading.value = true
-  try {
-    const { data } = await userService.getReviews(route.params.id, { page: 1, limit: 20 })
-    userReviews.value  = data?.items ?? []
+    reviews.value = data?.items ?? []
     reviewsTotal.value = data?.total ?? 0
-  } catch { /* non-critical */ } finally {
-    reviewsLoading.value = false
+  } catch {
+    reviews.value = []
+    reviewsTotal.value = 0
+  } finally {
+    loadingReviews.value = false
   }
 }
 
 async function toggleBlock() {
-  if (!user.value) return
-  blockLoading.value = true
+  toggling.value = true
   try {
-    const { data } = await userService.block(user.value._id)
-    user.value.isBlocked = data?.isBlocked ?? !user.value.isBlocked
-    ui.addToast(
-      user.value.isBlocked ? 'کاربر مسدود شد' : 'مسدودی کاربر رفع شد',
-      user.value.isBlocked ? 'warning' : 'success'
-    )
-  } catch {
-    ui.addToast('خطا در تغییر وضعیت', 'error')
+    await userService.toggleUserBlock(userId)
+    confirmOpen.value = false
+    await loadUser()
   } finally {
-    blockLoading.value = false
+    toggling.value = false
   }
 }
 
-onMounted(() => Promise.allSettled([fetchUser(), fetchRecentOrders(), fetchUserReviews()]))
-onUnmounted(() => { document.title = 'نیک | پنل مدیریت' })
+watch(reviewsPage, loadReviews)
+
+onMounted(() => {
+  loadUser()
+  loadReviews()
+})
 </script>
+
+<style scoped>
+.user-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.user-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.user-detail__back:hover {
+  color: var(--text-primary);
+}
+.user-detail__back-icon {
+  transform: rotate(180deg);
+}
+
+.user-detail__loading,
+.user-detail__error {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.user-detail__profile {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.user-detail__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: var(--brand-light);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+
+.user-detail__info {
+  flex: 1;
+  min-width: 200px;
+}
+
+.user-detail__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.user-detail__meta {
+  display: flex;
+  gap: 24px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.user-detail__meta dt {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+.user-detail__meta dd {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-detail__ltr {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.user-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .user-detail__stats {
+    grid-template-columns: 1fr;
+  }
+}
+.stat-card__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.stat-card__value {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.user-detail__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.user-detail__addresses {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) {
+  .user-detail__addresses {
+    grid-template-columns: 1fr;
+  }
+}
+
+.address-item {
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+.address-item__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.address-item__title {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.address-item__text {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.address-item__recipient {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.user-detail__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #E7AF42;
+  font-weight: 600;
+}
+</style>

@@ -1,156 +1,155 @@
 <template>
-  <div class="space-y-5">
-
-    <!-- Header -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-      <div>
-        <h1 class="page-title">صفحات</h1>
-        <p class="text-text-secondary text-sm mt-0.5">صفحات ثابت سایت مثل درباره ما، تماس و...</p>
-      </div>
-      <RouterLink :to="{ name: 'page-create' }">
-        <AdminButton>+ صفحه جدید</AdminButton>
-      </RouterLink>
+  <div class="pages">
+    <div class="pages__head">
+      <h1 class="pages__title">صفحات ثابت</h1>
+      <router-link to="/pages/create">
+        <AdminButton icon="plus">صفحه جدید</AdminButton>
+      </router-link>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="space-y-3">
-      <AdminSkeleton v-for="i in 4" :key="i" height="64px" class="rounded-xl" />
-    </div>
+    <AdminCard>
+      <AdminInput v-model="search" placeholder="جستجو در عنوان یا اسلاگ..." icon="search" />
+    </AdminCard>
 
-    <!-- Empty -->
-    <div v-else-if="!pages.length"
-         class="admin-card py-16 text-center text-text-disabled">
-      <p class="text-4xl mb-3">📄</p>
-      <p class="font-medium">هنوز صفحه‌ای ساخته نشده</p>
-      <RouterLink :to="{ name: 'page-create' }" class="text-primary text-sm mt-2 inline-block hover:underline">
-        اولین صفحه را بسازید
-      </RouterLink>
-    </div>
-
-    <!-- List -->
-    <div v-else class="space-y-2">
-      <div
-        v-for="item in pagedPages"
-        :key="item._id"
-        class="admin-card flex items-center gap-4 hover:border-primary/40 transition-colors"
-      >
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-semibold text-text-primary truncate">{{ item.title }}</span>
-            <span
-              :class="[
-                'text-xs px-2 py-0.5 rounded-full font-medium',
-                item.status === 'published'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-400/20 dark:text-green-400'
-                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-400/20 dark:text-yellow-400',
-              ]"
-            >{{ item.status === 'published' ? 'منتشر شده' : 'پیش‌نویس' }}</span>
+    <AdminCard flush>
+      <AdminTable :columns="columns" :rows="filteredPages" :loading="loading">
+        <template #cell-title="{ row }">
+          <div class="pages__title-cell">
+            <span class="pages__title-text">{{ row.title }}</span>
+            <span class="pages__slug">/{{ row.slug }}</span>
           </div>
-          <p class="text-text-secondary text-xs mt-0.5 font-mono dir-ltr">/pages/{{ item.slug }}</p>
-          <p v-if="item.excerpt" class="text-text-disabled text-xs mt-0.5 truncate">{{ item.excerpt }}</p>
-        </div>
-
-        <div class="flex items-center gap-2 flex-shrink-0">
-          <a
-            :href="`${frontUrl}/pages/${item.slug}`"
-            target="_blank"
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-surface transition-colors text-sm"
-            title="مشاهده در سایت"
-          >🔗</a>
-          <RouterLink :to="{ name: 'page-edit', params: { id: item._id } }">
-            <button class="w-8 h-8 rounded-lg flex items-center justify-center text-text-secondary hover:bg-surface transition-colors text-sm">
-              ✏️
-            </button>
-          </RouterLink>
-          <button
-            @click="confirmDelete(item)"
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-error hover:bg-error/10 transition-colors text-sm"
-          >🗑️</button>
-        </div>
-      </div>
-      <AdminPagination v-model="page" :total-pages="totalPages" :loading="loading" />
-    </div>
-
-    <!-- Delete confirm modal -->
-    <Transition name="fade">
-      <div v-if="deleteTarget"
-           class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-           @click.self="deleteTarget = null">
-        <div class="admin-card max-w-sm w-full space-y-4">
-          <h3 class="font-bold text-text-primary">حذف صفحه</h3>
-          <p class="text-text-secondary text-sm">
-            آیا از حذف صفحه <strong>«{{ deleteTarget.title }}»</strong> مطمئنید؟
-            این عمل قابل بازگشت نیست.
-          </p>
-          <div class="flex gap-2 justify-end">
-            <AdminButton variant="ghost" @click="deleteTarget = null">انصراف</AdminButton>
-            <AdminButton variant="danger" :loading="deleting" @click="doDelete">حذف</AdminButton>
+        </template>
+        <template #cell-status="{ value }">
+          <AdminBadge :variant="value === 'published' ? 'success' : 'pending'">
+            {{ value === 'published' ? 'منتشرشده' : 'پیش‌نویس' }}
+          </AdminBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="pages__row-actions">
+            <router-link :to="`/pages/${row._id}/edit`">
+              <AdminButton variant="ghost" size="sm" icon="edit">ویرایش</AdminButton>
+            </router-link>
+            <AdminButton variant="ghost" size="sm" icon="trash" @click="confirmDelete(row)">
+              حذف
+            </AdminButton>
           </div>
-        </div>
-      </div>
-    </Transition>
+        </template>
+        <template #empty>هنوز صفحه‌ای ثبت نشده است</template>
+      </AdminTable>
+    </AdminCard>
 
+    <AdminConfirm
+      v-model="confirmOpen"
+      title="حذف صفحه"
+      :message="`آیا از حذف «${toDelete?.title ?? ''}» مطمئن هستید؟`"
+      danger
+      :loading="deleting"
+      @confirm="handleDelete"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { pageService }    from '@/services/page.service'
-import { useUiStore }     from '@/stores/ui.store'
-import AdminButton     from '@/components/common/AdminButton.vue'
-import AdminSkeleton   from '@/components/common/AdminSkeleton.vue'
-import AdminPagination from '@/components/common/AdminPagination.vue'
+import { computed, onMounted, ref } from 'vue'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminInput from '../../components/common/AdminInput.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import AdminConfirm from '../../components/common/AdminConfirm.vue'
+import { pageService } from '../../services/page.service'
 
-const ui = useUiStore()
-const frontUrl = import.meta.env.VITE_FRONT_URL ?? 'http://localhost:5173'
+const columns = [
+  { key: 'title', label: 'عنوان' },
+  { key: 'status', label: 'وضعیت' },
+  { key: 'order', label: 'ترتیب', align: 'center', width: '90px' },
+  { key: 'actions', label: '', width: '180px', align: 'end' },
+]
 
-const PER_PAGE     = 10
-const pages        = ref([])
-const loading      = ref(true)
-const deleteTarget = ref(null)
-const deleting     = ref(false)
-const page         = ref(1)
+const pages = ref([])
+const loading = ref(true)
+const search = ref('')
 
-const totalPages  = computed(() => Math.ceil(pages.value.length / PER_PAGE))
-const pagedPages  = computed(() =>
-  pages.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE)
-)
+const confirmOpen = ref(false)
+const deleting = ref(false)
+const toDelete = ref(null)
 
-async function load() {
+const filteredPages = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return pages.value
+  return pages.value.filter(
+    (p) => p.title?.toLowerCase().includes(q) || p.slug?.toLowerCase().includes(q),
+  )
+})
+
+async function fetchPages() {
   loading.value = true
   try {
-    const { data } = await pageService.getAll()
-    pages.value = data
+    const { data } = await pageService.getAdminList()
+    pages.value = data ?? []
   } catch {
-    ui.addToast('خطا در بارگذاری صفحات', 'error')
+    pages.value = []
   } finally {
     loading.value = false
   }
 }
 
-function confirmDelete(page) {
-  deleteTarget.value = page
+function confirmDelete(row) {
+  toDelete.value = row
+  confirmOpen.value = true
 }
 
-async function doDelete() {
+async function handleDelete() {
+  if (!toDelete.value) return
   deleting.value = true
   try {
-    await pageService.remove(deleteTarget.value._id)
-    pages.value = pages.value.filter(p => p._id !== deleteTarget.value._id)
-    ui.addToast('صفحه حذف شد', 'success')
-    deleteTarget.value = null
-  } catch {
-    ui.addToast('خطا در حذف صفحه', 'error')
+    await pageService.remove(toDelete.value._id)
+    confirmOpen.value = false
+    await fetchPages()
   } finally {
     deleting.value = false
+    toDelete.value = null
   }
 }
 
-onMounted(load)
+onMounted(fetchPages)
 </script>
 
 <style scoped>
-.dir-ltr { direction: ltr; unicode-bidi: embed; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.pages {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.pages__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.pages__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.pages__title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pages__title-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.pages__slug {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  direction: ltr;
+  text-align: start;
+}
+.pages__row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
 </style>

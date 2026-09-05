@@ -1,9 +1,12 @@
 import http from './http.service'
+
 export const userService = {
-  getAll:         (params)          => http.get('/users',                          { params }),
-  getById:        (id)              => http.get(`/users/${id}`),
-  getReviews:     (id, params = {}) => http.get(`/users/${id}/reviews`,           { params }),
-  block:          (id)              => http.patch(`/users/${id}/block`),
-  setRole:        (id, role)        => http.patch(`/admin/users/${id}/role`,       { role }),
-  setPermissions: (id, permissions) => http.patch(`/admin/users/${id}/permissions`, { permissions }),
+  getMe: () => http.get('/users/me'),
+  updateMe: (payload) => http.patch('/users/me', payload),
+
+  // ── Admin: customer management ──────────────────────────────
+  getUsers: (params) => http.get('/users', { params }),
+  getUser: (id) => http.get(`/users/${id}`),
+  getUserReviews: (id, params) => http.get(`/users/${id}/reviews`, { params }),
+  toggleUserBlock: (id) => http.patch(`/users/${id}/block`),
 }

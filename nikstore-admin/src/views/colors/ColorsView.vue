@@ -1,212 +1,163 @@
 <template>
-  <div class="p-6 max-w-4xl mx-auto">
-
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-      <div>
-        <h1 class="text-xl font-bold text-text-primary">رنگ‌ها</h1>
-        <p class="text-sm text-text-secondary mt-0.5">{{ colors.length }} رنگ ثبت شده</p>
-      </div>
-      <AdminButton @click="openCreate">+ افزودن رنگ</AdminButton>
+  <div class="colors">
+    <div class="colors__head">
+      <h1 class="colors__title">رنگ‌ها</h1>
+      <AdminButton icon="plus" @click="openCreate">رنگ جدید</AdminButton>
     </div>
 
-    <!-- ── رنگ‌ها ── -->
-    <div v-if="loading" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <AdminSkeleton v-for="i in 6" :key="i" height="72px" class="rounded-xl" />
-    </div>
-    <div v-else-if="!colors.length" class="text-center py-16 text-text-secondary">
-      هنوز رنگی ثبت نشده.
-    </div>
-    <div v-else class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-      <div v-for="color in pagedColors" :key="color._id"
-        class="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface group">
-        <div class="w-10 h-10 rounded-lg flex-shrink-0 border border-black/10 shadow-sm"
-          :style="{ backgroundColor: color.hex }" />
-        <div class="flex-1 min-w-0">
-          <p class="font-medium text-text-primary text-sm truncate">{{ color.name }}</p>
-          <p class="text-xs text-text-secondary font-mono">{{ color.hex }}</p>
-        </div>
-        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button @click="openEdit(color)" class="icon-btn hover:text-primary" title="ویرایش">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 012.828 2.828L11.828 15.828A2 2 0 019 17H7v-2a2 2 0 012-2z"/>
-            </svg>
-          </button>
-          <button @click="confirmDelete(color)" class="icon-btn hover:text-error" title="حذف">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-    <AdminPagination v-model="page" :total-pages="colorTotalPages" :loading="loading" />
-
-    <!-- ── Modal: Add/Edit ── -->
-    <AdminModal v-model="showModal" :title="editingItem ? 'ویرایش رنگ' : 'افزودن رنگ'" size="sm">
-      <form @submit.prevent="saveItem" class="space-y-4">
-        <AdminInput v-model="form.name" label="نام رنگ" placeholder="مثلاً: مشکی" required />
-        <div>
-          <label class="field-label">رنگ <span class="text-error">*</span></label>
-          <div class="flex items-center gap-3">
-            <input type="color" v-model="form.hex"
-              class="w-12 h-10 rounded-lg border border-border cursor-pointer p-0.5" />
-            <AdminInput v-model="form.hex" placeholder="#000000" class="flex-1 font-mono" />
+    <AdminCard flush>
+      <AdminTable :columns="columns" :rows="colors" :loading="loading">
+        <template #cell-name="{ row }">
+          <div class="colors__name-cell">
+            <span class="colors__swatch" :style="{ background: row.hex }" />
+            <span>{{ row.name }}</span>
+            <span class="colors__hex">{{ row.hex }}</span>
           </div>
-          <p v-if="hexError" class="text-xs text-error mt-1">{{ hexError }}</p>
+        </template>
+        <template #cell-isActive="{ value }">
+          <AdminBadge :variant="value ? 'success' : 'neutral'">{{ value ? 'فعال' : 'غیرفعال' }}</AdminBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="colors__row-actions">
+            <AdminButton variant="ghost" size="sm" icon="edit" @click="openEdit(row)">ویرایش</AdminButton>
+            <AdminButton variant="ghost" size="sm" icon="trash" @click="confirmDelete(row)">حذف</AdminButton>
+          </div>
+        </template>
+        <template #empty>هنوز رنگی ثبت نشده است</template>
+      </AdminTable>
+    </AdminCard>
+
+    <AdminModal v-model="modalOpen" :title="editing ? 'ویرایش رنگ' : 'رنگ جدید'" width="380px">
+      <form class="colors__form" @submit.prevent="submit">
+        <AdminInput v-model="form.name" label="نام" />
+        <div class="colors__hex-field">
+          <AdminInput v-model="form.hex" label="کد رنگ" placeholder="#RRGGBB" />
+          <input v-model="form.hex" type="color" class="colors__picker">
         </div>
-        <div class="flex items-center gap-2">
-          <input type="checkbox" id="colorActive" v-model="form.isActive" class="w-4 h-4 accent-primary" />
-          <label for="colorActive" class="text-sm text-text-primary">فعال</label>
+        <label class="colors__checkbox">
+          <input v-model="form.isActive" type="checkbox">
+          فعال
+        </label>
+        <div class="colors__form-actions">
+          <AdminButton type="submit" :loading="saving">{{ editing ? 'ذخیره' : 'ایجاد' }}</AdminButton>
+          <AdminButton variant="secondary" type="button" @click="modalOpen = false">انصراف</AdminButton>
         </div>
       </form>
-      <template #footer>
-        <div class="flex gap-2 justify-end">
-          <AdminButton variant="ghost" @click="showModal = false">انصراف</AdminButton>
-          <AdminButton @click="saveItem" :loading="saving">
-            {{ editingItem ? 'ذخیره تغییرات' : 'افزودن رنگ' }}
-          </AdminButton>
-        </div>
-      </template>
     </AdminModal>
 
     <AdminConfirm
-      v-model="showConfirm"
+      v-model="confirmOpen"
       title="حذف رنگ"
-      :message="`«${deletingItem?.name}» حذف شود؟`"
+      :message="`آیا از حذف «${toDelete?.name ?? ''}» مطمئن هستید؟`"
+      danger
       :loading="deleting"
-      @confirm="deleteItem"
+      @confirm="handleDelete"
     />
-
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { colorService }         from '@/services/color.service'
-import { useUiStore }   from '@/stores/ui.store'
-import AdminButton      from '@/components/common/AdminButton.vue'
-import AdminInput       from '@/components/common/AdminInput.vue'
-import AdminModal       from '@/components/common/AdminModal.vue'
-import AdminConfirm     from '@/components/common/AdminConfirm.vue'
-import AdminSkeleton    from '@/components/common/AdminSkeleton.vue'
-import AdminPagination  from '@/components/common/AdminPagination.vue'
+import { onMounted, ref } from 'vue'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import AdminModal from '../../components/common/AdminModal.vue'
+import AdminInput from '../../components/common/AdminInput.vue'
+import AdminConfirm from '../../components/common/AdminConfirm.vue'
+import { colorService } from '../../services/color.service'
 
-const ui = useUiStore()
-
-// ── State ──────────────────────────────────────────────────
-const loading   = ref(false)
-const saving    = ref(false)
-const deleting  = ref(false)
-const page      = ref(1)
-const PER_PAGE  = 24
-
-const showModal   = ref(false)
-const showConfirm = ref(false)
-const editingItem  = ref(null)
-const deletingItem = ref(null)
+const columns = [
+  { key: 'name', label: 'رنگ' },
+  { key: 'isActive', label: 'وضعیت' },
+  { key: 'actions', label: '', width: '180px', align: 'end' },
+]
 
 const colors = ref([])
+const loading = ref(true)
 
-const form = reactive({
-  name: '', hex: '#000000',
-  isActive: true,
-})
+const modalOpen = ref(false)
+const editing = ref(null)
+const saving = ref(false)
+const form = ref(emptyForm())
 
-// ── Color helpers ──────────────────────────────────────────
-const hexError = computed(() =>
-  form.hex && !/^#[0-9A-Fa-f]{6}$/.test(form.hex) ? 'فرمت باید #RRGGBB باشد' : ''
-)
-const colorTotalPages = computed(() => Math.ceil(colors.value.length / PER_PAGE))
-const pagedColors = computed(() =>
-  colors.value.slice((page.value - 1) * PER_PAGE, page.value * PER_PAGE)
-)
+const confirmOpen = ref(false)
+const deleting = ref(false)
+const toDelete = ref(null)
 
-// ── Load ──────────────────────────────────────────────────
-async function load() {
+function emptyForm() {
+  return { name: '', hex: '#3D8B52', isActive: true }
+}
+
+async function fetchColors() {
   loading.value = true
   try {
-    const { data } = await colorService.getAll()
-    colors.value = Array.isArray(data) ? data : []
+    const { data } = await colorService.list()
+    colors.value = data ?? []
   } catch {
-    ui.addToast('خطا در بارگذاری', 'error')
+    colors.value = []
   } finally {
     loading.value = false
   }
 }
 
-onMounted(load)
-
-// ── Open modal ─────────────────────────────────────────────
-function resetForm() {
-  form.name = ''; form.hex = '#000000'
-  form.isActive = true
-}
-
 function openCreate() {
-  editingItem.value = null
-  resetForm()
-  showModal.value = true
+  editing.value = null
+  form.value = emptyForm()
+  modalOpen.value = true
 }
 
-function openEdit(item) {
-  editingItem.value = item
-  form.name     = item.name
-  form.hex      = item.hex
-  form.isActive = item.isActive
-  showModal.value = true
+function openEdit(row) {
+  editing.value = row
+  form.value = { name: row.name, hex: row.hex, isActive: row.isActive !== false }
+  modalOpen.value = true
 }
 
-// ── Save ──────────────────────────────────────────────────
-async function saveItem() {
+async function submit() {
   saving.value = true
   try {
-    await saveColor()
-    showModal.value = false
-    load()
-  } catch (e) {
-    ui.addToast(e?.response?.data?.message ?? 'خطا در ذخیره', 'error')
+    if (editing.value) await colorService.update(editing.value._id, form.value)
+    else await colorService.create(form.value)
+    modalOpen.value = false
+    await fetchColors()
   } finally {
     saving.value = false
   }
 }
 
-async function saveColor() {
-  if (!form.name.trim()) throw new Error('نام الزامی')
-  if (hexError.value)    throw new Error(hexError.value)
-  const dto = { name: form.name, hex: form.hex, isActive: form.isActive }
-  if (editingItem.value) {
-    await colorService.update(editingItem.value._id, dto)
-    ui.addToast('رنگ ویرایش شد', 'success')
-  } else {
-    await colorService.create(dto)
-    ui.addToast('رنگ افزوده شد', 'success')
-  }
+function confirmDelete(row) {
+  toDelete.value = row
+  confirmOpen.value = true
 }
 
-// ── Delete ────────────────────────────────────────────────
-function confirmDelete(item) {
-  deletingItem.value = item
-  showConfirm.value  = true
-}
-
-async function deleteItem() {
+async function handleDelete() {
+  if (!toDelete.value) return
   deleting.value = true
   try {
-    await colorService.remove(deletingItem.value._id)
-    ui.addToast('حذف شد', 'success')
-    showConfirm.value = false
-    load()
-  } catch {
-    ui.addToast('خطا در حذف', 'error')
+    await colorService.remove(toDelete.value._id)
+    confirmOpen.value = false
+    await fetchColors()
   } finally {
     deleting.value = false
+    toDelete.value = null
   }
 }
+
+onMounted(fetchColors)
 </script>
 
 <style scoped>
-.icon-btn {
-  @apply w-7 h-7 flex items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-primary/10;
-}
+.colors { display: flex; flex-direction: column; gap: 20px; }
+.colors__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.colors__title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.colors__name-cell { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-primary); }
+.colors__swatch { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--glass-border); flex-shrink: 0; }
+.colors__hex { font-size: 11.5px; color: var(--text-secondary); direction: ltr; }
+.colors__row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.colors__form { display: flex; flex-direction: column; gap: 14px; }
+.colors__hex-field { display: flex; align-items: flex-end; gap: 10px; }
+.colors__hex-field :deep(.admin-field) { flex: 1; }
+.colors__picker { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--glass-border); padding: 2px; background: transparent; cursor: pointer; }
+.colors__checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); }
+.colors__form-actions { display: flex; gap: 10px; margin-top: 6px; }
 </style>

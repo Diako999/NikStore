@@ -1,24 +1,38 @@
-import { useAuthStore } from '@/stores/auth.store'
+import { authService } from '../services/auth.service'
+import { useAuthStore } from '../stores/auth.store'
 
-export async function authGuard(to, _from, next) {
-  const auth = useAuthStore()
+// Silently re-hydrates the session from the httpOnly refresh cookie before
+// the first navigation resolves, so isLoggedIn is accurate on a hard reload
+// instead of only becoming true after the first 401-triggered refresh.
+// Memoized so every route change beyond the first doesn't refetch.
+let hydration = null
 
-  // Restore session from HttpOnly refresh-token cookie on first navigation (page refresh)
-  if (!auth.initialized) {
-    await auth.initAuth()
+function ensureHydrated(auth) {
+  if (!hydration) {
+    hydration = (async () => {
+      try {
+        const { data } = await authService.refresh()
+        auth.token = data.accessToken
+        await auth.fetchMe()
+      } catch {
+        // no valid session — stay logged out, nothing to do
+      }
+    })()
   }
+  return hydration
+}
 
-  if (to.meta.guestOnly && auth.isLoggedIn)
-    return next({ name: 'dashboard' })
+export function setupGuard(router) {
+  router.beforeEach(async (to) => {
+    const auth = useAuthStore()
+    await ensureHydrated(auth)
 
-  if (to.meta.layout === 'admin' && !auth.isLoggedIn)
-    return next({ name: 'login', query: { redirect: to.fullPath } })
-
-  if (to.meta.adminOnly && !auth.isAdmin)
-    return next({ name: 'dashboard' })
-
-  if (to.meta.permission && auth.isManager && !auth.hasPermission(to.meta.permission))
-    return next({ name: 'dashboard' })
-
-  next()
+    if (to.path !== '/login' && !auth.isLoggedIn) {
+      return { path: '/login' }
+    }
+    if (to.path === '/login' && auth.isLoggedIn) {
+      return { path: '/' }
+    }
+    return true
+  })
 }

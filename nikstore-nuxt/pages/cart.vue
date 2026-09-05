@@ -1,192 +1,322 @@
 <template>
-  <div class="container-main py-8 min-h-[60vh]">
+  <div class="cart-page">
+    <header class="cart-header">
+      <h1>سبد خرید</h1>
+      <span v-if="cartStore.totalCount" class="cart-header__count">{{ toPersianDigits(cartStore.totalCount) }} کالا</span>
+    </header>
 
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-bold text-text-primary">
-        سبد خرید
-        <span v-if="cartStore.items.length" class="font-fanum text-text-secondary text-base font-normal mr-2">({{ formatNumber(cartStore.totalItems) }} کالا)</span>
-      </h1>
-      <template v-if="cartStore.items.length">
-        <div v-if="confirmingClear" role="alert" class="flex items-center gap-2 text-sm">
-          <span class="text-text-secondary">پاک شود؟</span>
-          <button @click="doClear" :disabled="clearing" class="text-error font-medium hover:underline disabled:opacity-50">بله</button>
-          <button @click="confirmingClear = false" class="text-text-secondary hover:underline">خیر</button>
-        </div>
-        <button v-else @click="confirmingClear = true" class="text-sm text-text-secondary hover:text-error transition-colors">پاک کردن سبد</button>
-      </template>
-    </div>
-
-    <div v-if="cartStore.loading" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 flex flex-col gap-4">
-        <div v-for="i in 3" :key="i" class="h-32 rounded-2xl skeleton" />
+    <div v-if="!cartStore.items.length" class="cart-empty">
+      <div class="cart-empty__icon">
+        <AppIcon name="bag" :size="30" :stroke-width="1.6" />
       </div>
-      <div class="h-72 rounded-2xl skeleton" />
+      <p class="cart-empty__title">سبد خرید شما خالی است</p>
+      <p class="cart-empty__sub">محصولات مورد علاقه‌تان را پیدا کنید و به سبد اضافه کنید</p>
+      <NuxtLink to="/" class="btn-primary">
+        مشاهده محصولات
+        <AppIcon name="arrow" :size="16" />
+      </NuxtLink>
     </div>
 
-    <BaseEmpty
-      v-else-if="!cartStore.items.length"
-      icon="🛒"
-      title="سبد خرید شما خالی است"
-      subtitle="محصولات مورد علاقه‌تان را به سبد خرید اضافه کنید"
-      action="مشاهده محصولات"
-      to="/products"
-    />
-
-    <div v-else>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-        <!-- Items column -->
-        <div class="lg:col-span-2 flex flex-col gap-8">
-          <TransitionGroup name="cart-item" tag="div" class="flex flex-col gap-4">
-            <GlassCard
-              v-for="item in cartStore.items"
-              :key="`${item.productId}-${item.variantId}`"
-              padding="md"
-              class="flex gap-4"
-            >
-              <NuxtLink v-if="item.slug" :to="`/product/${item.slug}`" class="flex-shrink-0">
-                <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl" @error="e => e.target.src = PLACEHOLDER" />
-              </NuxtLink>
-              <div v-else class="flex-shrink-0">
-                <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-24 h-24 object-cover rounded-xl" />
-              </div>
-              <div class="flex-1 min-w-0 flex flex-col gap-2">
-                <div class="flex items-center gap-2 flex-wrap">
-                  <NuxtLink v-if="item.slug" :to="`/product/${item.slug}`" class="text-text-primary font-medium text-sm leading-6 hover:text-brand line-clamp-2 transition-colors">{{ item.name }}</NuxtLink>
-                  <span v-else class="text-text-primary font-medium text-sm line-clamp-2">{{ item.name }}</span>
-                </div>
-                <div v-if="item.attributes?.length" class="flex flex-wrap gap-1.5">
-                  <span v-for="attr in item.attributes" :key="attr.key" class="text-xs text-text-secondary bg-surface px-2 py-0.5 rounded-lg border border-surface-border">{{ attr.key }}: {{ attr.value }}</span>
-                </div>
-                <div class="flex items-center justify-between mt-auto flex-wrap gap-3 pt-1">
-                  <div>
-                    <div v-if="item.comparePrice > item.price" class="text-text-disabled line-through text-xs font-fanum leading-none mb-0.5">{{ formatPrice(item.comparePrice) }}</div>
-                    <div class="text-text-primary font-bold font-fanum">{{ formatPrice(item.price) }}</div>
-                    <div class="text-text-secondary text-xs font-fanum mt-0.5">جمع: {{ formatPrice(item.price * item.quantity) }}</div>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <button @click="handleRemove(item)" :disabled="removingKey === itemKey(item)" :aria-label="`حذف ${item.name} از سبد خرید`" class="text-text-disabled hover:text-error transition-colors disabled:opacity-50 w-11 h-11 flex items-center justify-center">
-                      <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
-                    <div class="flex items-center border border-surface-border rounded-xl overflow-hidden">
-                      <button @click="changeQty(item, item.quantity - 1)" :disabled="item.quantity <= 1 || updatingKey === itemKey(item)" :aria-label="`کاهش تعداد ${item.name}`" class="w-11 h-11 flex items-center justify-center text-text-primary hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 12H4"/></svg>
-                      </button>
-                      <span class="w-11 text-center font-fanum text-sm font-bold text-text-primary select-none" aria-live="polite" aria-atomic="true">{{ formatNumber(item.quantity) }}</span>
-                      <button @click="changeQty(item, item.quantity + 1)" :disabled="item.quantity >= item.stock || updatingKey === itemKey(item)" :aria-label="`افزایش تعداد ${item.name}`" class="w-11 h-11 flex items-center justify-center text-text-primary hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                        <svg class="w-4 h-4" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </GlassCard>
-          </TransitionGroup>
-        </div>
-
-        <!-- Summary column -->
-        <div class="flex flex-col gap-4 lg:sticky lg:top-24">
-
-          <GlassCard padding="lg" class="flex flex-col gap-4">
-            <h2 class="font-bold text-text-primary text-base border-b border-surface-border pb-3"><span aria-hidden="true">🛍️</span> خلاصه سفارش</h2>
-            <div class="flex flex-col gap-3 text-sm">
-              <div class="flex justify-between">
-                <span class="text-text-secondary">تعداد</span>
-                <span class="font-fanum text-text-primary">{{ formatNumber(cartStore.totalItems) }} عدد</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-text-secondary">قیمت اصلی</span>
-                <span class="font-fanum text-text-primary">{{ formatPrice(subtotal) }}</span>
-              </div>
-              <div v-if="savings > 0" class="flex justify-between text-success">
-                <span>تخفیف</span>
-                <span class="font-fanum">− {{ formatPrice(savings) }}</span>
-              </div>
-              <div class="flex justify-between items-center">
-                <span class="text-text-secondary">ارسال</span>
-                <span class="text-xs font-bold text-success bg-success/10 px-2.5 py-0.5 rounded-full">رایگان</span>
-              </div>
+    <template v-else>
+      <ul class="cart-list">
+        <li v-for="item in cartStore.items" :key="lineKey(item)" class="cart-item">
+          <NuxtLink :to="item.slug ? `/product/${item.slug}` : '#'" class="cart-item__thumb">
+            <img v-if="item.image" :src="item.image" :alt="item.name" loading="lazy">
+            <div v-else class="cart-item__fallback">
+              <AppIcon name="hoodie" :size="26" :stroke-width="1.5" />
             </div>
-            <div class="border-t border-surface-border pt-4">
-              <div class="flex justify-between items-center">
-                <span class="font-bold text-text-primary">مبلغ قابل پرداخت</span>
-                <span class="text-brand text-xl font-black font-fanum">{{ formatPrice(cartStore.totalPrice) }}</span>
-              </div>
-            </div>
-            <GlassButton variant="primary" block size="lg" @click="navigateTo('/checkout')">ادامه و پرداخت ←</GlassButton>
-          </GlassCard>
-
-          <NuxtLink to="/products" class="text-center text-sm text-brand hover:underline block flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-            ادامه خرید
           </NuxtLink>
-        </div>
 
+          <div class="cart-item__body">
+            <NuxtLink :to="item.slug ? `/product/${item.slug}` : '#'" class="cart-item__name">{{ item.name }}</NuxtLink>
+            <p v-if="item.variant" class="cart-item__variant">{{ item.variant }}</p>
+
+            <div class="cart-item__row">
+              <p class="cart-item__price">{{ formatPrice(item.price) }}</p>
+
+              <div class="qty-stepper">
+                <button
+                  type="button"
+                  class="qty-stepper__btn"
+                  aria-label="کاهش تعداد"
+                  @click="dec(item)"
+                >
+                  <AppIcon :name="item.qty === 1 ? 'trash' : 'minus'" :size="13" :stroke-width="2" />
+                </button>
+                <span class="qty-stepper__value">{{ toPersianDigits(item.qty) }}</span>
+                <button
+                  type="button"
+                  class="qty-stepper__btn"
+                  aria-label="افزایش تعداد"
+                  @click="inc(item)"
+                >
+                  <AppIcon name="plus" :size="13" :stroke-width="2" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="cart-item__remove"
+            aria-label="حذف از سبد خرید"
+            @click="remove(item)"
+          >
+            <AppIcon name="close" :size="13" :stroke-width="2" />
+          </button>
+        </li>
+      </ul>
+
+      <div class="cart-summary">
+        <div class="cart-summary__row">
+          <span>جمع سبد خرید</span>
+          <span class="cart-summary__value">{{ formatPrice(cartStore.totalPrice) }}</span>
+        </div>
+        <p class="cart-summary__hint">هزینه ارسال در مرحله بعد محاسبه می‌شود</p>
+        <NuxtLink to="/checkout" class="btn-primary btn-primary--block">
+          تسویه حساب
+          <AppIcon name="arrow" :size="16" />
+        </NuxtLink>
       </div>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { formatPrice, formatNumber } from '~/utils/formatters'
-import BaseEmpty   from '~/components/common/BaseEmpty.vue'
-import GlassCard   from '~/components/glass/GlassCard.vue'
-import GlassButton from '~/components/glass/GlassButton.vue'
-
-definePageMeta({ layout: 'default' })
-
-useSeoMeta({ title: 'سبد خرید', robots: 'noindex' })
-
-const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="%23e2e8f0"%3E%3Crect width="96" height="96"/%3E%3C/svg%3E'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import { formatPrice, toPersianDigits } from '~/utils/format'
+import { useCartStore } from '~/stores/cart.store'
 
 const cartStore = useCartStore()
-const ui        = useUiStore()
 
-const updatingKey     = ref(null)
-const removingKey     = ref(null)
-const clearing        = ref(false)
-const confirmingClear = ref(false)
-
-const subtotal = computed(() => cartStore.items.reduce((s, i) => { const base = i.comparePrice > i.price ? i.comparePrice : i.price; return s + base * i.quantity }, 0))
-const savings  = computed(() => subtotal.value - cartStore.totalPrice)
-
-function itemKey(item) { return `${item.productId}-${item.variantId}` }
-
-async function changeQty(item, newQty) {
-  if (newQty < 1 || newQty > item.stock) return
-  const key = itemKey(item)
-  if (updatingKey.value === key) return
-  updatingKey.value = key
-  try { await cartStore.updateItem(item.productId, item.variantId, newQty) }
-  catch { ui.addToast('خطا در بروزرسانی تعداد', 'error') }
-  finally { updatingKey.value = null }
+function lineKey(item) {
+  return item.variant ? `${item.productId}::${item.variant}` : item.productId
 }
 
-async function handleRemove(item) {
-  const key = itemKey(item)
-  if (removingKey.value === key) return
-  removingKey.value = key
-  try { await cartStore.removeItem(item.productId, item.variantId); ui.addToast('کالا از سبد حذف شد', 'success') }
-  catch { ui.addToast('خطا در حذف کالا', 'error') }
-  finally { removingKey.value = null }
+function inc(item) {
+  cartStore.updateQty(item.productId, item.variant, item.qty + 1)
 }
 
-async function doClear() {
-  clearing.value = true
-  try { await cartStore.clearCart(); confirmingClear.value = false; ui.addToast('سبد خرید پاک شد', 'success') }
-  catch { ui.addToast('خطا در پاک کردن سبد', 'error') }
-  finally { clearing.value = false }
+function dec(item) {
+  cartStore.updateQty(item.productId, item.variant, item.qty - 1)
 }
 
-onMounted(() => cartStore.fetchCart())
+function remove(item) {
+  cartStore.removeItem(item.productId, item.variant)
+}
 </script>
 
 <style scoped>
-.cart-item-enter-active, .cart-item-leave-active { transition: all 0.3s ease; }
-/* RTL: items enter from the right (negative X) and leave to the left (positive X) */
-.cart-item-enter-from { opacity: 0; transform: translateX(-20px); }
-.cart-item-leave-to   { opacity: 0; transform: translateX(20px); }
+.cart-page {
+  padding: 18px 18px 32px;
+}
+
+.cart-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.cart-header h1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.cart-header__count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 20px 40px;
+  gap: 6px;
+}
+.cart-empty__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-disabled);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .cart-empty__icon { box-shadow: var(--glass-shadow); }
+.cart-empty__title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+.cart-empty__sub { font-size: 12px; color: var(--text-secondary); margin-bottom: 18px; max-width: 260px; }
+
+.cart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  margin-bottom: 18px;
+}
+
+.cart-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .cart-item {
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+
+.cart-item__thumb {
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--glass-strong);
+  display: block;
+}
+.cart-item__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cart-item__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-light);
+  background: radial-gradient(120% 120% at 30% 20%, rgba(110, 176, 130, .35) 0%, rgba(61, 139, 82, .25) 55%, transparent 100%);
+}
+[data-theme='light'] .cart-item__fallback { color: var(--brand-dark); }
+
+.cart-item__body { flex: 1; min-width: 0; }
+.cart-item__name {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cart-item__variant { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+
+.cart-item__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.cart-item__price { font-size: 13px; font-weight: 700; color: var(--brand-light); }
+[data-theme='light'] .cart-item__price { color: var(--brand-dark); }
+
+.qty-stepper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+}
+.qty-stepper__btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.qty-stepper__value {
+  min-width: 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cart-item__remove {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  background: rgba(9, 15, 12, .3);
+  color: var(--text-secondary);
+}
+[data-theme='light'] .cart-item__remove { background: rgba(255, 255, 255, .5); }
+
+.cart-summary {
+  border-radius: 18px;
+  padding: 18px;
+  background:
+    linear-gradient(105deg, rgba(122, 90, 220, .22), rgba(231, 175, 66, .12)) padding-box,
+    linear-gradient(120deg, rgba(255, 255, 255, .4), rgba(255, 255, 255, .03) 60%) border-box;
+  border: 1px solid transparent;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .cart-summary {
+  border-width: 1.5px;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+  background:
+    linear-gradient(105deg, rgba(122, 90, 220, .18), rgba(231, 175, 66, .16)) padding-box,
+    linear-gradient(120deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, .2) 60%) border-box;
+}
+
+.cart-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.cart-summary__value { font-size: 16px; font-weight: 800; color: var(--brand-light); }
+[data-theme='light'] .cart-summary__value { color: var(--brand-dark); }
+.cart-summary__hint { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 14px; }
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .30);
+}
+[data-theme='light'] .btn-primary {
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+.btn-primary--block { width: 100%; }
 </style>

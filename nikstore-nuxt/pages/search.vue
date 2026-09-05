@@ -1,225 +1,201 @@
 <template>
-  <div class="container-main py-4">
+  <div class="search-page">
+    <div class="search-page__bar">
+      <SearchBar placeholder="جستجوی محصول، برند یا دسته‌بندی..." />
+    </div>
 
-    <nav aria-label="مسیر صفحه" class="mb-4">
-      <ol class="flex items-center gap-2 text-sm text-text-secondary list-none m-0 p-0">
-        <li><NuxtLink to="/" class="hover:text-brand transition-colors">خانه</NuxtLink></li>
-        <li aria-hidden="true">
-          <svg class="w-3 h-3 rotate-180 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </li>
-        <li><span aria-current="page" class="text-text-primary font-medium">نتایج جستجو</span></li>
-      </ol>
-    </nav>
+    <template v-if="q">
+      <p class="search-page__query">نتایج برای «{{ q }}»</p>
 
-    <GlassCard padding="md" class="mb-4">
-      <div class="flex items-center gap-3 flex-wrap">
-        <svg class="w-5 h-5 text-glass-brand flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
-        </svg>
-        <div v-if="searchQuery">
-          <span class="text-glass-text-secondary text-sm">نتایج جستجو برای: </span>
-          <span class="text-glass-text-primary font-bold text-lg">«{{ searchQuery }}»</span>
-        </div>
-        <span v-else class="text-glass-text-secondary text-sm">کلمه‌ای برای جستجو وارد کنید</span>
-        <span v-if="!loading && searchQuery" class="text-glass-text-secondary text-sm font-fanum mr-auto">
-          <span class="text-glass-text-primary font-bold">{{ formatNumber(total) }}</span> کالا
-        </span>
+      <SortBar
+        v-model="sort"
+        :result-count="total"
+        :options="sortOptions"
+        :active-filter-count="activeFilterCount"
+        @open-filter="filterOpen = true"
+      />
+
+      <ProductGrid :products="products" :pending="pending" empty-text="محصولی مطابق جستجوی شما یافت نشد" />
+
+      <div v-if="loadingMore" class="search-page__loadmore">
+        <span class="search-page__spinner" />
       </div>
-    </GlassCard>
+      <div ref="sentinelRef" class="search-page__sentinel" />
 
-    <div class="flex gap-4">
+      <FilterPanel
+        v-model:open="filterOpen"
+        :brands="[]"
+        :filters="filters"
+        @apply="applyFilters"
+        @reset="resetFilters"
+      />
+    </template>
 
-      <!-- Sidebar filters (desktop) -->
-      <aside v-if="facets && total > 0" class="hidden lg:block w-60 flex-shrink-0">
-        <div class="sticky top-24 space-y-4">
-
-          <GlassCard v-if="facets.priceRange" padding="md">
-            <h3 id="price-filter-label" class="font-semibold text-sm mb-3 text-glass-text-primary">محدوده قیمت</h3>
-            <div class="flex gap-2 text-xs text-glass-text-secondary font-fanum" aria-hidden="true">
-              <span>{{ formatNumber(facets.priceRange.min) }} ت</span>
-              <span class="mr-auto">{{ formatNumber(facets.priceRange.max) }} ت</span>
-            </div>
-            <div class="flex gap-2 mt-2" role="group" aria-labelledby="price-filter-label">
-              <GlassInput :model-value="priceMin" @update:model-value="v => priceMin = v === '' ? null : Number(v)" type="number" placeholder="از" class="font-fanum" @blur="onFilterChange" />
-              <GlassInput :model-value="priceMax" @update:model-value="v => priceMax = v === '' ? null : Number(v)" type="number" placeholder="تا" class="font-fanum" @blur="onFilterChange" />
-            </div>
-          </GlassCard>
-
-          <GlassCard
-            v-for="attr in facets.attributes"
-            :key="attr.key"
-            padding="md"
-          >
-            <h3 class="font-semibold text-sm mb-3 text-glass-text-primary">{{ attr.key }}</h3>
-            <div class="space-y-2">
-              <label
-                v-for="val in attr.values"
-                :key="val"
-                class="flex items-center gap-2 cursor-pointer text-sm text-glass-text-secondary"
-              >
-                <input
-                  type="checkbox"
-                  :value="`${attr.key}:${val}`"
-                  v-model="selectedAttrs"
-                  class="accent-brand"
-                  @change="onFilterChange"
-                />
-                <span>{{ val }}</span>
-              </label>
-            </div>
-          </GlassCard>
-
-          <GlassCard padding="md">
-            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-glass-text-primary">
-              <input type="checkbox" v-model="inStock" class="accent-brand w-4 h-4" @change="onFilterChange" />
-              <span>فقط موجود</span>
-            </label>
-          </GlassCard>
-
-        </div>
-      </aside>
-
-      <div class="flex-1 min-w-0">
-        <SortBar v-model="sortBy" :total="total" :loading="loading" @update:modelValue="onSortChange" />
-
-        <ProductGrid :products="products" :loading="loading" />
-
-        <div v-if="!loading && products.length === 0 && searchQuery" class="text-center py-16">
-          <div class="text-6xl mb-4 select-none">🔍</div>
-          <h2 class="text-xl font-bold text-text-primary mb-2">
-            نتیجه‌ای برای «{{ searchQuery }}» یافت نشد
-          </h2>
-          <p class="text-text-secondary mb-2 text-sm">پیشنهادات:</p>
-          <ul class="text-text-secondary text-sm mb-6 space-y-1">
-            <li>• از کلمات کوتاه‌تر یا متفاوت‌تر استفاده کنید</li>
-            <li>• غلط‌های تایپی را بررسی کنید</li>
-            <li>• با کلمه فارسی معادل امتحان کنید</li>
-          </ul>
-          <NuxtLink to="/products" class="inline-block bg-brand text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-dark transition-colors">
-            مشاهده همه محصولات
-          </NuxtLink>
-        </div>
-
-        <div v-if="!searchQuery" class="text-center py-16 text-text-secondary">
-          <div class="text-5xl mb-4">🔎</div>
-          <p>کلمه‌ای برای جستجو وارد کنید</p>
-        </div>
-
-        <BasePagination
-          v-if="totalPages > 1"
-          :model-value="currentPage"
-          :total-pages="totalPages"
-          :loading="loading"
-          @update:modelValue="onPageChange"
-          class="mt-6"
-        />
+    <div v-else class="search-page__empty">
+      <div class="search-page__empty-ico">
+        <AppIcon name="search" :size="26" :stroke-width="1.6" />
       </div>
+      <p>برای شروع، عبارت مورد نظر خود را جستجو کنید</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { formatNumber } from '~/utils/formatters'
-import SortBar          from '~/components/products/SortBar.vue'
-import ProductGrid      from '~/components/products/ProductGrid.vue'
-import BasePagination   from '~/components/common/BasePagination.vue'
-import http             from '~/services/http.service'
-import GlassCard        from '~/components/glass/GlassCard.vue'
-import GlassInput       from '~/components/glass/GlassInput.vue'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import SearchBar from '~/components/ui/SearchBar.vue'
+import SortBar from '~/components/products/SortBar.vue'
+import ProductGrid from '~/components/products/ProductGrid.vue'
+import FilterPanel from '~/components/products/FilterPanel.vue'
+import { searchService } from '~/services/search.service'
 
-definePageMeta({ layout: 'default' })
+const route = useRoute()
+const q = computed(() => (typeof route.query.q === 'string' ? route.query.q.trim() : ''))
 
-const route  = useRoute()
-const router = useRouter()
-const ui     = useUiStore()
+const sort = ref('relevant')
+const sortOptions = [
+  { value: 'relevant', label: 'مرتبط‌ترین' },
+  { value: 'newest', label: 'جدیدترین' },
+  { value: 'popular', label: 'پرفروش‌ترین' },
+  { value: 'price_asc', label: 'ارزان‌ترین' },
+  { value: 'price_desc', label: 'گران‌ترین' },
+  { value: 'mostViewed', label: 'پربازدیدترین' },
+]
 
-const products      = ref([])
-const loading       = ref(false)
-const total         = ref(0)
-const facets        = ref(null)
-const currentPage   = ref(1)
-const sortBy        = ref('relevant')
-const priceMin      = ref(null)
-const priceMax      = ref(null)
-const inStock       = ref(false)
-const selectedAttrs = ref([])
-const LIMIT         = 24
+const filters = reactive({ minPrice: null, maxPrice: null, inStock: false })
+const filterOpen = ref(false)
+const activeFilterCount = computed(() => {
+  let n = 0
+  if (filters.minPrice) n++
+  if (filters.maxPrice) n++
+  if (filters.inStock) n++
+  return n
+})
 
-const searchQuery = computed(() => String(route.query.q || '').trim())
-useSeoMeta({ title: () => searchQuery.value ? `جستجو: ${searchQuery.value}` : 'جستجو', robots: 'noindex' })
-const totalPages  = computed(() => Math.max(1, Math.ceil(total.value / LIMIT)))
+const LIMIT = 20
+const products = ref([])
+const total = ref(0)
+const totalPages = ref(1)
+const page = ref(1)
+const pending = ref(false)
+const loadingMore = ref(false)
 
-async function fetchSearch() {
-  if (!searchQuery.value) { products.value = []; total.value = 0; facets.value = null; return }
-  loading.value = true
-  try {
-    const params = {
-      q:     searchQuery.value,
-      page:  currentPage.value,
-      limit: LIMIT,
-      sort:  sortBy.value,
-      ...(priceMin.value ? { minPrice: priceMin.value } : {}),
-      ...(priceMax.value ? { maxPrice: priceMax.value } : {}),
-      ...(inStock.value  ? { inStock: true }            : {}),
-      ...(selectedAttrs.value.length ? { attrs: selectedAttrs.value.join(',') } : {}),
-    }
-    const { data } = await http.get('/search', { params })
-    products.value = data?.products ?? []
-    total.value    = data?.total    ?? 0
-    facets.value   = data?.facets   ?? null
-  } catch {
-    ui.addToast('خطا در جستجو. دوباره تلاش کنید', 'error')
-    products.value = []
-    total.value    = 0
-  } finally {
-    loading.value = false
+function buildParams(pageNum) {
+  return {
+    q: q.value,
+    sort: sort.value,
+    page: pageNum,
+    limit: LIMIT,
+    ...(filters.minPrice && { minPrice: filters.minPrice }),
+    ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+    ...(filters.inStock && { inStock: true }),
   }
 }
 
-onMounted(async () => {
-  sortBy.value      = route.query.sortBy || 'relevant'
-  currentPage.value = Number(route.query.page) || 1
-  priceMin.value    = route.query.minPrice ? Number(route.query.minPrice) : null
-  priceMax.value    = route.query.maxPrice ? Number(route.query.maxPrice) : null
-  inStock.value     = route.query.inStock === 'true'
-  await fetchSearch()
+async function runSearch(reset) {
+  if (!q.value) {
+    products.value = []
+    total.value = 0
+    return
+  }
+  if (reset) {
+    pending.value = true
+    page.value = 1
+  } else {
+    loadingMore.value = true
+  }
+  try {
+    const { data } = await searchService.search(buildParams(page.value))
+    if (reset) products.value = data?.products ?? []
+    else products.value = [...products.value, ...(data?.products ?? [])]
+    total.value = data?.total ?? 0
+    totalPages.value = data?.totalPages ?? 1
+  } finally {
+    pending.value = false
+    loadingMore.value = false
+  }
+}
+
+async function loadMore() {
+  if (loadingMore.value || pending.value || page.value >= totalPages.value) return
+  page.value += 1
+  await runSearch(false)
+}
+
+function applyFilters(next) {
+  Object.assign(filters, next)
+  runSearch(true)
+}
+
+function resetFilters() {
+  filters.minPrice = null
+  filters.maxPrice = null
+  filters.inStock = false
+  runSearch(true)
+}
+
+watch([q, sort], () => runSearch(true))
+
+const sentinelRef = ref(null)
+let observer = null
+
+onMounted(() => {
+  runSearch(true)
+  if (typeof IntersectionObserver !== 'undefined' && sentinelRef.value) {
+    observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) loadMore()
+    }, { rootMargin: '200px' })
+    observer.observe(sentinelRef.value)
+  }
 })
+onUnmounted(() => { if (observer) observer.disconnect() })
 
-watch(searchQuery, async () => {
-  currentPage.value   = 1
-  selectedAttrs.value = []
-  priceMin.value      = null
-  priceMax.value      = null
-  inStock.value       = false
-  await fetchSearch()
-})
-
-function onSortChange() {
-  currentPage.value = 1
-  fetchSearch()
-  router.replace({ query: { ...route.query, sortBy: sortBy.value, page: undefined } })
-}
-
-function onFilterChange() {
-  currentPage.value = 1
-  fetchSearch()
-  router.replace({
-    query: {
-      ...route.query,
-      page:     undefined,
-      minPrice: priceMin.value || undefined,
-      maxPrice: priceMax.value || undefined,
-      inStock:  inStock.value  || undefined,
-    },
-  })
-}
-
-async function onPageChange(p) {
-  currentPage.value = p
-  await fetchSearch()
-  router.replace({ query: { ...route.query, page: p > 1 ? p : undefined } })
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
+useSeoMeta({ title: () => (q.value ? `جستجو: ${q.value}` : 'جستجو') })
 </script>
+
+<style scoped>
+.search-page__bar :deep(.search-bar) { margin-top: 18px; }
+
+.search-page__query {
+  margin: 0 18px 12px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.search-page__loadmore { display: flex; justify-content: center; padding: 16px 0; }
+.search-page__spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  border-top-color: var(--brand-light);
+  animation: search-spin .7s linear infinite;
+}
+.search-page__sentinel { height: 1px; }
+
+.search-page__empty {
+  margin: 60px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+.search-page__empty-ico {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-disabled);
+}
+
+@keyframes search-spin {
+  to { transform: rotate(360deg); }
+}
+</style>

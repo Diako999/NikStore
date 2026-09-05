@@ -1,0 +1,57 @@
+/*
+  Design tokens for the glassmorphism visual language. Theme switch is
+  data-theme="dark" | "light" on <html>, set by composables/useTheme.js.
+  No attribute (first paint, before hydration) falls back to dark, which
+  matches the app's primary/default look.
+*/
+
+:root,
+[data-theme='dark'] {
+  --brand: #3D8B52;
+  --brand-dark: #2D6B3E;
+  --brand-light: #6EB082;
+  --text-primary: #F5F7F3;
+  --text-secondary: #C3D2C7;
+  --text-disabled: #7E8F84;
+  --glass: rgba(255, 255, 255, .10);
+  --glass-strong: rgba(255, 255, 255, .16);
+  --glass-border: rgba(255, 255, 255, .22);
+  --glass-shadow: none;
+  --bg-rgb: 11, 19, 16;
+
+  --page-bg:
+    radial-gradient(65% 45% at 15% 8%, rgba(122, 90, 220, .45), transparent 60%),
+    radial-gradient(55% 40% at 95% 15%, rgba(231, 175, 66, .35), transparent 60%),
+    radial-gradient(70% 55% at 50% 100%, rgba(61, 139, 82, .55), transparent 65%),
+    linear-gradient(128deg, rgba(110, 176, 130, .10) 0%, transparent 45%, rgba(231, 175, 66, .08) 100%),
+    linear-gradient(165deg, #16241C 0%, #0E1712 55%, #090F0C 100%);
+}
+
+[data-theme='light'] {
+  --brand: #3D8B52;
+  --brand-dark: #2D6B3E;
+  --brand-light: #6EB082;
+  --text-primary: #1E2822;
+  --text-secondary: #5C6B62;
+  --text-disabled: #9AA79E;
+  --glass: rgba(255, 255, 255, .52);
+  --glass-strong: rgba(255, 255, 255, .72);
+  --glass-border: rgba(255, 255, 255, .85);
+  --glass-shadow: 0 14px 30px rgba(122, 90, 220, .14), 0 6px 14px rgba(40, 55, 46, .10);
+  --bg-rgb: 246, 244, 238;
+
+  --page-bg:
+    radial-gradient(60% 42% at 12% 6%, rgba(122, 90, 220, .20), transparent 60%),
+    radial-gradient(55% 40% at 96% 12%, rgba(231, 175, 66, .22), transparent 60%),
+    radial-gradient(70% 55% at 55% 100%, rgba(110, 176, 130, .30), transparent 65%),
+    linear-gradient(128deg, rgba(255, 255, 255, .5) 0%, transparent 45%, rgba(231, 175, 66, .10) 100%),
+    linear-gradient(165deg, #F8F6F0 0%, #F1EEE5 55%, #EAE6DA 100%);
+}
+
+html,
+body {
+  background: var(--page-bg);
+  background-attachment: fixed;
+  background-size: cover;
+  min-height: 100%;
+}

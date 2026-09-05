@@ -1,319 +1,216 @@
-﻿<template>
-  <div class="container-main py-8">
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-xl font-bold text-text-primary">سفارش‌های من</h1>
-      <NuxtLink :to="'/products'" class="flex items-center gap-1 text-sm text-brand hover:underline">
-        خرید جدید
-        <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-        </svg>
-      </NuxtLink>
-    </div>
+<template>
+  <div class="orders">
+    <SectionHead title="سفارش‌های من" />
 
-    <!-- Status filter tabs -->
-    <div class="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide" role="tablist" aria-label="فیلتر وضعیت سفارش">
+    <div class="filters">
       <button
-        v-for="tab in statusTabs" :key="tab.value"
-        @click="activeStatus = tab.value; fetchOrders()"
-        role="tab"
-        :aria-selected="activeStatus === tab.value"
-        :class="[
-          'flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-all border',
-          activeStatus === tab.value
-            ? 'bg-brand text-white border-brand'
-            : 'border-surface-border text-text-secondary hover:text-text-primary',
-        ]"
+        v-for="f in filters"
+        :key="f.value || 'all'"
+        type="button"
+        class="filter-chip"
+        :class="{ 'filter-chip--active': status === f.value }"
+        @click="setStatus(f.value)"
       >
-        {{ tab.label }}
+        {{ f.label }}
       </button>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="flex flex-col gap-4">
-      <div v-for="i in 4" :key="i" class="h-32 rounded-2xl skeleton" />
-    </div>
-
-    <!-- Empty -->
-    <BaseEmpty
-      v-else-if="!orders.length"
-      icon="📦"
-      title="سفارشی یافت نشد"
-      subtitle="هنوز سفارشی ثبت نکرده‌اید یا در این وضعیت سفارشی ندارید"
-      action="شروع خرید"
-      :to="'/products'"
-    />
-
-    <!-- Order cards -->
-    <div v-else ref="ordersGridRef" class="flex flex-col gap-4">
-      <GlassCard
-        v-for="order in orders" :key="order._id"
-        padding="lg"
-        class="transition-all hover:border-brand/30 relative"
-      >
-        <!-- Stretched link — covers the whole card for pointer/keyboard navigation -->
-        <NuxtLink
-          :to="`/user/orders/${order._id}`"
-          class="absolute inset-0 rounded-2xl focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none"
-          :aria-label="`سفارش ${order.orderNumber}، وضعیت: ${statusLabel(order.status)}`"
-        />
-
-        <!-- Order header -->
-        <div class="mb-4 pb-4 border-b border-surface-border">
-          <!-- Row 1: badge + date -->
-          <div class="flex items-center justify-between mb-2">
-            <span :class="['text-xs px-3 py-1 rounded-full font-medium flex-shrink-0', statusColor(order.status).badge]">
-              {{ statusLabel(order.status) }}
-            </span>
-            <p class="text-xs text-text-secondary">{{ formatDate(order.createdAt) }}</p>
-          </div>
-          <!-- Row 2: dot + order number + copy -->
-          <div class="flex items-center gap-2">
-            <span :class="['w-2 h-2 rounded-full flex-shrink-0', statusColor(order.status).dot]" />
-            <p class="text-xs font-bold text-text-primary font-mono tracking-wide flex-1 min-w-0 truncate dir-ltr">
-              {{ order.orderNumber }}
-            </p>
-            <button
-              @click.stop="copyOrderNumber(order._id, order.orderNumber)"
-              :aria-label="copiedId === order._id ? 'کپی شد' : 'کپی شماره سفارش'"
-              :class="[
-                'relative z-10 w-9 h-9 rounded-lg flex items-center justify-center transition-all flex-shrink-0',
-                copiedId === order._id
-                  ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-surface text-text-secondary hover:text-brand border border-surface-border',
-              ]"
-            >
-              <svg v-if="copiedId !== order._id" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="9" width="13" height="13" rx="2"/>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-              </svg>
-              <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Items preview -->
-        <div class="flex gap-3 mb-4">
-          <div class="flex -space-x-2 space-x-reverse">
-            <img
-              v-for="(item, i) in order.items.slice(0, 4)" :key="i"
-              :src="item.thumbnail || PLACEHOLDER"
-              :alt="item.name"
-              class="w-12 h-12 rounded-xl object-cover border-2 border-surface-border"
-              :style="{ zIndex: 4 - i }"
-              @error="e => e.target.src = PLACEHOLDER"
-            />
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm text-text-primary line-clamp-1">
-              {{ order.items[0]?.name }}
-              <span v-if="order.items.length > 1" class="text-text-secondary">
-                و {{ order.items.length - 1 }} کالای دیگر
-              </span>
-            </p>
-            <p class="text-xs text-text-secondary mt-1 font-fanum">
-              {{ order.items.reduce((s, i) => s + i.quantity, 0) }} عدد
-            </p>
-          </div>
-        </div>
-
-        <!-- Footer: total + cancel action -->
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-text-secondary">مبلغ کل</p>
-            <p class="text-base font-bold text-text-primary font-fanum">
-              {{ formatPrice(order.total) }}
-            </p>
-          </div>
-          <button
-            v-if="canCancel(order.status)"
-            @click.stop="openCancel(order)"
-            class="relative z-10 text-xs text-error border border-error/40 px-3 py-1.5 rounded-lg hover:bg-error/5 transition-colors"
-          >
-            لغو سفارش
-          </button>
-        </div>
-      </GlassCard>
-    </div>
-
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-8">
-      <button
-        v-for="p in totalPages" :key="p"
-        @click="page = p; fetchOrders()"
-        :class="[
-          'w-9 h-9 rounded-lg text-sm font-medium transition-colors font-fanum',
-          page === p
-            ? 'bg-brand text-white'
-            : 'border border-surface-border text-text-secondary hover:text-text-primary',
-        ]"
-      >
-        {{ p }}
-      </button>
-    </div>
-
-    <!-- Cancel confirm dialog -->
-    <Teleport to="body">
-      <div
-        v-if="cancelTarget"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-        @click.self="cancelTarget = null"
-        @keydown.esc="cancelTarget = null"
-      >
-        <GlassCard
-          padding="lg"
-          class="w-full max-w-sm flex flex-col gap-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cancel-dialog-title"
-        >
-          <h3 id="cancel-dialog-title" class="font-bold text-glass-text-primary text-base">لغو سفارش</h3>
-          <p class="text-glass-text-secondary text-sm leading-6">
-            آیا از لغو سفارش
-            <span class="font-bold text-glass-text-primary font-fanum dir-ltr">{{ cancelTarget?.orderNumber }}</span>
-            مطمئن هستید؟ این عملیات قابل برگشت نیست.
-          </p>
-          <div class="flex gap-3 mt-2">
-            <button
-              @click="confirmCancel"
-              :disabled="cancelling"
-              class="flex-1 py-2.5 rounded-xl bg-error text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
-            >
-              {{ cancelling ? 'در حال لغو...' : 'بله، لغو شود' }}
-            </button>
-            <button
-              @click="cancelTarget = null"
-              class="flex-1 py-2.5 rounded-xl border border-glass-border text-sm text-glass-text-secondary hover:text-glass-text-primary transition-colors"
-            >
-              انصراف
-            </button>
-          </div>
-        </GlassCard>
+    <div class="panel">
+      <div v-if="loading" class="list">
+        <div v-for="i in 3" :key="i" class="skel" />
       </div>
-    </Teleport>
+
+      <p v-else-if="!orders.length" class="empty-hint">سفارشی در این وضعیت یافت نشد</p>
+
+      <div v-else class="list">
+        <NuxtLink v-for="order in orders" :key="order._id" :to="`/user/orders/${order._id}`" class="order-card">
+          <div class="order-card__top">
+            <span class="order-card__num">{{ toPersianDigits(order.orderNumber) }}</span>
+            <span class="status-badge" :class="`status-badge--${order.status}`">{{ statusLabel(order.status) }}</span>
+          </div>
+          <p class="order-card__date">{{ formatDate(order.createdAt) }}</p>
+          <div class="order-card__bottom">
+            <span class="order-card__count">{{ toPersianDigits(order.items?.length || 0) }} کالا</span>
+            <span class="order-card__price">{{ formatPrice(order.total) }}</span>
+          </div>
+        </NuxtLink>
+      </div>
+
+      <div v-if="totalPages > 1" class="pager">
+        <button type="button" class="pager__btn" :disabled="page <= 1" @click="page--">
+          <AppIcon name="chevron-right" :size="14" :stroke-width="2" />
+        </button>
+        <span class="pager__label">{{ toPersianDigits(page) }} از {{ toPersianDigits(totalPages) }}</span>
+        <button type="button" class="pager__btn" :disabled="page >= totalPages" @click="page++">
+          <AppIcon name="chevron-left" :size="14" :stroke-width="2" />
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { onMounted, ref, watch } from 'vue'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import SectionHead from '~/components/ui/SectionHead.vue'
+import { orderService } from '~/services/order.service'
+import { formatPrice, toPersianDigits } from '~/utils/format'
 
-definePageMeta({ layout: 'default', middleware: ['auth'] })
-useSeoMeta({ title: 'سفارش‌های من', robots: 'noindex,nofollow' })
+definePageMeta({ layout: 'default', middleware: 'auth' })
+useSeoMeta({ title: 'سفارش‌های من | نیک' })
 
-
-import { ref, nextTick, onMounted } from 'vue'
-import { orderService }      from '~/services/order.service'
-import { useUiStore }        from '~/stores/ui.store'
-import { formatPrice, formatDate } from '~/utils/formatters'
-import BaseEmpty from '~/components/common/BaseEmpty.vue'
-import GlassCard from '~/components/glass/GlassCard.vue'
-
-const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="%23334155"%3E%3Crect width="48" height="48" rx="8"/%3E%3C/svg%3E'
-
-const ui         = useUiStore()
-const orders     = ref([])
-const loading    = ref(true)
-const page       = ref(1)
-const totalPages = ref(1)
-const activeStatus = ref('')
-const cancelTarget = ref(null)
-const cancelling   = ref(false)
-const copiedId     = ref(null)
-const ordersGridRef = ref(null)
-
-// Order-history reveal: this list is CSR-only (fetched in onMounted, not
-// SSR-prefetched like the blog grid), so the cards don't exist in the DOM
-// yet when a mount-time-only composable like useGsapReveal would take its
-// snapshot — it would find zero children and never animate. Firing the
-// tween manually right after the fetch resolves (and again on every filter
-// change) is the equivalent one-shot fade+rise, just timed correctly.
-async function revealOrders() {
-  if (!import.meta.client) return
-  await nextTick()
-  const el = ordersGridRef.value
-  if (!el || !el.children.length) return
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  const { gsap } = await import('gsap')
-  gsap.fromTo(
-    el.children,
-    { opacity: 0, y: 20 },
-    { opacity: 1, y: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out' },
-  )
+const STATUS_LABELS = {
+  pending: 'در انتظار تایید',
+  confirmed: 'تایید شده',
+  processing: 'در حال پردازش',
+  shipped: 'ارسال شده',
+  delivered: 'تحویل داده شده',
+  cancelled: 'لغو شده',
 }
+function statusLabel(s) { return STATUS_LABELS[s] || s }
 
-function copyOrderNumber(id, text) {
-  navigator.clipboard.writeText(text).then(() => {
-    copiedId.value = id
-    setTimeout(() => { copiedId.value = null }, 2000)
-  })
-}
-
-const statusTabs = [
-  { value: '',           label: 'همه' },
-  { value: 'pending',    label: 'در انتظار' },
-  { value: 'confirmed',  label: 'تأیید شده' },
-  { value: 'processing', label: 'در حال پردازش' },
-  { value: 'shipped',    label: 'ارسال شده' },
-  { value: 'delivered',  label: 'تحویل داده شده' },
-  { value: 'cancelled',  label: 'لغو شده' },
+const filters = [
+  { label: 'همه', value: '' },
+  { label: 'در انتظار', value: 'pending' },
+  { label: 'در حال پردازش', value: 'processing' },
+  { label: 'ارسال شده', value: 'shipped' },
+  { label: 'تحویل شده', value: 'delivered' },
+  { label: 'لغو شده', value: 'cancelled' },
 ]
 
-const STATUS_MAP = {
-  pending:    { label: 'در انتظار تأیید', dot: 'bg-warning',  badge: 'bg-warning/10 text-warning' },
-  confirmed:  { label: 'تأیید شده',       dot: 'bg-brand',    badge: 'bg-brand/10 text-brand' },
-  processing: { label: 'در حال پردازش',  dot: 'bg-blue-400', badge: 'bg-blue-400/10 text-blue-400' },
-  shipped:    { label: 'ارسال شده',       dot: 'bg-purple-400', badge: 'bg-purple-400/10 text-purple-400' },
-  delivered:  { label: 'تحویل داده شده', dot: 'bg-success',  badge: 'bg-success/10 text-success' },
-  cancelled:  { label: 'لغو شده',        dot: 'bg-error',    badge: 'bg-error/10 text-error' },
+const status = ref('')
+const page = ref(1)
+const orders = ref([])
+const totalPages = ref(1)
+const loading = ref(false)
+
+function setStatus(value) {
+  status.value = value
+  page.value = 1
 }
 
-function statusLabel(s) { return STATUS_MAP[s]?.label ?? s }
-function statusColor(s) { return STATUS_MAP[s] ?? { dot: 'bg-gray-400', badge: 'bg-gray-400/10 text-gray-400' } }
-function canCancel(s)   { return s === 'pending' || s === 'confirmed' }
-
-async function fetchOrders() {
+async function loadOrders() {
   loading.value = true
   try {
-    const params = { page: page.value, limit: 10 }
-    if (activeStatus.value) params.status = activeStatus.value
-    const { data } = await orderService.getMyOrders(params)
-    orders.value     = data.orders ?? []
-    totalPages.value = data.totalPages ?? 1
-    revealOrders()
-  } catch {
-    ui.addToast('خطا در دریافت سفارشات', 'error')
+    const { data } = await orderService.getMine({
+      page: page.value,
+      limit: 10,
+      ...(status.value ? { status: status.value } : {}),
+    })
+    orders.value = data.orders || []
+    totalPages.value = data.totalPages || 1
   } finally {
     loading.value = false
   }
 }
 
-function openCancel(order) {
-  cancelTarget.value = order
-}
+onMounted(loadOrders)
+watch([status, page], loadOrders)
 
-async function confirmCancel() {
-  if (!cancelTarget.value) return
-  cancelling.value = true
+function formatDate(value) {
+  if (!value) return ''
   try {
-    await orderService.cancelOrder(cancelTarget.value._id)
-    const idx = orders.value.findIndex(o => o._id === cancelTarget.value._id)
-    if (idx !== -1) orders.value[idx].status = 'cancelled'
-    ui.addToast('سفارش با موفقیت لغو شد', 'success')
-    cancelTarget.value = null
-  } catch (err) {
-    const msg = err?.response?.data?.message
-    ui.addToast(msg || 'خطا در لغو سفارش', 'error')
-  } finally {
-    cancelling.value = false
+    return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }).format(new Date(value))
+  } catch {
+    return ''
   }
 }
-
-onMounted(fetchOrders)
 </script>
 
 <style scoped>
-.dir-ltr { direction: ltr; }
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.orders { padding: 24px 0 8px; }
+
+.filters {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 18px 16px;
+  scrollbar-width: none;
+}
+.filters::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+.filter-chip--active {
+  color: #fff;
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  border-color: transparent;
+}
+
+.panel { margin: 0 18px; }
+
+.list { display: flex; flex-direction: column; gap: 12px; }
+.skel { height: 92px; border-radius: 16px; background: var(--glass); animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+
+.empty-hint { font-size: 12.5px; color: var(--text-secondary); padding: 8px 2px; }
+
+.order-card {
+  display: block;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(150deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .03) 55%, rgba(231, 175, 66, .28)) border-box;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .order-card {
+  border-width: 1.5px;
+  box-shadow: var(--glass-shadow);
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 175, 66, .5) 55%, rgba(122, 90, 220, .4) 100%) border-box;
+}
+
+.order-card__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.order-card__num { font-size: 12.5px; font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; }
+.order-card__date { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+
+.order-card__bottom { display: flex; align-items: center; justify-content: space-between; }
+.order-card__count { font-size: 11.5px; color: var(--text-secondary); }
+.order-card__price { font-size: 13px; font-weight: 700; color: var(--brand-light); }
+[data-theme='light'] .order-card__price { color: var(--brand-dark); }
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(158, 158, 158, .35);
+}
+.status-badge--pending { background: linear-gradient(135deg, rgba(231, 175, 66, .95), rgba(180, 130, 40, .9)); }
+.status-badge--confirmed,
+.status-badge--processing { background: linear-gradient(135deg, rgba(122, 90, 220, .9), rgba(90, 60, 190, .9)); }
+.status-badge--shipped { background: linear-gradient(135deg, rgba(110, 176, 130, .95), rgba(61, 139, 82, .9)); }
+.status-badge--delivered { background: linear-gradient(135deg, rgba(61, 139, 82, .95), rgba(45, 107, 62, .92)); }
+.status-badge--cancelled { background: linear-gradient(135deg, rgba(232, 131, 127, .95), rgba(180, 70, 65, .9)); }
+
+.pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding-top: 18px; }
+.pager__btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+.pager__btn:disabled { opacity: .4; cursor: not-allowed; }
+.pager__label { font-size: 12px; color: var(--text-secondary); }
 </style>

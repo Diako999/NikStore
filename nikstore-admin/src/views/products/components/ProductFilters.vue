@@ -1,106 +1,91 @@
 <template>
-  <div class="admin-card mb-4">
-    <div class="flex flex-wrap gap-3 items-end">
-
-      <!-- Search -->
-      <div class="flex-1 min-w-[200px]">
-        <AdminInput v-model="filters.search" placeholder="جستجو در نام محصول..." prepend="🔍" />
-      </div>
-
-      <!-- Category -->
-      <div class="w-44">
-        <AdminSelect v-model="filters.categoryId" placeholder="همه دسته‌ها" :options="categoryOptions" />
-      </div>
-
-      <!-- Brand -->
-      <div class="w-36">
-        <AdminSelect v-model="filters.brandId" placeholder="همه برندها" :options="brandOptions" />
-      </div>
-
-      <!-- Status -->
-      <div class="w-36">
-        <AdminSelect v-model="filters.status" placeholder="همه وضعیت‌ها" :options="statusOptions" />
-      </div>
-
-      <!-- Sort -->
-      <div class="w-40">
-        <AdminSelect v-model="filters.sortBy" :options="sortOptions" />
-      </div>
-
-      <!-- Reset -->
-      <AdminButton v-if="hasActiveFilters" variant="ghost" size="md" @click="reset">
-        پاک کردن فیلتر
-      </AdminButton>
-
-    </div>
+  <div class="product-filters">
+    <AdminInput
+      v-model="localSearch"
+      icon="search"
+      placeholder="جستجوی نام محصول..."
+      class="product-filters__search"
+      @keyup.enter="emitChange"
+    />
+    <AdminSelect
+      v-model="filters.category"
+      placeholder="همه دسته‌بندی‌ها"
+      :options="categoryOptions"
+      class="product-filters__field"
+    />
+    <AdminSelect
+      v-model="filters.status"
+      placeholder="همه وضعیت‌ها"
+      :options="statusOptions"
+      class="product-filters__field"
+    />
+    <AdminButton variant="secondary" icon="search" @click="emitChange">اعمال فیلتر</AdminButton>
+    <AdminButton v-if="hasFilters" variant="ghost" icon="close" @click="reset">پاک کردن</AdminButton>
   </div>
 </template>
 
 <script setup>
-import { reactive, computed, watch } from 'vue'
-import { useDebounce } from '@/composables/useDebounce'
-import AdminInput  from '@/components/common/AdminInput.vue'
-import AdminSelect from '@/components/common/AdminSelect.vue'
-import AdminButton from '@/components/common/AdminButton.vue'
-import { PRODUCT_STATUSES } from '@/utils/constants'
+import { computed, reactive, ref, watch } from 'vue'
+import AdminInput from '../../../components/common/AdminInput.vue'
+import AdminSelect from '../../../components/common/AdminSelect.vue'
+import AdminButton from '../../../components/common/AdminButton.vue'
 
 const props = defineProps({
   categories: { type: Array, default: () => [] },
-  brands:     { type: Array, default: () => [] },
-  loading:    Boolean,
-})
-const emit = defineEmits(['change'])
-
-const filters = reactive({
-  search:     '',
-  categoryId: '',
-  brandId:    '',
-  status:     '',
-  sortBy:     'newest',
 })
 
-const debouncedSearch = useDebounce(computed(() => filters.search))
+const modelValue = defineModel({
+  type: Object,
+  default: () => ({ search: '', category: '', status: '' }),
+})
 
-watch(debouncedSearch, () => emitChange())
-watch([() => filters.categoryId, () => filters.brandId, () => filters.status, () => filters.sortBy], () => emitChange())
+const filters = reactive({ ...modelValue.value })
+const localSearch = ref(modelValue.value.search || '')
+
+const statusOptions = [
+  { label: 'در حال فروش', value: 'active' },
+  { label: 'پیش‌نویس', value: 'draft' },
+  { label: 'غیرفعال', value: 'inactive' },
+]
+
+const categoryOptions = computed(() =>
+  props.categories.map((category) => ({
+    label: `${'ـ '.repeat(category.depth || 0)}${category.name}`,
+    value: category._id,
+  })),
+)
+
+const hasFilters = computed(() => !!(filters.category || filters.status || localSearch.value))
 
 function emitChange() {
-  emit('change', {
-    search:     debouncedSearch.value,
-    categoryId: filters.categoryId,
-    brandId:    filters.brandId,
-    status:     filters.status,
-    sortBy:     filters.sortBy,
-  })
+  modelValue.value = { ...filters, search: localSearch.value }
 }
 
 function reset() {
-  filters.search = filters.categoryId = filters.brandId = filters.status = ''
-  filters.sortBy = 'newest'
+  filters.category = ''
+  filters.status = ''
+  localSearch.value = ''
+  emitChange()
 }
 
-const hasActiveFilters = computed(() => filters.search || filters.categoryId || filters.brandId || filters.status)
-
-const categoryOptions = computed(() =>
-  props.categories.map(c => ({
-    value: c._id,
-    label: c.depth > 0 ? `${'— '.repeat(c.depth)}${c.name}` : c.name,
-  }))
+watch(
+  () => [filters.category, filters.status],
+  () => emitChange(),
 )
-
-const brandOptions = computed(() =>
-  props.brands.map(b => ({ value: b._id, label: b.name }))
-)
-
-const statusOptions = Object.entries(PRODUCT_STATUSES).map(([v, d]) => ({
-  value: v, label: d.label,
-}))
-
-const sortOptions = [
-  { value: 'newest',     label: 'جدیدترین' },
-  { value: 'oldest',     label: 'قدیمی‌ترین' },
-  { value: 'price_asc',  label: 'ارزان‌ترین' },
-  { value: 'price_desc', label: 'گران‌ترین' },
-  { value: 'stock_asc',  label: 'کمترین موجودی' },
-]
 </script>
+
+<style scoped>
+.product-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.product-filters__search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+.product-filters__field {
+  min-width: 180px;
+}
+</style>

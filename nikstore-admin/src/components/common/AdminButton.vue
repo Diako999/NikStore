@@ -1,46 +1,119 @@
 <template>
   <button
-    @click="$emit('click', $event)"
+    class="admin-btn"
+    :class="[`admin-btn--${variant}`, `admin-btn--${size}`]"
+    :type="type"
     :disabled="disabled || loading"
-    :class="[
-      'inline-flex items-center justify-center gap-2 font-medium rounded-lg',
-      'transition-all duration-150 select-none',
-      sizeClasses,
-      variantClasses,
-      block ? 'w-full' : '',
-      (disabled || loading) ? 'opacity-50 cursor-not-allowed pointer-events-none' : '',
-    ]"
   >
-    <svg v-if="loading" class="animate-spin w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-    </svg>
-    <slot />
+    <AppIcon v-if="icon && !loading" :name="icon" :size="iconSize" />
+    <span v-if="loading" class="admin-btn__spinner" aria-hidden="true" />
+    <span v-if="$slots.default"><slot /></span>
   </button>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import AppIcon from '../icons/AppIcon.vue'
 
 const props = defineProps({
-  variant:  { type: String, default: 'primary' },
-  size:     { type: String, default: 'md' },
-  loading:  { type: Boolean, default: false },
+  variant: { type: String, default: 'primary' }, // primary | secondary | danger | ghost
+  size: { type: String, default: 'md' }, // sm | md
+  type: { type: String, default: 'button' },
+  icon: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
-  block:    { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
 })
-defineEmits(['click'])
 
-const sizeClasses = computed(() => ({
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-2.5 text-base',
-}[props.size] ?? 'px-4 py-2 text-sm'))
-
-const variantClasses = computed(() => ({
-  primary:   'bg-primary text-white hover:bg-primary-dark active:scale-[0.98]',
-  secondary: 'bg-surface text-text-primary border border-border hover:bg-border',
-  danger:    'bg-error text-white hover:bg-red-600 active:scale-[0.98]',
-  ghost:     'text-text-secondary hover:bg-surface hover:text-text-primary',
-}[props.variant] ?? ''))
+const iconSize = computed(() => (props.size === 'sm' ? 15 : 17))
 </script>
+
+<style scoped>
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: filter .15s ease, opacity .15s ease, transform .1s ease;
+}
+.admin-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.admin-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.admin-btn--md {
+  font-size: 13.5px;
+  padding: 10px 18px;
+}
+.admin-btn--sm {
+  font-size: 12.5px;
+  padding: 7px 13px;
+}
+
+.admin-btn--primary {
+  color: #fff;
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  border: 1px solid rgba(255, 255, 255, .25);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .30);
+}
+[data-theme='light'] .admin-btn--primary {
+  border: 1px solid rgba(255, 255, 255, .3);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .22), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+.admin-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.admin-btn--secondary {
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+[data-theme='light'] .admin-btn--secondary {
+  box-shadow: var(--glass-shadow);
+}
+.admin-btn--secondary:hover:not(:disabled) {
+  background: var(--glass-strong);
+}
+
+.admin-btn--danger {
+  color: #fff;
+  background: linear-gradient(135deg, #E27C79 0%, #D9534F 60%, #B84440 100%);
+  border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: 0 8px 20px rgba(217, 83, 79, .28);
+}
+.admin-btn--danger:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.admin-btn--ghost {
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+}
+.admin-btn--ghost:hover:not(:disabled) {
+  background: var(--glass);
+  color: var(--text-primary);
+}
+
+.admin-btn__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  animation: admin-btn-spin .6s linear infinite;
+}
+@keyframes admin-btn-spin {
+  to { transform: rotate(360deg); }
+}
+</style>

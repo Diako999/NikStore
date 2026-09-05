@@ -1,9 +1,9 @@
 import http from './http.service'
 
 export const pageService = {
-  getAll:    ()       => http.get('/pages/admin'),
-  getById:   (id)     => http.get(`/pages/admin/${id}`),
-  create:    (data)   => http.post('/pages', data),
-  update:    (id, d)  => http.patch(`/pages/${id}`, d),
-  remove:    (id)     => http.delete(`/pages/${id}`),
+  getAdminList: () => http.get('/pages/admin'),
+  getAdminDetail: (id) => http.get(`/pages/admin/${id}`),
+  create: (payload) => http.post('/pages', payload),
+  update: (id, payload) => http.patch(`/pages/${id}`, payload),
+  remove: (id) => http.delete(`/pages/${id}`),
 }

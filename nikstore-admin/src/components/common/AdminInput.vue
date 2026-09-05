@@ -1,66 +1,89 @@
 <template>
-  <div>
-    <label v-if="label" class="field-label">
-      {{ label }}
-      <span v-if="required" class="text-error">*</span>
-    </label>
-    <div :class="[
-      'flex items-center border rounded-lg bg-card overflow-hidden transition-all duration-150',
-      error
-        ? 'border-error ring-2 ring-error/15'
-        : focused
-          ? 'border-primary ring-2 ring-primary/15'
-          : 'border-border',
-      disabled ? 'bg-surface opacity-60' : '',
-    ]">
-      <div v-if="prepend"
-           class="px-3 text-text-secondary bg-surface border-l border-border flex-shrink-0 self-stretch flex items-center text-sm">
-        {{ prepend }}
-      </div>
+  <label class="admin-field">
+    <span v-if="label" class="admin-field__label">{{ label }}</span>
+    <span class="admin-field__control" :class="{ 'admin-field__control--error': !!error }">
+      <AppIcon v-if="icon" :name="icon" :size="16" class="admin-field__icon" />
       <input
         v-model="model"
+        class="admin-field__input"
         :type="type"
         :placeholder="placeholder"
         :disabled="disabled"
-        :dir="dir"
         :autocomplete="autocomplete"
-        class="flex-1 px-3 py-2.5 text-sm text-text-primary bg-transparent outline-none placeholder:text-text-disabled"
-        @focus="focused = true"
-        @blur="focused = false"
-        @keydown.enter="$emit('enter')"
-      />
-      <div v-if="append"
-           class="px-3 text-text-secondary bg-surface border-r border-border flex-shrink-0 self-stretch flex items-center text-sm">
-        {{ append }}
-      </div>
-    </div>
-    <p v-if="error" class="field-error">{{ error }}</p>
-    <p v-else-if="hint" class="text-text-disabled text-xs mt-1">{{ hint }}</p>
-  </div>
+      >
+    </span>
+    <span v-if="error" class="admin-field__error">{{ error }}</span>
+  </label>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import AppIcon from '../icons/AppIcon.vue'
 
-const props = defineProps({
-  modelValue:  { default: '' },
-  label:       String,
-  placeholder: String,
-  type:        { default: 'text' },
-  error:       String,
-  hint:        String,
-  disabled:    Boolean,
-  required:    Boolean,
-  dir:          { default: 'rtl' },
-  prepend:      String,
-  append:       String,
-  autocomplete: { default: 'off' },
+defineProps({
+  label: { type: String, default: '' },
+  type: { type: String, default: 'text' },
+  placeholder: { type: String, default: '' },
+  disabled: { type: Boolean, default: false },
+  error: { type: String, default: '' },
+  icon: { type: String, default: '' },
+  autocomplete: { type: String, default: 'off' },
 })
-const emit = defineEmits(['update:modelValue', 'enter'])
 
-const focused = ref(false)
-const model   = computed({
-  get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v),
-})
+const model = defineModel({ type: [String, Number], default: '' })
 </script>
+
+<style scoped>
+.admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-field__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.admin-field__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  transition: border-color .15s ease;
+}
+.admin-field__control:focus-within {
+  border-color: var(--brand-light);
+}
+.admin-field__control--error {
+  border-color: #D9534F;
+}
+.admin-field__icon {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+.admin-field__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13.5px;
+  padding: 11px 0;
+}
+.admin-field__input::placeholder {
+  color: var(--text-disabled);
+}
+.admin-field__input:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+.admin-field__error {
+  font-size: 11.5px;
+  color: #D9534F;
+}
+</style>

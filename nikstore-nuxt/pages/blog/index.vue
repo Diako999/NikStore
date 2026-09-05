@@ -1,186 +1,232 @@
 <template>
-  <div class="min-h-screen">
+  <div class="blog-page">
+    <header class="blog-page__head">
+      <h1>وبلاگ</h1>
+      <p>آخرین مطالب مد، استایل و پوشاک</p>
+    </header>
 
-    <div class="bg-gradient-to-l from-brand to-brand-dark py-12 text-white">
-      <div class="container mx-auto px-4 text-center">
-        <h1 class="text-3xl font-black mb-2">بلاگ {{ settingsStore.siteName }}</h1>
-        <p class="text-white/80 text-sm">مقالات، نکات و راهنماهای خرید پوشاک</p>
-      </div>
+    <div v-if="tags.length" class="blog-tags">
+      <button
+        type="button"
+        class="tag-chip"
+        :class="{ 'tag-chip--active': !activeTag }"
+        @click="selectTag(null)"
+      >
+        همه
+      </button>
+      <button
+        v-for="t in tags"
+        :key="t.tag"
+        type="button"
+        class="tag-chip"
+        :class="{ 'tag-chip--active': activeTag === t.tag }"
+        @click="selectTag(t.tag)"
+      >
+        {{ t.tag }}
+      </button>
     </div>
 
-    <div class="container mx-auto px-4 py-8">
-      <div class="flex flex-col lg:flex-row gap-8">
-
-        <aside class="w-full lg:w-64 flex-shrink-0 space-y-5">
-          <GlassCard padding="md">
-            <h3 class="font-bold text-glass-text-primary text-sm mb-3">جستجو</h3>
-            <GlassSearchBar
-              v-model="store.filters.search"
-              placeholder="جستجو در بلاگ..."
-              @update:model-value="onSearchInput"
-            />
-          </GlassCard>
-
-          <GlassCard padding="md">
-            <h3 class="font-bold text-glass-text-primary text-sm mb-3">مرتب‌سازی</h3>
-            <div class="space-y-1">
-              <button
-                v-for="s in sortOptions" :key="s.value"
-                @click="setSort(s.value)"
-                :class="['flex items-center gap-2 w-full px-3 py-2 rounded-xl text-sm transition-all', store.filters.sortBy === s.value ? 'bg-brand text-white' : 'text-glass-text-secondary hover:bg-glass']"
-              >
-                <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <path :d="s.icon" />
-                </svg>{{ s.label }}
-              </button>
-            </div>
-          </GlassCard>
-
-          <GlassCard v-if="store.tags.length" padding="md">
-            <h3 class="font-bold text-glass-text-primary text-sm mb-3">موضوعات</h3>
-            <div class="flex flex-wrap gap-2">
-              <button @click="clearTag" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', !store.filters.tag ? 'bg-brand text-white border-brand' : 'border-glass-border text-glass-text-secondary']">همه</button>
-              <button v-for="t in store.tags" :key="t.tag" @click="selectTag(t.tag)" :class="['text-xs px-3 py-1.5 rounded-xl transition-all border', store.filters.tag === t.tag ? 'bg-brand text-white border-brand' : 'border-glass-border text-glass-text-secondary']">
-                #{{ t.tag }} <span class="text-[10px] opacity-70">{{ t.count }}</span>
-              </button>
-            </div>
-          </GlassCard>
-        </aside>
-
-        <main class="flex-1 min-w-0">
-          <div v-if="store.loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            <GlassCard v-for="i in 6" :key="i" padding="sm" class="overflow-hidden animate-pulse !p-0">
-              <div class="aspect-[16/9] bg-gray-200 dark:bg-gray-700"></div>
-              <div class="p-4 space-y-3">
-                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-              </div>
-            </GlassCard>
+    <div class="blog-list">
+      <template v-if="pending">
+        <div v-for="i in 3" :key="i" class="post-skel" />
+      </template>
+      <template v-else-if="posts.length">
+        <NuxtLink
+          v-for="p in posts"
+          :key="p._id"
+          :to="`/blog/${p.slug}`"
+          class="post-card"
+        >
+          <div class="post-card__thumb">
+            <img v-if="p.featuredImage" :src="p.featuredImage" :alt="p.title" loading="lazy">
+            <div v-else class="post-card__fallback" />
           </div>
-
-          <GlassCard v-else-if="!store.posts.length" padding="lg" class="flex flex-col items-center py-20 gap-4">
-            <span class="text-5xl">📭</span>
-            <p class="text-glass-text-secondary text-center">هنوز مقاله‌ای منتشر نشده.</p>
-          </GlassCard>
-
-          <div v-else>
-            <p class="text-sm text-glass-text-secondary mb-4">{{ store.total }} مقاله یافت شد</p>
-            <div ref="blogGridRef" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              <BlogCard v-for="post in store.posts" :key="post._id" :post="post" />
-            </div>
-            <div v-if="store.totalPages > 1" class="flex justify-center mt-8 gap-2 flex-wrap">
-              <button
-                v-for="p in store.totalPages" :key="p"
-                @click="goToPage(p)"
-                :class="['w-9 h-9 rounded-xl text-sm font-medium transition-all border', store.filters.page === p ? 'bg-brand text-white border-brand' : 'bg-glass border-glass-border text-glass-text-secondary']"
-              >{{ p }}</button>
+          <div class="post-card__body">
+            <h2>{{ p.title }}</h2>
+            <p v-if="p.excerpt" class="post-card__excerpt">{{ p.excerpt }}</p>
+            <div class="post-card__meta">
+              <span>{{ authorName(p.author) }}</span>
+              <span class="post-card__dot">·</span>
+              <span>{{ formatDate(p.publishedAt || p.createdAt) }}</span>
             </div>
           </div>
-        </main>
-      </div>
+        </NuxtLink>
+      </template>
+      <p v-else class="empty-hint">هنوز مطلبی در وبلاگ ثبت نشده است</p>
+    </div>
+
+    <div v-if="totalPages > 1" class="blog-pager">
+      <button type="button" :disabled="page <= 1" @click="goPage(page - 1)">قبلی</button>
+      <span>{{ toPersianDigits(page) }} از {{ toPersianDigits(totalPages) }}</span>
+      <button type="button" :disabled="page >= totalPages" @click="goPage(page + 1)">بعدی</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { useDebounceFn } from '@vueuse/core'
-import BlogCard from '~/components/blog/BlogCard.vue'
-import GlassCard from '~/components/glass/GlassCard.vue'
-import GlassSearchBar from '~/components/glass/GlassSearchBar.vue'
-import { useGsapReveal } from '~/composables/useGsapReveal'
+import { computed } from 'vue'
+import { toPersianDigits } from '~/utils/format'
 
-definePageMeta({ layout: 'default' })
-const settingsStore = useSettingsStore()
+const route = useRoute()
+const router = useRouter()
 
-const config = useRuntimeConfig()
-const store  = useBlogStore()
+const page = computed(() => Math.max(1, parseInt(route.query.page, 10) || 1))
+const activeTag = computed(() => (typeof route.query.tag === 'string' && route.query.tag ? route.query.tag : null))
 
-useSeoMeta({
-  title:       'وبلاگ | آخرین مقالات',
-  description: 'مقالات آموزشی در زمینه مد، استایل و پوشاک',
-  ogType:      'website',
-  ogUrl:       `${config.public.siteUrl}/blog`,
+// Reads through $fetch (not blogService) so the initial load runs SSR-side
+// to match the /blog/** swr rule — blogService's axios instance uses a
+// relative baseURL, which only resolves in the browser.
+const { data: listData, pending } = await useAsyncData(
+  'blog-list',
+  () => $fetch('/api/v1/blog', {
+    params: {
+      page: page.value,
+      limit: 10,
+      sortBy: 'newest',
+      ...(activeTag.value ? { tag: activeTag.value } : {}),
+    },
+  }),
+  { watch: [page, activeTag], transform: (r) => r?.data ?? r },
+)
+
+const posts = computed(() => listData.value?.posts ?? [])
+const totalPages = computed(() => listData.value?.totalPages ?? 1)
+
+const { data: tagsData } = await useAsyncData('blog-tags', () => $fetch('/api/v1/blog/tags'), {
+  transform: (r) => r?.data ?? r ?? [],
 })
-useHead({
-  link: [{ rel: 'canonical', href: `${config.public.siteUrl}/blog` }],
-  script: computed(() => {
-    const posts = store.posts
-    if (!posts?.length) return []
-    return [{
-      type: 'application/ld+json',
-      key:  'jsonld-blog-list',
-      innerHTML: JSON.stringify({
-        '@context':  'https://schema.org',
-        '@type':     'Blog',
-        name:        `وبلاگ ${settingsStore.siteName}`,
-        description: 'مقالات آموزشی در زمینه مد، استایل و پوشاک',
-        url:         `${config.public.siteUrl}/blog`,
-        blogPost:    posts.slice(0, 10).map(p => ({
-          '@type':       'BlogPosting',
-          headline:       p.title,
-          url:            `${config.public.siteUrl}/blog/${p.slug}`,
-          datePublished:  p.publishedAt,
-          image:          p.featuredImage || undefined,
-        })),
-      }),
-    }]
-  }),
-})
+const tags = computed(() => tagsData.value ?? [])
 
-// Outlined stroke-path icons (viewBox 0 0 24 24) — matches the simple
-// line-icon language used everywhere else (header/cart/search icons)
-// instead of raw platform emoji, which render inconsistently across OSes.
-const sortOptions = [
-  { value: 'newest',  icon: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z', label: 'جدیدترین' },
-  { value: 'oldest',  icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5', label: 'قدیمی‌ترین' },
-  { value: 'popular', icon: 'M2.25 18L9 11.25l4.306 4.306a11.95 11.95 0 015.814-5.518L21.75 6M21.75 6h-5.25M21.75 6v5.25', label: 'محبوب‌ترین' },
-]
-
-// ── SSR: pre-fetch posts and tags ───────────────────────────────
-await Promise.all([
-  useAsyncData('blog-posts', async () => {
-    const res = await $fetch('/api/v1/blog', {
-      params: { page: store.filters.page, limit: store.filters.limit, sortBy: store.filters.sortBy, status: 'published' },
-    })
-    const d = res?.data ?? res
-    store.posts      = d?.posts      ?? []
-    store.total      = d?.total      ?? 0
-    store.totalPages = d?.totalPages ?? 1
-    return null
-  }),
-  useAsyncData('blog-tags', async () => {
-    const res = await $fetch('/api/v1/blog/tags')
-    const d   = res?.data ?? res
-    store.tags = Array.isArray(d) ? d : []
-    return null
-  }),
-])
-
-// Fires on mount — the posts above are already resolved via the awaited
-// useAsyncData call, so the grid's cards exist in the DOM by the time this
-// composable takes its children snapshot (unlike a CSR-only fetch-in-onMounted
-// list, where the snapshot would land before the data — see the order-history
-// page for that case).
-const blogGridRef = ref(null)
-useGsapReveal(blogGridRef, { y: 20, stagger: 0.06 })
-
-const onSearchInput = useDebounceFn(() => {
-  store.filters.page = 1
-  store.fetchPosts()
-}, 350)
-
-function setSort(val) { store.filters.sortBy = val; store.filters.page = 1; store.fetchPosts() }
-function selectTag(tag) { store.filters.tag = tag; store.filters.page = 1; store.fetchPosts() }
-function clearTag() { store.filters.tag = ''; store.filters.page = 1; store.fetchPosts() }
-
-function goToPage(p) {
-  store.filters.page = p
-  store.fetchPosts()
-  if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' })
+function selectTag(tag) {
+  const query = { ...route.query }
+  delete query.page
+  if (tag) query.tag = tag
+  else delete query.tag
+  router.push({ query })
 }
 
-onMounted(() => {
-  if (!store.posts.length) store.fetchPosts()
-  if (!store.tags.length)  store.fetchTags()
-})
+function goPage(next) {
+  router.push({ query: { ...route.query, page: next } })
+}
+
+function authorName(author) {
+  if (!author) return 'نیک'
+  const name = [author.firstName, author.lastName].filter(Boolean).join(' ')
+  return name || 'نیک'
+}
+
+const dateFormatter = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' })
+function formatDate(value) {
+  if (!value) return ''
+  return dateFormatter.format(new Date(value))
+}
+
+useSeoMeta({ title: 'وبلاگ' })
 </script>
+
+<style scoped>
+.blog-page__head { margin: 18px 18px 16px; }
+.blog-page__head h1 { font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 4px; }
+.blog-page__head p { font-size: 12px; color: var(--text-secondary); }
+
+.blog-tags {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 18px;
+  margin-bottom: 18px;
+  scrollbar-width: none;
+}
+.blog-tags::-webkit-scrollbar { display: none; }
+
+.tag-chip {
+  flex: 0 0 auto;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tag-chip--active {
+  color: #fff;
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  border-color: transparent;
+}
+
+.blog-list { display: flex; flex-direction: column; gap: 14px; margin: 0 18px 22px; }
+
+.post-card {
+  display: block;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid transparent;
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(150deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .03) 55%, rgba(231, 175, 66, .28)) border-box;
+}
+[data-theme='light'] .post-card {
+  border-width: 1.5px;
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+  background:
+    linear-gradient(var(--glass), var(--glass)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 175, 66, .5) 55%, rgba(122, 90, 220, .4) 100%) border-box;
+}
+
+.post-card__thumb { width: 100%; height: 170px; background: var(--glass); }
+.post-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.post-card__fallback { width: 100%; height: 100%; background: linear-gradient(120deg, rgba(61, 139, 82, .25), rgba(231, 175, 66, .15)); }
+
+.post-card__body { padding: 14px 16px 16px; }
+.post-card__body h2 { font-size: 14.5px; font-weight: 700; line-height: 1.5; margin-bottom: 6px; color: var(--text-primary); }
+.post-card__excerpt {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.post-card__meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-disabled); }
+.post-card__dot { opacity: .6; }
+
+.post-skel { height: 220px; border-radius: 18px; background: var(--glass); animation: pulse 1.6s ease-in-out infinite; }
+.empty-hint { margin: 0 18px; font-size: 12.5px; color: var(--text-secondary); }
+
+.blog-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 8px 18px 26px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.blog-pager button {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+.blog-pager button:disabled { opacity: .4; cursor: not-allowed; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+</style>

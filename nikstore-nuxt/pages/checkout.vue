@@ -1,618 +1,315 @@
 <template>
-  <div class="container-main py-8 min-h-[70vh]">
+  <div class="checkout-page">
+    <header class="checkout-header">
+      <button type="button" class="checkout-header__back" aria-label="بازگشت" @click="$router.back()">
+        <AppIcon name="chevron-left" :size="18" :stroke-width="2" />
+      </button>
+      <h1>تسویه حساب</h1>
+      <span class="checkout-header__spacer" />
+    </header>
 
-    <!-- Sticky mobile total bar (UXID-016). top-28 (112px) clears the
-         sticky global header's real mobile height (h-14 main row + its
-         own mobile search row = 110px) — top-14 (56px, only the main
-         row) left this bar sticking *inside* the header's own band, so
-         the header (higher z-index) fully covered it on scroll. -->
-    <div v-if="checkoutItems.length" class="sticky top-28 z-10 lg:hidden bg-glass backdrop-blur-md border-b border-glass-border px-4 py-2.5 flex justify-between items-center text-sm -mx-4 mb-4">
-      <span class="text-glass-text-secondary">مبلغ قابل پرداخت</span>
-      <span class="font-fanum font-black text-glass-brand text-base">{{ formatPrice(checkoutTotal) }}</span>
+    <div v-if="loading" class="checkout-state">
+      <p>در حال آماده‌سازی سفارش...</p>
     </div>
 
-    <!-- Stepper -->
-    <ol class="flex items-center justify-center gap-0 mb-10 select-none list-none p-0 m-0" aria-label="مراحل تکمیل خرید">
-      <template v-for="(s, i) in steps" :key="s.key">
-        <li class="flex flex-col items-center gap-1.5" :aria-current="currentStep === i ? 'step' : undefined">
-          <div :class="[
-            'w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300',
-            currentStep > i ? 'bg-brand text-white'
-              : currentStep === i ? 'bg-brand text-white ring-4 ring-brand/20'
-              : 'bg-surface-border text-text-disabled',
-          ]" aria-hidden="true">
-            <svg v-if="currentStep > i" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-            </svg>
-            <span v-else>{{ i + 1 }}</span>
-          </div>
-          <span :class="['text-xs font-medium whitespace-nowrap', currentStep >= i ? 'text-text-primary' : 'text-text-disabled']">{{ s.label }}</span>
-        </li>
-        <li v-if="i < steps.length - 1" :class="['h-0.5 w-16 sm:w-24 mx-1 mb-5 transition-all duration-300', currentStep > i ? 'bg-brand' : 'bg-surface-border']" aria-hidden="true" />
-      </template>
-    </ol>
-
-    <!-- Empty cart guard -->
-    <div v-if="!checkoutItems.length && !placing" class="text-center py-20">
-      <div class="text-5xl mb-4">🛒</div>
-      <p class="text-text-secondary mb-4">سبد خرید شما خالی است</p>
-      <GlassButton variant="primary" to="/products">مشاهده محصولات</GlassButton>
+    <div v-else-if="initError" class="checkout-state checkout-state--error">
+      <p>{{ initError }}</p>
+      <button type="button" class="checkout-retry" @click="init">تلاش مجدد</button>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <template v-else>
+      <section class="checkout-section">
+        <h2 class="checkout-section__title">خلاصه سفارش</h2>
+        <ul class="order-summary">
+          <li v-for="item in cartStore.items" :key="item.productId + (item.variant || '')" class="order-summary__row">
+            <span class="order-summary__name">{{ item.name }} × {{ toPersianDigits(item.qty) }}</span>
+            <span class="order-summary__price">{{ formatPrice(item.price * item.qty) }}</span>
+          </li>
+        </ul>
+        <div class="order-summary__total">
+          <span>جمع کل</span>
+          <span>{{ formatPrice(cartStore.totalPrice) }}</span>
+        </div>
+      </section>
 
-      <!-- Main content -->
-      <div class="lg:col-span-2 space-y-5">
-
-        <!-- STEP 0: آدرس تحویل -->
-        <div v-show="currentStep === 0" :inert="currentStep !== 0">
-          <GlassCard padding="lg" class="space-y-4">
-            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۱</span>
-              آدرس تحویل
-            </h2>
-
-            <div v-if="loadingAddresses" class="space-y-3">
-              <div v-for="i in 2" :key="i" class="h-24 rounded-xl skeleton" />
-            </div>
-
-            <div v-else-if="addresses.length" class="space-y-3">
-              <div
-                role="radiogroup"
-                aria-labelledby="addr-group-label"
-              >
-                <span id="addr-group-label" class="sr-only">انتخاب آدرس تحویل</span>
-                <div
-                  v-for="addr in addresses" :key="addr._id"
-                  role="radio"
-                  :aria-checked="selectedAddressId === addr._id"
-                  tabindex="0"
-                  @click="selectedAddressId = addr._id"
-                  @keydown.enter.prevent="selectedAddressId = addr._id"
-                  @keydown.space.prevent="selectedAddressId = addr._id"
-                  :class="['flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all',
-                    selectedAddressId === addr._id ? 'border-brand bg-brand/5' : 'border-surface-border hover:border-brand/40',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1']"
-                >
-                  <div :class="['w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-all',
-                    selectedAddressId === addr._id ? 'border-brand' : 'border-surface-border']" aria-hidden="true">
-                    <div v-if="selectedAddressId === addr._id" class="w-2.5 h-2.5 rounded-full bg-brand" />
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-bold text-text-primary text-sm">{{ addr.title }}</span>
-                      <span v-if="addr.isDefault" class="text-[11px] bg-brand/10 text-brand px-2 py-0.5 rounded-full">پیش‌فرض</span>
-                    </div>
-                    <p class="text-text-primary text-sm mt-1">{{ addr.recipientName }}</p>
-                    <p class="text-text-secondary text-xs mt-0.5 leading-5">{{ addr.province }}، {{ addr.city }}، {{ addr.street }}، {{ addr.detail }}</p>
-                    <p class="text-text-disabled text-xs font-fanum mt-0.5">{{ addr.recipientPhone }} · کد پستی: {{ addr.postalCode }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <button @click="showAddressForm = !showAddressForm"
-                class="w-full py-3 rounded-xl border-2 border-dashed border-surface-border text-sm text-text-secondary hover:border-brand/40 hover:text-brand transition-colors flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
-                {{ showAddressForm ? 'بستن فرم' : 'افزودن آدرس جدید' }}
-              </button>
-            </div>
-
-            <div v-else-if="!loadingAddresses && !showAddressForm" class="py-6 text-center">
-              <p class="text-text-secondary text-sm mb-3">آدرسی ثبت نشده است</p>
-              <GlassButton variant="primary" size="sm" @click="showAddressForm = true">افزودن آدرس</GlassButton>
-            </div>
-
-            <Transition name="expand">
-              <form v-if="showAddressForm" class="border-t border-surface-border pt-5 space-y-5" @submit.prevent="saveNewAddress" novalidate>
-
-                <!-- عنوان آدرس — full width with chip presets -->
-                <div class="flex flex-col gap-2">
-                  <label class="form-label">عنوان آدرس <span class="text-error" aria-hidden="true">*</span></label>
-                  <div class="flex gap-2" role="group" aria-label="انتخاب سریع عنوان">
-                    <button
-                      v-for="p in ['خانه', 'محل کار', 'خانه پدری']" :key="p"
-                      type="button"
-                      @click="addrForm.title = p"
-                      :class="[
-                        'flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition-all duration-150',
-                        addrForm.title === p
-                          ? 'border-brand bg-brand/10 text-brand'
-                          : 'border-surface-border text-text-secondary hover:border-brand/40 hover:text-brand',
-                      ]"
-                    >{{ p }}</button>
-                  </div>
-                  <GlassInput v-model="addrForm.title" placeholder="یا عنوان دلخواه بنویس..." maxlength="30" :error="addrErrors.title" aria-required="true" />
-                </div>
-
-                <!-- نام + تلفن -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <GlassInput v-model="addrForm.recipientName" label="نام گیرنده" placeholder="نام و نام خانوادگی" :error="addrErrors.recipientName" aria-required="true" />
-                  <div class="flex flex-col gap-1.5">
-                    <GlassInput v-model="addrForm.recipientPhone" label="تلفن گیرنده" class="font-fanum" dir="ltr" placeholder="09xxxxxxxxx" type="tel" :error="addrErrors.recipientPhone" aria-required="true" />
-                    <button
-                      v-if="auth.user?.phone && addrForm.recipientPhone !== auth.user.phone"
-                      type="button"
-                      @click="addrForm.recipientPhone = auth.user.phone"
-                      class="flex items-center gap-1 text-xs text-brand hover:text-brand/70 transition-colors self-start"
-                    >
-                      <svg class="w-3 h-3 flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" d="M16 3h5m0 0v5m0-5l-6 6M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"/>
-                      </svg>
-                      استفاده از شماره خودم ({{ auth.user.phone }})
-                    </button>
-                  </div>
-                </div>
-
-                <!-- استان + شهر -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div class="flex flex-col gap-1.5">
-                    <label for="addr-province" class="form-label">استان <span class="text-error" aria-hidden="true">*</span></label>
-                    <div class="select-wrapper">
-                      <select id="addr-province" v-model="addrForm.province" class="glass-select" @change="addrForm.city = ''" :aria-required="true">
-                        <option value="" disabled>انتخاب استان</option>
-                        <option v-for="p in PROVINCE_NAMES" :key="p" :value="p">{{ p }}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div class="flex flex-col gap-1.5">
-                    <label for="addr-city" class="form-label">شهر <span class="text-error" aria-hidden="true">*</span></label>
-                    <div class="select-wrapper">
-                      <select id="addr-city" v-model="addrForm.city" class="glass-select" :disabled="!addrForm.province" :aria-required="true">
-                        <option value="" disabled>{{ addrForm.province ? 'انتخاب شهر' : 'ابتدا استان را انتخاب کنید' }}</option>
-                        <option v-for="c in addrCities" :key="c" :value="c">{{ c }}</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- خیابان + کد پستی -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <GlassInput v-model="addrForm.street" label="خیابان / کوچه" placeholder="خیابان ولیعصر، کوچه بهار" aria-required="true" />
-                  <GlassInput v-model="addrForm.postalCode" label="کد پستی" class="font-fanum" dir="ltr" placeholder="1234567890" maxlength="10" :error="addrErrors.postalCode" aria-required="true" />
-                </div>
-
-                <!-- جزئیات -->
-                <div class="flex flex-col gap-1.5">
-                  <label for="addr-detail" class="form-label">جزئیات آدرس (پلاک، طبقه، واحد) <span class="text-error" aria-hidden="true">*</span></label>
-                  <textarea id="addr-detail" v-model="addrForm.detail" class="glass-textarea" rows="2" placeholder="مثال: پلاک ۱۲، طبقه سوم، واحد ۷" :aria-required="true" />
-                </div>
-
-                <GlassButton variant="primary" :loading="savingAddress" :disabled="savingAddress" block class="sm:w-auto sm:inline-flex" @click="saveNewAddress">
-                  {{ savingAddress ? 'در حال ذخیره...' : 'ذخیره و استفاده از این آدرس' }}
-                </GlassButton>
-
-              </form>
-            </Transition>
-          </GlassCard>
-
-          <div class="flex justify-end mt-4">
-            <GlassButton variant="primary" size="lg" :disabled="!selectedAddressId" @click="goToStep(1)">
-              ادامه — بررسی سفارش
-              <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-            </GlassButton>
-          </div>
+      <section class="checkout-section">
+        <div class="checkout-section__head">
+          <h2 class="checkout-section__title">آدرس تحویل</h2>
+          <button v-if="!showForm" type="button" class="checkout-section__add" @click="showForm = true">
+            <AppIcon name="plus" :size="13" :stroke-width="2.2" />
+            آدرس جدید
+          </button>
         </div>
 
-        <!-- STEP 1: بررسی سفارش -->
-        <div v-show="currentStep === 1" :inert="currentStep !== 1">
-          <GlassCard padding="lg" class="space-y-4">
-            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۲</span>
-              بررسی سفارش
-            </h2>
-            <div class="space-y-3">
-              <div v-for="item in checkoutItems" :key="`${item.productId}-${item.variantId}`"
-                class="flex items-center gap-3 py-3 border-b border-surface-border last:border-0">
-                <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-14 h-14 object-cover rounded-lg flex-shrink-0" @error="e => e.target.src = PLACEHOLDER" />
-                <div class="flex-1 min-w-0">
-                  <p class="text-text-primary text-sm font-medium line-clamp-1">{{ item.name }}</p>
-                  <div v-if="item.attributes?.length" class="flex gap-1 mt-1 flex-wrap">
-                    <span v-for="a in item.attributes" :key="a.key" class="text-[11px] text-text-disabled bg-surface px-1.5 py-0.5 rounded">{{ a.key }}: {{ a.value }}</span>
-                  </div>
-                </div>
-                <div class="text-left flex-shrink-0 text-sm">
-                  <p class="font-fanum text-text-secondary">× {{ formatNumber(item.quantity) }}</p>
-                  <p class="font-fanum font-bold text-text-primary mt-0.5">{{ formatPrice(item.price * item.quantity) }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="space-y-2">
-              <div class="flex gap-2 items-start">
-                <GlassInput v-model="couponCode" class="flex-1 uppercase tracking-widest" label="کد تخفیف" dir="ltr" placeholder="کد تخفیف (اختیاری)"
-                  :disabled="couponApplied || checkingCoupon" @enter="applyCoupon" @update:model-value="couponMessage = ''; couponError = false" />
-                <GlassButton v-if="!couponApplied" variant="secondary" size="md" class="mt-6 flex-shrink-0" :loading="checkingCoupon" :disabled="!couponCode.trim() || checkingCoupon" @click="applyCoupon">
-                  اعمال
-                </GlassButton>
-                <GlassButton v-else variant="ghost" size="md" class="mt-6 flex-shrink-0 !text-error" @click="removeCoupon">حذف</GlassButton>
-              </div>
-              <p v-if="couponMessage" :class="['text-xs font-medium flex items-center gap-1', couponError ? 'text-error' : 'text-success']">
-                <span v-if="couponError">✕</span>{{ couponMessage }}
-              </p>
-            </div>
-            <div class="space-y-2">
-              <label class="form-label">یادداشت برای سفارش (اختیاری)</label>
-              <textarea v-model="orderNote" class="glass-textarea" rows="2" placeholder="اگر توضیح خاصی برای سفارش دارید بنویسید..." maxlength="300" />
-              <p class="text-xs text-text-disabled font-fanum text-left">{{ orderNote.length }}/۳۰۰</p>
-            </div>
-          </GlassCard>
-          <div class="flex justify-between mt-4">
-            <button @click="goToStep(0)" class="px-5 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2">
-              <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-              بازگشت
-            </button>
-            <GlassButton variant="primary" size="lg" @click="goToStep(2)">
-              ادامه — پرداخت
-              <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-            </GlassButton>
-          </div>
+        <div v-if="addresses.length && !showForm" class="address-list">
+          <AddressCard
+            v-for="addr in addresses"
+            :key="addr._id"
+            :address="addr"
+            :selected="selectedAddressId === addr._id"
+            @select="selectedAddressId = addr._id"
+          />
         </div>
 
-        <!-- STEP 2: روش پرداخت -->
-        <div v-show="currentStep === 2" :inert="currentStep !== 2">
-          <GlassCard padding="lg" class="space-y-5">
-            <h2 class="font-bold text-glass-text-primary text-base flex items-center gap-2">
-              <span class="w-6 h-6 rounded-full bg-brand text-white text-xs flex items-center justify-center">۳</span>
-              روش پرداخت
-            </h2>
-            <div class="flex items-center justify-between rounded-xl bg-surface px-4 py-3">
-              <div class="flex items-center gap-2 text-sm text-text-secondary">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                موجودی کیف پول
-              </div>
-              <span class="font-fanum font-bold text-text-primary">{{ loadingWallet ? '...' : formatPrice(walletBalance) }}</span>
-            </div>
-            <div class="space-y-3">
-              <label :class="['flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all', paymentMethod === 'gateway' ? 'border-brand bg-brand/5' : 'border-surface-border hover:border-brand/30']">
-                <input type="radio" value="gateway" v-model="paymentMethod" class="sr-only" />
-                <div :class="['w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center', paymentMethod === 'gateway' ? 'border-brand' : 'border-surface-border']">
-                  <div v-if="paymentMethod === 'gateway'" class="w-2.5 h-2.5 rounded-full bg-brand" />
-                </div>
-                <div>
-                  <p class="font-semibold text-text-primary text-sm">پرداخت آنلاین (درگاه بانکی)</p>
-                  <p class="text-text-secondary text-xs mt-0.5">پرداخت کامل از طریق درگاه بانکی امن</p>
-                </div>
-              </label>
-              <label :class="['flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all',
-                walletBalance < checkoutTotal ? 'border-surface-border opacity-50 cursor-not-allowed'
-                  : paymentMethod === 'wallet' ? 'border-brand bg-brand/5' : 'border-surface-border hover:border-brand/30']">
-                <input type="radio" value="wallet" v-model="paymentMethod" class="sr-only" :disabled="walletBalance < checkoutTotal" />
-                <div :class="['w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center', paymentMethod === 'wallet' ? 'border-brand' : 'border-surface-border']">
-                  <div v-if="paymentMethod === 'wallet'" class="w-2.5 h-2.5 rounded-full bg-brand" />
-                </div>
-                <div>
-                  <p class="font-semibold text-text-primary text-sm">پرداخت از کیف پول</p>
-                  <p class="text-text-secondary text-xs mt-0.5">{{ walletBalance < checkoutTotal ? `موجودی کافی نیست (کمبود: ${formatPrice(checkoutTotal - walletBalance)})` : 'پرداخت فوری بدون نیاز به درگاه' }}</p>
-                </div>
-                <span class="mr-auto text-xs font-fanum text-brand font-bold flex-shrink-0">{{ formatPrice(walletBalance) }}</span>
-              </label>
-              <label v-if="walletBalance > 0 && walletBalance < checkoutTotal" :class="['flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all', paymentMethod === 'mixed' ? 'border-brand bg-brand/5' : 'border-surface-border hover:border-brand/30']">
-                <input type="radio" value="mixed" v-model="paymentMethod" class="sr-only" />
-                <div :class="['w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center', paymentMethod === 'mixed' ? 'border-brand' : 'border-surface-border']">
-                  <div v-if="paymentMethod === 'mixed'" class="w-2.5 h-2.5 rounded-full bg-brand" />
-                </div>
-                <div class="flex-1">
-                  <p class="font-semibold text-text-primary text-sm">ترکیبی (کیف پول + درگاه)</p>
-                  <p class="text-text-secondary text-xs mt-0.5">بخشی از کیف پول، مابقی از درگاه</p>
-                  <Transition name="expand">
-                    <div v-if="paymentMethod === 'mixed'" class="mt-3 space-y-2">
-                      <label for="wallet-amount-input" class="form-label text-xs">مبلغ از کیف پول (تومان)</label>
-                      <div class="flex items-center gap-2">
-                        <button type="button" @click="walletAmount = Math.max(1, walletAmount - 10000)"
-                          class="w-9 h-9 rounded-lg border border-surface-border flex items-center justify-center text-text-primary hover:bg-surface transition-colors flex-shrink-0"
-                          aria-label="کاهش مبلغ کیف پول">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M20 12H4"/></svg>
-                        </button>
-                        <GlassInput
-                          id="wallet-amount-input"
-                          type="number"
-                          :model-value="walletAmount"
-                          @update:model-value="v => walletAmount = Number(v)"
-                          :min="1"
-                          :max="walletBalance"
-                          :step="10000"
-                          class="flex-1 text-center font-fanum font-bold"
-                          dir="ltr"
-                          :aria-label="`مبلغ از کیف پول، حداکثر ${formatPrice(walletBalance)}`"
-                          :aria-valuenow="walletAmount"
-                          :aria-valuemin="1"
-                          :aria-valuemax="walletBalance"
-                          @blur="walletAmount = Math.min(walletBalance, Math.max(1, walletAmount))"
-                        />
-                        <button type="button" @click="walletAmount = Math.min(walletBalance, walletAmount + 10000)"
-                          class="w-9 h-9 rounded-lg border border-surface-border flex items-center justify-center text-text-primary hover:bg-surface transition-colors flex-shrink-0"
-                          aria-label="افزایش مبلغ کیف پول">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
-                        </button>
-                      </div>
-                      <p class="text-xs text-text-secondary font-fanum">مابقی از درگاه: <strong class="text-text-primary">{{ formatPrice(checkoutTotal - walletAmount) }}</strong></p>
-                    </div>
-                  </Transition>
-                </div>
-              </label>
-            </div>
-          </GlassCard>
-          <div class="flex justify-between mt-4">
-            <button @click="goToStep(1)" class="px-5 py-2.5 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors flex items-center gap-2">
-              <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-              بازگشت
-            </button>
-            <GlassButton variant="primary" size="lg" :loading="placing" :disabled="placing" @click="placeOrder">
-              {{ placing ? 'در حال پردازش...' : 'تأیید و پرداخت' }}
-            </GlassButton>
-          </div>
-        </div>
+        <p v-else-if="!showForm" class="checkout-empty-hint">هنوز آدرسی ثبت نکرده‌اید</p>
 
-      </div>
+        <AddressForm
+          v-if="showForm"
+          :submitting="addingAddress"
+          :error="addAddressError"
+          @submit="submitNewAddress"
+          @cancel="cancelAddForm"
+        />
+      </section>
 
-      <!-- Sticky order summary -->
-      <GlassCard padding="lg" class="flex flex-col gap-4 lg:sticky lg:top-24">
-        <h2 class="font-bold text-glass-text-primary text-sm border-b border-surface-border pb-3">خلاصه سبد خرید</h2>
-        <div class="space-y-2 max-h-52 overflow-y-auto">
-          <div v-for="item in checkoutItems" :key="`${item.productId}-${item.variantId}`" class="flex items-center gap-2">
-            <img :src="item.thumbnail || PLACEHOLDER" :alt="item.name" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" @error="e => e.target.src = PLACEHOLDER" />
-            <div class="flex-1 min-w-0">
-              <p class="text-xs text-text-primary line-clamp-1">{{ item.name }}</p>
-              <p class="text-xs text-text-disabled font-fanum">× {{ formatNumber(item.quantity) }}</p>
-            </div>
-            <span class="text-xs font-fanum font-medium text-text-primary flex-shrink-0">{{ formatPrice(item.price * item.quantity) }}</span>
-          </div>
-        </div>
-        <div class="space-y-2 text-sm border-t border-surface-border pt-3">
-          <div class="flex justify-between text-text-secondary"><span>جمع کالاها</span><span class="font-fanum">{{ formatPrice(subtotal) }}</span></div>
-          <div v-if="savings > 0" class="flex justify-between text-success"><span>تخفیف</span><span class="font-fanum">− {{ formatPrice(savings) }}</span></div>
-          <div v-if="couponApplied" class="flex justify-between text-success text-xs">
-            <span>کد تخفیف «{{ couponCode }}»</span>
-            <span class="font-fanum">{{ discountAmount > 0 ? `− ${formatPrice(discountAmount)}` : 'اعمال شد ✓' }}</span>
-          </div>
-          <div class="flex justify-between text-text-secondary"><span>هزینه ارسال</span><span class="text-success font-medium">رایگان</span></div>
-        </div>
-        <div class="border-t border-surface-border pt-3">
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-text-primary">مبلغ قابل پرداخت</span>
-            <span class="text-brand text-lg font-black font-fanum">{{ formatPrice(checkoutTotal) }}</span>
-          </div>
-          <p v-if="savings > 0" class="text-success text-xs font-fanum text-left mt-1">{{ formatPrice(savings) }} صرفه‌جویی</p>
-        </div>
-        <div v-if="selectedAddress && currentStep > 0" class="border-t border-surface-border pt-3 text-xs text-text-secondary space-y-0.5">
-          <p class="font-semibold text-text-primary flex items-center gap-1">
-            <svg class="w-3.5 h-3.5 text-brand flex-shrink-0" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            آدرس تحویل:
-          </p>
-          <p>{{ selectedAddress.recipientName }}</p>
-          <p>{{ selectedAddress.city }}، {{ selectedAddress.street }}</p>
-        </div>
-        <div class="border-t border-surface-border pt-3 grid grid-cols-2 gap-2">
-          <div v-for="t in trustBadges" :key="t.label" class="flex items-center gap-1.5 text-[11px] text-text-secondary">
-            <component :is="t.icon" class="w-3.5 h-3.5 flex-shrink-0" />
-            <span>{{ t.label }}</span>
-          </div>
-        </div>
-      </GlassCard>
+      <p v-if="placeError" class="checkout-place-error">{{ placeError }}</p>
 
-    </div>
+      <button
+        type="button"
+        class="btn-primary btn-primary--block"
+        :disabled="!selectedAddressId || placingOrder || showForm"
+        @click="placeOrder"
+      >
+        {{ placingOrder ? 'در حال ثبت سفارش...' : `پرداخت ${formatPrice(cartStore.totalPrice)}` }}
+      </button>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { formatPrice, formatNumber } from '~/utils/formatters'
-import { userService }     from '~/services/user.service'
-import { orderService }    from '~/services/order.service'
-import { paymentService }  from '~/services/payment.service'
-import { discountService } from '~/services/discount.service'
-import { PROVINCE_NAMES, getCities } from '~/data/iran-cities'
-import GlassCard   from '~/components/glass/GlassCard.vue'
-import GlassButton from '~/components/glass/GlassButton.vue'
-import GlassInput  from '~/components/glass/GlassInput.vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import AddressCard from '~/components/checkout/AddressCard.vue'
+import AddressForm from '~/components/checkout/AddressForm.vue'
+import { formatPrice, toPersianDigits } from '~/utils/format'
+import { useCartStore } from '~/stores/cart.store'
+import { cartService } from '~/services/cart.service'
+import { userService } from '~/services/user.service'
+import { orderService } from '~/services/order.service'
+import { paymentService, PaymentMethod } from '~/services/payment.service'
 
-definePageMeta({ layout: 'default', middleware: ['auth'] })
-useSeoMeta({ title: 'تکمیل خرید', robots: 'noindex' })
+definePageMeta({ layout: 'auth', middleware: 'auth' })
 
-const router    = useRouter()
 const cartStore = useCartStore()
-const auth      = useAuthStore()
-const ui        = useUiStore()
+const router = useRouter()
 
-const checkoutItems = computed(() => cartStore.items)
-const checkoutTotal = computed(() => cartStore.totalPrice)
-
-const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="%23e2e8f0"%3E%3Crect width="56" height="56"/%3E%3C/svg%3E'
-
-const steps = [
-  { key: 'address', label: 'آدرس' },
-  { key: 'review',  label: 'بررسی' },
-  { key: 'payment', label: 'پرداخت' },
-]
-const currentStep = ref(0)
-function goToStep(n) { currentStep.value = n; if (import.meta.client) window.scrollTo({ top: 0, behavior: 'smooth' }) }
-
-const addresses         = ref([])
-const loadingAddresses  = ref(true)
+const loading = ref(true)
+const initError = ref('')
+const addresses = ref([])
 const selectedAddressId = ref(null)
-const showAddressForm   = ref(false)
-const savingAddress     = ref(false)
-const selectedAddress   = computed(() => addresses.value.find(a => a._id === selectedAddressId.value) ?? null)
+const showForm = ref(false)
+const addingAddress = ref(false)
+const addAddressError = ref('')
+const placingOrder = ref(false)
+const placeError = ref('')
 
-const addrForm   = ref({ title: '', recipientName: '', recipientPhone: '', postalCode: '', province: '', city: '', street: '', detail: '' })
-const addrCities = computed(() => getCities(addrForm.value.province))
-const addrErrors = ref({})
+function extractErrorMessage(err) {
+  const msg = err?.response?.data?.message
+  if (Array.isArray(msg)) return msg[0]
+  return msg || 'خطایی رخ داد، لطفا دوباره تلاش کنید'
+}
 
-async function fetchAddresses() {
-  loadingAddresses.value = true
+async function syncCartToServer() {
+  // The server cart is the source of truth for order creation, so mirror the
+  // local cart into it exactly — clearing first avoids stacking quantities
+  // on top of whatever a previous visit to this page already synced.
+  await cartService.clear()
+  for (const item of cartStore.items) {
+    await cartService.addItem({
+      productId: item.productId,
+      variantId: item.variant,
+      quantity: item.qty,
+    })
+  }
+}
+
+async function loadAddresses() {
+  const { data } = await userService.getMe()
+  addresses.value = data?.addresses || []
+  const def = addresses.value.find((a) => a.isDefault)
+  selectedAddressId.value = (def || addresses.value[0])?._id || null
+  showForm.value = addresses.value.length === 0
+}
+
+async function init() {
+  if (!cartStore.items.length) {
+    router.replace('/cart')
+    return
+  }
+  loading.value = true
+  initError.value = ''
   try {
-    const { data } = await userService.getProfile()
-    addresses.value = data.addresses ?? []
-    const def = addresses.value.find(a => a.isDefault) ?? addresses.value[0]
-    if (def) selectedAddressId.value = def._id
-    if (!addresses.value.length) showAddressForm.value = true
-  } catch { ui.addToast('خطا در دریافت آدرس‌ها', 'error') }
-  finally { loadingAddresses.value = false }
+    await syncCartToServer()
+    await loadAddresses()
+  } catch (e) {
+    initError.value = extractErrorMessage(e)
+  } finally {
+    loading.value = false
+  }
 }
 
-function validateAddrForm() {
-  const e = {}
-  if (!addrForm.value.title.trim())         e.title = 'الزامی است'
-  if (!addrForm.value.recipientName.trim()) e.recipientName = 'الزامی است'
-  if (!/^0?9\d{9}$/.test(addrForm.value.recipientPhone)) e.recipientPhone = 'شماره معتبر نیست'
-  if (!/^\d{10}$/.test(addrForm.value.postalCode))        e.postalCode = 'باید ۱۰ رقم باشد'
-  addrErrors.value = e
-  return !Object.keys(e).length
+init()
+
+function cancelAddForm() {
+  addAddressError.value = ''
+  showForm.value = false
 }
 
-async function saveNewAddress() {
-  if (!validateAddrForm()) return
-  savingAddress.value = true
+async function submitNewAddress(payload) {
+  addingAddress.value = true
+  addAddressError.value = ''
   try {
-    const { data } = await userService.addAddress(addrForm.value)
-    addresses.value = data.addresses ?? []
-    auth.user = data
-    const newest = addresses.value[addresses.value.length - 1]
-    if (newest) selectedAddressId.value = newest._id
-    showAddressForm.value = false
-    addrForm.value = { title: '', recipientName: '', recipientPhone: '', postalCode: '', province: '', city: '', street: '', detail: '' }
-    ui.addToast('آدرس ذخیره شد', 'success')
-  } catch (err) {
-    const msg = err?.response?.data?.message
-    ui.addToast(Array.isArray(msg) ? msg[0] : (msg ?? 'خطا در ذخیره آدرس'), 'error')
-  } finally { savingAddress.value = false }
+    const { data } = await userService.addAddress(payload)
+    addresses.value = data?.addresses || []
+    selectedAddressId.value = addresses.value[addresses.value.length - 1]?._id || null
+    showForm.value = false
+  } catch (e) {
+    addAddressError.value = extractErrorMessage(e)
+  } finally {
+    addingAddress.value = false
+  }
 }
-
-const couponCode     = ref('')
-const couponApplied  = ref(false)
-const couponMessage  = ref('')
-const couponError    = ref(false)
-const checkingCoupon = ref(false)
-const discountAmount = ref(0)
-
-async function applyCoupon() {
-  const code = couponCode.value.trim().toUpperCase()
-  if (!code) return
-  checkingCoupon.value = true; couponMessage.value = ''; couponError.value = false
-  try {
-    const { data } = await discountService.validate(code, checkoutTotal.value)
-    if (data.isValid) {
-      couponApplied.value = true; couponError.value = false
-      discountAmount.value = data.discountAmount ?? 0
-      couponMessage.value = data.discountAmount ? `${formatPrice(data.discountAmount)} تخفیف اعمال شد ✓` : 'کد تخفیف اعمال شد ✓'
-    } else {
-      couponApplied.value = false; couponError.value = true; discountAmount.value = 0
-      couponMessage.value = data.message || 'کد تخفیف وجود ندارد'
-    }
-  } catch (err) {
-    couponApplied.value = false; couponError.value = true; discountAmount.value = 0
-    const msg = err?.response?.data?.message
-    couponMessage.value = Array.isArray(msg) ? msg[0] : (msg || 'کد تخفیف معتبر نیست')
-  } finally { checkingCoupon.value = false }
-}
-
-function removeCoupon() { couponCode.value = ''; couponApplied.value = false; couponMessage.value = ''; couponError.value = false; discountAmount.value = 0 }
-
-const orderNote     = ref('')
-const walletBalance = ref(0)
-const loadingWallet = ref(false)
-const paymentMethod = ref('gateway')
-const walletAmount  = ref(0)
-
-
-const subtotal = computed(() => checkoutItems.value.reduce((s, i) => s + (i.comparePrice > i.price ? i.comparePrice : i.price) * i.quantity, 0))
-const savings  = computed(() => subtotal.value - checkoutTotal.value)
-
-const placing = ref(false)
 
 async function placeOrder() {
-  if (!selectedAddressId.value) { ui.addToast('آدرس تحویل را انتخاب کنید', 'error'); return }
-  placing.value = true
+  if (!selectedAddressId.value || placingOrder.value) return
+  placingOrder.value = true
+  placeError.value = ''
   try {
-    const orderDto = {
-      addressId: selectedAddressId.value,
-      ...(orderNote.value.trim() ? { note: orderNote.value.trim() } : {}),
-      ...(couponApplied.value && couponCode.value ? { couponCode: couponCode.value.trim() } : {}),
-    }
-    const { data: order } = await orderService.createOrder(orderDto)
-    const payDto = {
+    const { data: order } = await orderService.create({ addressId: selectedAddressId.value })
+    const { data: payment } = await paymentService.pay({
       orderId: order._id,
-      method:  paymentMethod.value,
+      method: PaymentMethod.GATEWAY,
       callbackUrl: `${window.location.origin}/payment/result?orderId=${order._id}`,
-      ...(paymentMethod.value === 'mixed' ? { walletAmount: walletAmount.value } : {}),
-    }
-    const { data: payment } = await paymentService.payOrder(payDto)
-    if (payment.success) {
-      await cartStore.fetchCart()
-      router.push({ path: '/payment/result', query: { status: 'success', orderId: order._id } })
-    } else if (payment.gatewayUrl) {
+    })
+
+    cartStore.clear()
+
+    if (payment?.gatewayUrl) {
       window.location.href = payment.gatewayUrl
+      return
     }
-  } catch (err) {
-    const msg = err?.response?.data?.message
-    ui.addToast(Array.isArray(msg) ? msg[0] : (msg ?? 'خطا در ثبت سفارش'), 'error')
-  } finally { placing.value = false }
+
+    router.push({ path: '/payment/result', query: { orderId: order._id } })
+  } catch (e) {
+    placeError.value = extractErrorMessage(e)
+    placingOrder.value = false
+  }
 }
-
-const IconLock    = { template: `<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>` }
-const IconReturn  = { template: `<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>` }
-const IconShield  = { template: `<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>` }
-const IconTruck   = { template: `<svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>` }
-
-const trustBadges = [
-  { icon: IconLock,   label: 'پرداخت امن' },
-  { icon: IconReturn, label: 'ضمانت بازگشت' },
-  { icon: IconShield, label: 'اصالت کالا' },
-  { icon: IconTruck,  label: 'ارسال رایگان' },
-]
-
-onMounted(async () => {
-  await cartStore.fetchCart()
-  loadingWallet.value = true
-  await Promise.all([
-    fetchAddresses(),
-    paymentService.getBalance().then(({ data }) => {
-      walletBalance.value = data.balance ?? 0
-      walletAmount.value  = Math.min(walletBalance.value, checkoutTotal.value - 1)
-    }).catch(() => {}).finally(() => { loadingWallet.value = false }),
-  ])
-})
 </script>
 
 <style scoped>
-.form-label { font-size: 0.8125rem; font-weight: 500; color: var(--text-primary); }
+.checkout-page {
+  padding: 18px 18px 32px;
+}
 
-/* Select/textarea fields — checkout is the one page where the spec insists
-   form fields stay high-contrast and readable rather than heavily blurred,
-   so these intentionally mirror GlassInput's shallow-blur, solid-text
-   recipe (bg-glass + glass-border + 8px blur) rather than the decorative
-   GlassCard treatment. GlassInput itself only renders <input>, so <select>
-   and <textarea> get this local equivalent instead of the shared component. */
-.glass-select, .glass-textarea {
-  width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.875rem;
-  border: 1.5px solid var(--glass-border);
+.checkout-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.checkout-header h1 { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+.checkout-header__back {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--glass-border);
   background: var(--glass);
-  backdrop-filter: blur(8px) saturate(140%);
-  -webkit-backdrop-filter: blur(8px) saturate(140%);
-  color: var(--text-primary); font-size: 0.875rem; outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
 }
-.glass-select:focus, .glass-textarea:focus {
-  border-color: var(--brand-light);
-  box-shadow: 0 0 0 3px rgb(var(--brand-rgb) / 0.18);
+.checkout-header__spacer { width: 34px; }
+
+.checkout-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); font-size: 13px; }
+.checkout-state--error { color: #E8848C; }
+.checkout-retry {
+  margin-top: 12px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
 }
-.glass-textarea { resize: none; }
-.expand-enter-active, .expand-leave-active { transition: all 0.25s ease; overflow: hidden; }
-.expand-enter-from, .expand-leave-to { opacity: 0; max-height: 0; }
-.expand-enter-to, .expand-leave-from { max-height: 600px; opacity: 1; }
-.select-wrapper { position: relative; }
-.select-wrapper::after {
-  content: '';
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 0; height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--text-secondary);
-  pointer-events: none;
+
+.checkout-section { margin-bottom: 22px; }
+.checkout-section__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
 }
-.glass-select { appearance: none; -webkit-appearance: none; padding-left: 2rem; cursor: pointer; }
-.glass-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.checkout-section__title { font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+.checkout-section__head .checkout-section__title { margin-bottom: 0; }
+.checkout-section__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--brand-light);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+[data-theme='light'] .checkout-section__add { color: var(--brand-dark); }
+
+.order-summary { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.order-summary__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.order-summary__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-inline-end: 10px; }
+.order-summary__price { color: var(--text-primary); font-weight: 600; white-space: nowrap; }
+
+.order-summary__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.address-list { display: flex; flex-direction: column; gap: 10px; }
+.checkout-empty-hint { font-size: 12px; color: var(--text-secondary); }
+
+.checkout-place-error {
+  font-size: 12px;
+  color: #E8848C;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .30);
+  cursor: pointer;
+}
+[data-theme='light'] .btn-primary {
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+.btn-primary:disabled { opacity: .55; cursor: default; }
 </style>

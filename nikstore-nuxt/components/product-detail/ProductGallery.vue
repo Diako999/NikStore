@@ -1,270 +1,121 @@
-﻿<template>
-  <div class="flex flex-col gap-3">
-
-    <!-- SKELETON -->
-    <template v-if="loading">
-      <BaseSkeleton height="420px" class="rounded-2xl w-full" />
-      <div class="flex gap-2">
-        <BaseSkeleton v-for="i in 4" :key="i" height="72px" width="72px" class="rounded-xl flex-shrink-0" />
+<template>
+  <div class="gallery">
+    <div class="gallery__main">
+      <div ref="trackRef" class="gallery__track" @scroll="onScroll">
+        <div v-for="(img, i) in images" :key="i" class="gallery__slide">
+          <img v-if="img" :src="img" :alt="alt" loading="lazy">
+          <div v-else class="gallery__fallback" />
+        </div>
       </div>
-    </template>
 
-    <!-- REAL GALLERY -->
-    <template v-else>
+      <div v-if="images.length > 1" class="gallery__dots">
+        <span v-for="(img, i) in images" :key="i" class="gallery__dot" :class="{ 'gallery__dot--active': i === active }" />
+      </div>
+    </div>
 
-      <!-- Main image -->
-      <GlassCard
-        padding="sm"
-        radius="20px"
-        class="!p-0 group cursor-zoom-in"
-        style="aspect-ratio: 1 / 1;"
-        ref="mainContainer"
-        @click="openLightbox"
-        @keydown.enter.prevent="openLightbox"
-        @touchstart="onTouchStart"
-        @touchend="onTouchEnd"
-        role="button"
-        tabindex="0"
-        :aria-label="`مشاهده تصویر بزرگ: ${name}`"
+    <div v-if="images.length > 1" class="gallery__thumbs">
+      <button
+        v-for="(img, i) in images"
+        :key="i"
+        type="button"
+        class="gallery__thumb"
+        :class="{ 'gallery__thumb--active': i === active }"
+        @click="scrollTo(i)"
       >
-        <Transition name="gallery-fade" mode="out-in">
-          <img
-            :key="activeIndex"
-            :src="activeImage.url || activeImage.thumbnail"
-            :alt="name"
-            class="w-full h-full object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-            @error="onImgError"
-          />
-        </Transition>
-
-        <!-- Desktop nav arrows -->
-        <template v-if="normalizedImages.length > 1">
-          <button
-            @click.stop="prev"
-            class="hidden md:flex absolute top-1/2 right-3 -translate-y-1/2 w-11 h-11 glass hover:glass-strong tactile shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            aria-label="تصویر قبلی"
-          >
-            <svg class="w-5 h-5 text-glass-text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-            </svg>
-          </button>
-          <button
-            @click.stop="next"
-            class="hidden md:flex absolute top-1/2 left-3 -translate-y-1/2 w-11 h-11 glass hover:glass-strong tactile shadow-card rounded-full items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-            aria-label="تصویر بعدی"
-          >
-            <svg class="w-5 h-5 text-glass-text-primary" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
-            </svg>
-          </button>
-        </template>
-
-        <!-- Mobile counter badge -->
-        <div
-          v-if="normalizedImages.length > 1"
-          class="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full font-fanum"
-        >
-          {{ activeIndex + 1 }}/{{ normalizedImages.length }}
-        </div>
-      </GlassCard>
-
-      <!-- Desktop thumbnails -->
-      <GlassCard v-if="normalizedImages.length > 1" padding="sm" radius="16px" class="hidden md:block">
-        <div class="flex gap-2 overflow-x-auto scrollbar-hide">
-          <button
-            v-for="(img, idx) in normalizedImages"
-            :key="idx"
-            @click="activeIndex = idx"
-            :class="[
-              'flex-shrink-0 w-[72px] h-[72px] rounded-xl border-2 overflow-hidden transition-all duration-150',
-              activeIndex === idx
-                ? 'border-brand shadow-sm scale-105'
-                : 'border-glass-border hover:border-brand/50',
-            ]"
-            :aria-label="`تصویر ${idx + 1}`"
-            :aria-pressed="activeIndex === idx"
-          >
-            <img :src="img.thumbnail || img.url" :alt="`تصویر ${idx + 1}`" class="w-full h-full object-contain p-1" />
-          </button>
-        </div>
-      </GlassCard>
-
-      <!-- Mobile dot indicators -->
-      <div v-if="normalizedImages.length > 1" class="md:hidden flex justify-center gap-1.5 py-1" role="tablist" :aria-label="`تصاویر ${name}`">
-        <button
-          v-for="(_, idx) in normalizedImages"
-          :key="idx"
-          @click="activeIndex = idx"
-          :class="[
-            'rounded-full transition-all duration-200 flex-shrink-0',
-            activeIndex === idx ? 'w-5 h-[6px] bg-brand' : 'w-[6px] h-[6px] bg-glass-text-disabled',
-          ]"
-          style="min-width: 44px; min-height: 44px; width: auto; height: auto; display: flex; align-items: center; justify-content: center; background: transparent;"
-          role="tab"
-          :aria-label="`تصویر ${idx + 1}`"
-          :aria-selected="activeIndex === idx"
-        >
-          <span
-            :class="[
-              'rounded-full transition-all duration-200 block',
-              activeIndex === idx ? 'w-5 h-1.5 bg-brand' : 'w-1.5 h-1.5 bg-glass-text-disabled',
-            ]"
-          />
-        </button>
-      </div>
-
-    </template>
+        <img v-if="img" :src="img" :alt="alt" loading="lazy">
+        <div v-else class="gallery__fallback" />
+      </button>
+    </div>
   </div>
-
-  <!-- Lightbox -->
-  <Teleport to="body">
-    <Transition name="lb-fade">
-      <div
-        v-if="lightboxOpen"
-        class="fixed inset-0 z-[999] flex items-center justify-center bg-black/90"
-        @click.self="closeLightbox"
-        @keydown.esc="closeLightbox"
-        tabindex="-1"
-        ref="lightboxEl"
-        role="dialog"
-        aria-modal="true"
-        :aria-label="`تصاویر ${name}`"
-      >
-        <!-- Close button -->
-        <button
-          @click="closeLightbox"
-          class="absolute top-4 left-4 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
-          aria-label="بستن تصویر"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-
-        <!-- Prev -->
-        <button
-          v-if="normalizedImages.length > 1"
-          @click="prev"
-          class="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
-          aria-label="تصویر قبلی"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-          </svg>
-        </button>
-
-        <!-- Image -->
-        <img
-          :src="activeImage.url || activeImage.thumbnail"
-          :alt="name"
-          class="max-w-[90vw] max-h-[90vh] object-contain select-none"
-          @error="onImgError"
-        />
-
-        <!-- Next -->
-        <button
-          v-if="normalizedImages.length > 1"
-          @click="next"
-          class="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
-          aria-label="تصویر بعدی"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
-          </svg>
-        </button>
-
-        <!-- Counter -->
-        <div
-          v-if="normalizedImages.length > 1"
-          class="absolute bottom-5 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-3 py-1 rounded-full font-fanum"
-        >
-          {{ activeIndex + 1 }} / {{ normalizedImages.length }}
-        </div>
-      </div>
-    </Transition>
-  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, watch } from 'vue'
-import BaseSkeleton from '~/components/common/BaseSkeleton.vue'
-import GlassCard     from '~/components/glass/GlassCard.vue'
-import { PRODUCT_PLACEHOLDER } from '~/utils/constants'
+import { ref } from 'vue'
 
 const props = defineProps({
-  images:  { type: Array,   default: () => [] },
-  name:    { type: String,  default: '' },
-  loading: { type: Boolean, default: false },
+  images: { type: Array, default: () => [] },
+  alt: { type: String, default: '' },
 })
 
-const activeIndex   = ref(0)
-const mainContainer = ref(null)
-const lightboxOpen  = ref(false)
-const lightboxEl    = ref(null)
+const trackRef = ref(null)
+const active = ref(0)
 
-// Reset to first image whenever the image set changes (e.g. variant selection)
-watch(() => props.images, () => { activeIndex.value = 0 })
-
-function normalizeImg(img) {
-  if (!img) return { url: PRODUCT_PLACEHOLDER, thumbnail: PRODUCT_PLACEHOLDER }
-  if (typeof img === 'string') return { url: img, thumbnail: img }
-  return img
+function onScroll() {
+  const el = trackRef.value
+  if (!el) return
+  const idx = Math.round(el.scrollLeft / el.clientWidth)
+  active.value = Math.min(Math.max(idx, 0), props.images.length - 1)
 }
 
-const normalizedImages = computed(() => props.images.map(normalizeImg))
-
-const activeImage = computed(() =>
-  normalizedImages.value[activeIndex.value] || { url: PRODUCT_PLACEHOLDER }
-)
-
-function next() {
-  activeIndex.value = (activeIndex.value + 1) % normalizedImages.value.length
+function scrollTo(i) {
+  const el = trackRef.value
+  if (!el) return
+  el.scrollTo({ left: el.clientWidth * i, behavior: 'smooth' })
+  active.value = i
 }
-function prev() {
-  activeIndex.value = (activeIndex.value - 1 + normalizedImages.value.length) % normalizedImages.value.length
-}
-
-async function openLightbox() {
-  lightboxOpen.value = true
-  document.body.style.overflow = 'hidden'
-  await nextTick()
-  lightboxEl.value?.focus()
-}
-function closeLightbox() {
-  lightboxOpen.value = false
-  document.body.style.overflow = ''
-}
-
-let touchStartX = 0
-function onTouchStart(e) { touchStartX = e.touches[0].clientX }
-function onTouchEnd(e) {
-  const dx = e.changedTouches[0].clientX - touchStartX
-  if (Math.abs(dx) < 50) return
-  if (dx > 0) prev()
-  else        next()
-}
-
-function onImgError(e) { e.target.src = PRODUCT_PLACEHOLDER }
-
-defineExpose({ setImage: (idx) => { activeIndex.value = idx } })
 </script>
 
 <style scoped>
-.gallery-fade-enter-active,
-.gallery-fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-.gallery-fade-enter-from,
-.gallery-fade-leave-to {
-  opacity: 0;
+.gallery__main {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
 }
 
-.lb-fade-enter-active,
-.lb-fade-leave-active {
-  transition: opacity 0.2s ease;
+.gallery__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
-.lb-fade-enter-from,
-.lb-fade-leave-to {
-  opacity: 0;
+.gallery__track::-webkit-scrollbar { display: none; }
+
+.gallery__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  aspect-ratio: 1 / 1.05;
 }
+.gallery__slide img { width: 100%; height: 100%; object-fit: cover; }
+.gallery__fallback {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(120% 120% at 30% 20%, #A9C9B4 0%, #3D8B52 55%, #0F1A13 100%);
+}
+
+.gallery__dots {
+  position: absolute;
+  bottom: 10px;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.gallery__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .45);
+}
+.gallery__dot--active { background: #fff; width: 14px; border-radius: 3px; }
+
+.gallery__thumbs {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gallery__thumbs::-webkit-scrollbar { display: none; }
+.gallery__thumb {
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1.5px solid transparent;
+}
+.gallery__thumb--active { border-color: var(--brand-light); }
+.gallery__thumb img { width: 100%; height: 100%; object-fit: cover; }
 </style>

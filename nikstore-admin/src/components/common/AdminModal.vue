@@ -1,39 +1,22 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal">
-      <div v-if="modelValue"
-           class="fixed inset-0 z-modal flex items-center justify-center p-4"
-           @keydown.esc="!persistent && close()">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50" @click="!persistent && close()" />
-
-        <!-- Panel -->
-        <div :class="[
-          'glass-surface relative rounded-2xl w-full flex flex-col max-h-[90vh]',
-          sizeClass,
-        ]">
-          <!-- Header -->
-          <div class="relative flex items-center justify-between px-6 py-4 border-b border-glass-border flex-shrink-0">
-            <h3 class="font-bold text-glass-text-primary text-base">{{ title }}</h3>
-            <button
-              @click="close"
-              class="text-glass-text-secondary hover:text-glass-text-primary p-1 rounded-lg hover:bg-glass transition-colors"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
-              </svg>
+    <Transition name="admin-modal-fade">
+      <div v-if="open" class="admin-modal-overlay" @mousedown.self="handleBackdrop">
+        <div class="admin-modal" :style="{ maxWidth: width }" role="dialog" aria-modal="true">
+          <header v-if="$slots.header || title" class="admin-modal__header">
+            <slot name="header">
+              <h3 class="admin-modal__title">{{ title }}</h3>
+            </slot>
+            <button type="button" class="admin-modal__close" aria-label="بستن" @click="close">
+              <AppIcon name="close" :size="16" />
             </button>
-          </div>
-
-          <!-- Body -->
-          <div class="relative px-6 py-5 overflow-y-auto flex-1 text-glass-text-primary">
+          </header>
+          <div class="admin-modal__body">
             <slot />
           </div>
-
-          <!-- Footer -->
-          <div v-if="$slots.footer" class="relative px-6 py-4 border-t border-glass-border flex-shrink-0">
+          <footer v-if="$slots.footer" class="admin-modal__footer">
             <slot name="footer" />
-          </div>
+          </footer>
         </div>
       </div>
     </Transition>
@@ -41,40 +24,118 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue'
+import { onBeforeUnmount, onMounted, watch } from 'vue'
+import AppIcon from '../icons/AppIcon.vue'
 
 const props = defineProps({
-  modelValue: { type: Boolean, default: false },
-  title:      { type: String,  default: '' },
-  size:       { type: String,  default: 'md' },
-  persistent: { type: Boolean, default: false },
+  title: { type: String, default: '' },
+  width: { type: String, default: '480px' },
+  closeOnBackdrop: { type: Boolean, default: true },
 })
-const emit = defineEmits(['update:modelValue', 'close'])
+
+const open = defineModel({ type: Boolean, default: false })
 
 function close() {
-  emit('update:modelValue', false)
-  emit('close')
+  open.value = false
 }
 
-const sizeClass = computed(() => ({
-  sm: 'max-w-sm',
-  md: 'max-w-lg',
-  lg: 'max-w-3xl',
-}[props.size] ?? 'max-w-lg'))
+function handleBackdrop() {
+  if (props.closeOnBackdrop) close()
+}
 
-watch(() => props.modelValue, (v) => {
-  document.body.style.overflow = v ? 'hidden' : ''
+function handleKeydown(event) {
+  if (event.key === 'Escape' && open.value) close()
+}
+
+onMounted(() => document.addEventListener('keydown', handleKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', handleKeydown))
+
+watch(open, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
 })
 </script>
 
 <style scoped>
-.modal-enter-active,
-.modal-leave-active { transition: opacity 0.25s ease; }
-.modal-enter-from,
-.modal-leave-to { opacity: 0; }
+.admin-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(9, 15, 12, .5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
 
-.modal-enter-active .relative,
-.modal-leave-active .relative { transition: transform 0.25s ease, opacity 0.25s ease; }
-.modal-enter-from .relative,
-.modal-leave-to .relative { transform: scale(0.95); opacity: 0; }
+.admin-modal {
+  width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  background:
+    linear-gradient(var(--glass-strong), var(--glass-strong)) padding-box,
+    linear-gradient(150deg, rgba(255, 255, 255, .42), rgba(255, 255, 255, .03) 55%, rgba(231, 175, 66, .28)) border-box;
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid transparent;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .35);
+}
+[data-theme='light'] .admin-modal {
+  background:
+    linear-gradient(var(--glass-strong), var(--glass-strong)) padding-box,
+    linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(231, 175, 66, .5) 55%, rgba(122, 90, 220, .4) 100%) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 30px 70px rgba(40, 55, 46, .22);
+}
+
+.admin-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.admin-modal__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.admin-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.admin-modal__close:hover {
+  background: var(--glass);
+  color: var(--text-primary);
+}
+.admin-modal__body {
+  padding: 20px;
+}
+.admin-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.admin-modal-fade-enter-active,
+.admin-modal-fade-leave-active {
+  transition: opacity .15s ease;
+}
+.admin-modal-fade-enter-from,
+.admin-modal-fade-leave-to {
+  opacity: 0;
+}
 </style>

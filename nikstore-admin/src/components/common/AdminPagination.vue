@@ -1,84 +1,94 @@
 <template>
-  <div v-if="totalPages > 1" class="flex items-center justify-center mt-6">
-  <div class="glass-pill-dock flex-wrap">
-
-    <!-- Prev -->
-    <button
-      @click="changePage(modelValue - 1)"
-      :disabled="modelValue <= 1 || loading"
-      class="w-9 h-9 flex items-center justify-center rounded-full
-             text-text-secondary hover:bg-glass hover:text-primary
-             disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-      </svg>
-    </button>
-
-    <!-- Pages -->
-    <template v-for="p in pages" :key="p">
-      <span v-if="p === '...'" class="w-9 h-9 flex items-center justify-center text-text-disabled text-sm">
-        …
-      </span>
-      <button v-else
-        @click="changePage(p)"
-        :class="[
-          'w-9 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors font-fanum',
-          p === modelValue
-            ? 'bg-primary text-white shadow-sm'
-            : 'text-text-secondary hover:bg-glass hover:text-primary',
-        ]"
+  <div class="admin-pagination">
+    <span class="admin-pagination__summary">
+      نمایش {{ rangeStart }}–{{ rangeEnd }} از {{ total }}
+    </span>
+    <div class="admin-pagination__controls">
+      <button
+        type="button"
+        class="admin-pagination__btn"
+        :disabled="page <= 1"
+        @click="go(page - 1)"
       >
-        {{ p }}
+        <AppIcon name="chevron-right" :size="15" />
       </button>
-    </template>
-
-    <!-- Next -->
-    <button
-      @click="changePage(modelValue + 1)"
-      :disabled="modelValue >= totalPages || loading"
-      class="w-9 h-9 flex items-center justify-center rounded-full
-             text-text-secondary hover:bg-glass hover:text-primary
-             disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
-      </svg>
-    </button>
-
-  </div>
+      <span class="admin-pagination__page">{{ page }} / {{ pageCount }}</span>
+      <button
+        type="button"
+        class="admin-pagination__btn"
+        :disabled="page >= pageCount"
+        @click="go(page + 1)"
+      >
+        <AppIcon name="chevron-left" :size="15" />
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import AppIcon from '../icons/AppIcon.vue'
 
 const props = defineProps({
-  modelValue: { type: Number, default: 1 },
-  totalPages: { type: Number, default: 1 },
-  loading:    { type: Boolean, default: false },
+  page: { type: Number, required: true },
+  pageSize: { type: Number, default: 20 },
+  total: { type: Number, default: 0 },
 })
-const emit = defineEmits(['update:modelValue'])
 
-function changePage(p) {
-  if (p < 1 || p > props.totalPages || props.loading) return
-  emit('update:modelValue', p)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
+const emit = defineEmits(['update:page'])
+
+const pageCount = computed(() => Math.max(1, Math.ceil(props.total / props.pageSize)))
+const rangeStart = computed(() => (props.total === 0 ? 0 : (props.page - 1) * props.pageSize + 1))
+const rangeEnd = computed(() => Math.min(props.page * props.pageSize, props.total))
+
+function go(next) {
+  if (next < 1 || next > pageCount.value) return
+  emit('update:page', next)
 }
-
-const pages = computed(() => {
-  const total   = props.totalPages
-  const current = props.modelValue
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-
-  const result = []
-  result.push(1)
-  if (current > 3)         result.push('...')
-  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-    result.push(i)
-  }
-  if (current < total - 2) result.push('...')
-  result.push(total)
-  return result
-})
 </script>
+
+<style scoped>
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px;
+  flex-wrap: wrap;
+}
+.admin-pagination__summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.admin-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-pagination__page {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 52px;
+  text-align: center;
+}
+.admin-pagination__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+.admin-pagination__btn:hover:not(:disabled) {
+  background: var(--glass-strong);
+}
+.admin-pagination__btn:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+</style>

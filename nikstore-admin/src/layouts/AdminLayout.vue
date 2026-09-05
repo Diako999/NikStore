@@ -1,67 +1,169 @@
 <template>
-  <div class="admin-layout-root min-h-screen flex">
+  <div class="admin-layout">
+    <AdminSidebar :open="sidebarOpen" />
+    <div v-if="sidebarOpen" class="admin-layout__scrim" @click="sidebarOpen = false" />
 
-    <!-- Mobile overlay -->
-    <Transition name="fade">
-      <div v-if="ui.sidebarMobileOpen"
-           class="fixed inset-0 bg-black/50 z-sidebar lg:hidden"
-           @click="ui.closeMobileSidebar()" />
-    </Transition>
+    <div class="admin-layout__main">
+      <header class="admin-layout__header">
+        <button type="button" class="admin-layout__menu-btn" @click="sidebarOpen = !sidebarOpen">
+          <AppIcon name="menu" :size="20" />
+        </button>
 
-    <!-- Sidebar -->
-    <AdminSidebar />
+        <div class="admin-layout__header-spacer" />
 
-    <!-- Main area -->
-    <div
-      class="flex-1 flex flex-col min-w-0 transition-all duration-300"
-      :class="ui.sidebarCollapsed ? 'lg:pr-[68px]' : 'lg:pr-[268px]'"
-    >
-      <AdminHeader />
+        <div class="admin-layout__header-actions">
+          <ThemeToggle />
 
-      <main class="flex-1 p-5 overflow-auto">
-        <div class="mb-5">
-          <h1 class="page-title">{{ route.meta.title }}</h1>
+          <div class="admin-layout__user">
+            <span class="admin-layout__user-name">{{ displayName }}</span>
+            <span v-if="auth.isSuperAdmin" class="admin-layout__user-role">مدیر کل</span>
+            <span v-else class="admin-layout__user-role">مدیر</span>
+          </div>
+
+          <button type="button" class="admin-layout__logout" aria-label="خروج" @click="handleLogout">
+            <AppIcon name="logout" :size="18" />
+          </button>
         </div>
-        <RouterView />
+      </header>
+
+      <main class="admin-layout__content">
+        <router-view />
       </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
-import { useRoute }            from 'vue-router'
-import { storeToRefs }         from 'pinia'
-import { useUiStore }          from '@/stores/ui.store'
-import { useSettingsStore }    from '@/stores/settings.store'
-import AdminSidebar   from '@/components/layout/AdminSidebar.vue'
-import AdminHeader    from '@/components/layout/AdminHeader.vue'
-import { useRealtimeNotifications } from '@/composables/useRealtimeNotifications'
-import { useAdminTheme }             from '@/composables/useAdminTheme'
-import { useAdminHead }              from '@/composables/useHead'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import AdminSidebar from '../components/layout/AdminSidebar.vue'
+import ThemeToggle from '../components/common/ThemeToggle.vue'
+import AppIcon from '../components/icons/AppIcon.vue'
+import { useAuthStore } from '../stores/auth.store'
 
-const route          = useRoute()
-const ui             = useUiStore()
-const settingsStore  = useSettingsStore()
-const { settings }   = storeToRefs(settingsStore)
-const routeTitle     = computed(() => route.meta.title ?? '')
+const auth = useAuthStore()
+const router = useRouter()
+const sidebarOpen = ref(false)
 
-useAdminHead(settings, routeTitle)
-useRealtimeNotifications()
-const { init: initTheme } = useAdminTheme()
-onMounted(initTheme)
+const displayName = computed(() => {
+  const user = auth.user
+  if (!user) return 'مدیر'
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ')
+  return name || user.phone || 'مدیر'
+})
+
+async function handleLogout() {
+  await auth.logout()
+  router.push('/login')
+}
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
-.fade-enter-from,  .fade-leave-to      { opacity: 0; }
+.admin-layout {
+  min-height: 100vh;
+}
 
-/* Calm, mostly-solid root — cohesive with the aurora palette (same base
-   tone as --page-bg) but deliberately NOT the busy full mesh, which is
-   reserved for the login screen. A faint radial brand tint keeps it from
-   reading as a flat, disconnected surface. */
-.admin-layout-root {
-  background-color: rgb(var(--bg-rgb));
-  background-image: radial-gradient(120% 60% at 100% 0%, rgb(var(--brand-rgb) / 0.05), transparent 60%);
+.admin-layout__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(9, 15, 12, .5);
+}
+@media (min-width: 1024px) {
+  .admin-layout__scrim {
+    display: none;
+  }
+}
+
+.admin-layout__main {
+  margin-inline-start: 264px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+@media (max-width: 1023px) {
+  .admin-layout__main {
+    margin-inline-start: 0;
+  }
+}
+
+.admin-layout__header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 24px;
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+.admin-layout__menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+@media (max-width: 1023px) {
+  .admin-layout__menu-btn {
+    display: flex;
+  }
+}
+
+.admin-layout__header-spacer {
+  flex: 1;
+}
+
+.admin-layout__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-layout__user {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.4;
+}
+.admin-layout__user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.admin-layout__user-role {
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.admin-layout__logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+.admin-layout__logout:hover {
+  color: #D9534F;
+  background: var(--glass-strong);
+}
+
+.admin-layout__content {
+  flex: 1;
+  padding: 24px;
 }
 </style>

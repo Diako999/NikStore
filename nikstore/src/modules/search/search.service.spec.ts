@@ -281,9 +281,7 @@ describe('SearchService', () => {
       categoryModel.find.mockReturnValue(leanChain([]));
 
       const res = await service.suggest('هودی');
-      expect(res.products).toEqual([
-        { name: 'هودی پرفورمنس', slug: 'hoodie' },
-      ]);
+      expect(res.products).toEqual([{ name: 'هودی پرفورمنس', slug: 'hoodie' }]);
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('Redis get failed'),
       );

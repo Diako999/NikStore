@@ -55,3 +55,6 @@ docs/
 
 # Local git worktrees (agent-managed, not part of history)
 .worktrees/
+
+# Working design reference notes (not app content)
+.design-notes/

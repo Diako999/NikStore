@@ -1,149 +1,241 @@
 <template>
-  <div class="w-full max-w-sm mx-auto px-4">
-    <GlassCard padding="lg" radius="24px">
+  <div class="otp">
+    <h1 class="otp__title">کد تایید را وارد کنید</h1>
+    <p class="otp__sub">
+      کد ۶ رقمی ارسال شده به شماره
+      <bdi class="otp__phone">{{ displayPhone }}</bdi>
+      را وارد کنید
+    </p>
 
-      <!-- Wordmark already shown in layouts/auth.vue's header above — just
-           the mark here, linked home, to avoid repeating it twice on one
-           short screen. -->
-      <div class="flex flex-col items-center mb-8">
-        <NuxtLink to="/">
-          <img :src="settingsStore.logoUrl || '/nik-logo.png'" :alt="settingsStore.siteName" class="h-14 w-14 object-contain rounded-full" />
-        </NuxtLink>
+    <form class="otp__form" @submit.prevent="onSubmit">
+      <div class="otp__boxes" dir="ltr">
+        <input
+          v-for="(d, i) in digits"
+          :key="i"
+          :ref="(el) => (inputs[i] = el)"
+          v-model="digits[i]"
+          class="otp__box"
+          type="tel"
+          inputmode="numeric"
+          maxlength="1"
+          @input="onDigitInput(i, $event)"
+          @keydown="onKeydown(i, $event)"
+          @paste="onPaste"
+        >
       </div>
 
-      <div class="mb-7 text-center">
-        <h1 class="text-xl font-bold text-glass-text-primary mb-3">کد تأیید را وارد کنید</h1>
-        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-glass border border-glass-border">
-          <span class="text-glass-text-secondary">کد ۶ رقمی ارسال شد به</span>
-          <span class="font-bold text-glass-text-primary" dir="ltr">{{ maskedPhone }}</span>
-        </div>
-      </div>
+      <p v-if="error" class="otp__error">{{ error }}</p>
 
-      <div class="mb-6">
-        <OtpInput ref="otpInputRef" v-model="otpCode" :length="6" :error="!!otpError" :disabled="authStore.loading" @complete="handleComplete" />
-        <Transition name="fade-down">
-          <p v-if="otpError" class="text-center text-error text-sm mt-3 flex items-center justify-center gap-1.5">{{ otpError }}</p>
-        </Transition>
-      </div>
+      <button type="submit" class="otp__submit" :disabled="loading || code.length !== 6">
+        {{ loading ? 'در حال بررسی...' : 'تایید و ورود' }}
+      </button>
+    </form>
 
-      <GlassButton variant="primary" size="lg" block class="mb-5" :loading="authStore.loading" :disabled="otpCode.length < 6 || authStore.loading" @click="verify">
-        {{ authStore.loading ? 'در حال بررسی...' : 'تأیید و ورود' }}
-      </GlassButton>
-
-      <div class="flex items-center justify-center gap-3 text-sm">
-        <button @click="resend" :disabled="cooldown > 0 || authStore.loading" :class="['font-medium transition-colors duration-150', cooldown > 0 ? 'text-glass-text-disabled cursor-not-allowed' : 'text-glass-brand hover:opacity-80']">
-          ارسال مجدد کد
-        </button>
-        <Transition name="fade">
-          <span v-if="cooldown > 0" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold tabular-nums bg-glass text-glass-text-secondary" dir="ltr">{{ formattedCooldown }}</span>
-        </Transition>
-      </div>
-
-      <div class="mt-6 pt-5 border-t border-glass-border text-center">
-        <button @click="goBack" class="text-glass-text-secondary text-sm hover:text-glass-brand inline-flex items-center gap-1.5 mx-auto transition-colors duration-150">
-          <svg class="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
-          ویرایش شماره موبایل
-        </button>
-      </div>
-    </GlassCard>
+    <div class="otp__footer">
+      <button type="button" class="otp__link" :disabled="cooldown > 0 || resending" @click="onResend">
+        {{ resendLabel }}
+      </button>
+      <NuxtLink :to="editPhoneLink" class="otp__link otp__link--muted">ویرایش شماره موبایل</NuxtLink>
+    </div>
   </div>
 </template>
 
 <script setup>
-import OtpInput   from '~/components/auth/OtpInput.vue'
-import GlassCard   from '~/components/glass/GlassCard.vue'
-import GlassButton from '~/components/glass/GlassButton.vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { authService } from '~/services/auth.service'
+import { useAuthStore } from '~/stores/auth.store'
+import { toPersianDigits } from '~/utils/format'
 
-definePageMeta({ layout: 'auth', middleware: ['guest'] })
+definePageMeta({ layout: 'auth', middleware: 'guest' })
+useSeoMeta({ title: 'تایید کد | نیک' })
 
-const router        = useRouter()
-const route         = useRoute()
-const authStore     = useAuthStore()
-const ui            = useUiStore()
-const settingsStore = useSettingsStore()
+const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
-useSeoMeta({ title: 'تأیید شماره موبایل', robots: 'noindex' })
+const phone = String(route.query.phone || '')
 
-const otpCode     = ref('')
-const otpError    = ref('')
-const otpInputRef = ref(null)
-
-const RESEND_TIMEOUT = 120
-const cooldown = ref(RESEND_TIMEOUT)
-let countdownInterval = null
-
-const formattedCooldown = computed(() => {
-  const m = Math.floor(cooldown.value / 60)
-  const s = cooldown.value % 60
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-})
-
-function startCountdown() {
-  cooldown.value = RESEND_TIMEOUT
-  clearInterval(countdownInterval)
-  countdownInterval = setInterval(() => { if (cooldown.value > 0) cooldown.value--; else clearInterval(countdownInterval) }, 1000)
+if (!phone) {
+  router.replace('/auth/login')
 }
 
-const maskedPhone = computed(() => {
-  const p = authStore.pendingPhone
-  if (!p || p.length < 8) return p
-  return p.slice(0, 4) + ' ' + p.slice(4, 7) + ' ****'
+const displayPhone = computed(() => toPersianDigits(phone))
+const editPhoneLink = computed(() => ({
+  path: '/auth/login',
+  query: route.query.redirect ? { redirect: route.query.redirect } : {},
+}))
+
+const digits = ref(['', '', '', '', '', ''])
+const inputs = ref([])
+const code = computed(() => digits.value.join(''))
+const loading = ref(false)
+const resending = ref(false)
+const error = ref('')
+
+onMounted(() => {
+  nextTick(() => inputs.value[0]?.focus())
+  startCooldown()
 })
+onUnmounted(() => { if (timer) clearInterval(timer) })
 
-onMounted(async () => {
-  if (!authStore.pendingPhone) { router.replace('/auth/login'); return }
-  startCountdown()
-  await nextTick()
-  otpInputRef.value?.focus()
-})
+function onDigitInput(index, event) {
+  const raw = event.target.value.replace(/\D/g, '')
+  digits.value[index] = raw.slice(-1)
+  error.value = ''
+  if (raw && index < 5) inputs.value[index + 1]?.focus()
+}
 
-onUnmounted(() => clearInterval(countdownInterval))
-
-async function verify() {
-  if (otpCode.value.length < 6 || authStore.loading) return
-  otpError.value = ''
-  try {
-    await authStore.verifyOtp(authStore.pendingPhone, otpCode.value)
-    ui.addToast('خوش آمدید! ورود موفقیت‌آمیز بود', 'success')
-    const redirect = route.query.redirect
-    router.push(redirect ? String(redirect) : '/')
-  } catch (err) {
-    const status = err.response?.status
-    otpCode.value = ''
-    if (status === 401) {
-      otpError.value = err.response?.data?.message?.includes('منقضی')
-        ? 'کد تأیید منقضی شده. کد جدید دریافت کنید'
-        : 'کد تأیید اشتباه است. مجدداً تلاش کنید'
-    } else { otpError.value = 'خطا در ورود. لطفاً دوباره تلاش کنید' }
-    await nextTick()
-    otpInputRef.value?.focus()
+function onKeydown(index, event) {
+  if (event.key === 'Backspace' && !digits.value[index] && index > 0) {
+    inputs.value[index - 1]?.focus()
   }
 }
 
-function handleComplete(code) { otpCode.value = code; if (!authStore.loading) verify() }
+function onPaste(event) {
+  const text = (event.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, 6)
+  if (!text) return
+  event.preventDefault()
+  text.split('').forEach((ch, i) => { digits.value[i] = ch })
+  nextTick(() => inputs.value[Math.min(text.length, 5)]?.focus())
+}
 
-async function resend() {
-  if (cooldown.value > 0 || authStore.loading) return
-  otpError.value = ''
-  otpCode.value  = ''
+async function onSubmit() {
+  if (code.value.length !== 6) return
+  loading.value = true
+  error.value = ''
   try {
-    await authStore.sendOtp(authStore.pendingPhone)
-    startCountdown()
-    ui.addToast('کد جدید ارسال شد', 'success')
-    await nextTick()
-    otpInputRef.value?.focus()
-  } catch (err) {
-    if (err.response?.status === 429) ui.addToast('لطفاً کمی صبر کنید و دوباره تلاش کنید', 'warning')
-    else ui.addToast('خطا در ارسال کد. دوباره تلاش کنید', 'error')
+    await authStore.verifyOtp(phone, code.value)
+    router.push(route.query.redirect ? String(route.query.redirect) : '/user')
+  } catch (e) {
+    error.value = e.response?.data?.message || 'کد وارد شده صحیح نیست'
+    digits.value = ['', '', '', '', '', '']
+    nextTick(() => inputs.value[0]?.focus())
+  } finally {
+    loading.value = false
   }
 }
 
-function goBack() { clearInterval(countdownInterval); router.push('/auth/login') }
+const COOLDOWN_SECONDS = 60
+const cooldown = ref(0)
+let timer = null
+
+function startCooldown() {
+  cooldown.value = COOLDOWN_SECONDS
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    cooldown.value -= 1
+    if (cooldown.value <= 0) clearInterval(timer)
+  }, 1000)
+}
+
+const resendLabel = computed(() => {
+  if (resending.value) return 'در حال ارسال مجدد...'
+  if (cooldown.value > 0) return `ارسال مجدد کد (${toPersianDigits(cooldown.value)})`
+  return 'ارسال مجدد کد'
+})
+
+async function onResend() {
+  if (cooldown.value > 0 || resending.value) return
+  resending.value = true
+  error.value = ''
+  try {
+    await authService.sendOtp(phone)
+    startCooldown()
+  } catch (e) {
+    error.value = e.response?.data?.message || 'ارسال مجدد کد با خطا مواجه شد'
+  } finally {
+    resending.value = false
+  }
+}
 </script>
 
 <style scoped>
-.fade-down-enter-active, .fade-down-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-down-enter-from, .fade-down-leave-to { opacity: 0; transform: translateY(-4px); }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
+.otp {
+  padding: 48px 24px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.otp__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.otp__sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+.otp__phone { font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; }
+
+.otp__form { display: flex; flex-direction: column; gap: 16px; }
+
+.otp__boxes { display: flex; justify-content: center; gap: 8px; }
+.otp__box {
+  width: 42px;
+  height: 52px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 19px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  outline: none;
+}
+.otp__box:focus { border-color: var(--brand-light); }
+[data-theme='light'] .otp__box {
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+
+.otp__error {
+  font-size: 12px;
+  color: #E8837F;
+  text-align: center;
+}
+
+.otp__submit {
+  padding: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .3);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+  cursor: pointer;
+}
+.otp__submit:disabled { opacity: .55; cursor: not-allowed; }
+
+.otp__footer {
+  margin-top: auto;
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.otp__link {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--brand-light);
+  cursor: pointer;
+}
+[data-theme='light'] .otp__link { color: var(--brand-dark); }
+.otp__link:disabled { color: var(--text-disabled); cursor: not-allowed; }
+.otp__link--muted { font-weight: 500; color: var(--text-secondary); }
 </style>

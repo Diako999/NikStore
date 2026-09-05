@@ -1,144 +1,163 @@
 <template>
-  <div class="container-main py-16 flex items-center justify-center min-h-[60vh]">
-    <div class="w-full max-w-md text-center" aria-live="assertive" aria-atomic="true">
+  <div class="result-page">
+    <div v-if="verifying" class="result-card">
+      <div class="result-icon result-icon--pending">
+        <AppIcon name="card" :size="26" :stroke-width="1.6" />
+      </div>
+      <p class="result-title">در حال بررسی پرداخت...</p>
+      <p class="result-sub">لطفا چند لحظه صبر کنید</p>
+    </div>
 
-      <!-- Loading -->
-      <div v-if="verifying" class="space-y-4" role="status">
-        <div class="w-16 h-16 rounded-full border-4 border-brand/20 border-t-brand animate-spin mx-auto" aria-hidden="true" />
-        <p class="text-text-secondary">در حال تأیید پرداخت...</p>
+    <div v-else class="result-card">
+      <div class="result-icon" :class="success ? 'result-icon--success' : 'result-icon--fail'">
+        <AppIcon :name="success ? 'check' : 'close'" :size="26" :stroke-width="2.4" />
       </div>
 
-      <!-- Success -->
-      <div v-else-if="result === 'success'" class="space-y-6">
-        <div class="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mx-auto">
-          <svg class="w-10 h-10 text-success" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold text-text-primary">پرداخت موفق</h1>
-          <p class="text-text-secondary text-sm mt-2">سفارش شما با موفقیت ثبت و پرداخت شد</p>
-          <p v-if="refId" class="text-text-disabled text-xs font-fanum mt-1">کد پیگیری: {{ refId }}</p>
-        </div>
+      <p class="result-title">{{ success ? 'پرداخت با موفقیت انجام شد' : 'پرداخت ناموفق بود' }}</p>
+      <p class="result-sub">{{ message }}</p>
+      <p v-if="refId" class="result-ref">کد پیگیری: {{ toPersianDigits(refId) }}</p>
 
-        <div class="rounded-2xl border border-surface-border p-5 text-right space-y-3 bg-card">
-          <div class="flex justify-between text-sm">
-            <span class="text-text-secondary">شماره سفارش</span>
-            <span class="font-fanum text-text-primary font-medium">{{ orderNumber || '—' }}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-text-secondary">وضعیت</span>
-            <span class="text-success font-medium">تأیید شده</span>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-3">
-          <NuxtLink :to="`/user/orders/${orderId}`"
-            class="btn-brand py-3 flex items-center justify-center gap-2 w-full">
-            مشاهده جزئیات سفارش
-          </NuxtLink>
-          <NuxtLink to="/"
-            class="py-3 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors w-full flex items-center justify-center">
-            بازگشت به صفحه اصلی
-          </NuxtLink>
-        </div>
+      <div class="result-actions">
+        <NuxtLink v-if="success && orderId" :to="`/user/orders/${orderId}`" class="btn-primary">
+          مشاهده سفارش
+        </NuxtLink>
+        <NuxtLink v-else-if="!success" to="/cart" class="btn-primary">
+          بازگشت به سبد خرید
+        </NuxtLink>
+        <NuxtLink to="/" class="btn-secondary">
+          بازگشت به فروشگاه
+        </NuxtLink>
       </div>
-
-      <!-- Failed -->
-      <div v-else-if="result === 'failed'" class="space-y-6">
-        <div class="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center mx-auto">
-          <svg class="w-10 h-10 text-error" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-xl font-bold text-text-primary">پرداخت ناموفق</h1>
-          <p class="text-text-secondary text-sm mt-2">{{ errorMessage || 'پرداخت انجام نشد یا لغو شد' }}</p>
-        </div>
-
-        <div class="flex flex-col gap-3">
-          <NuxtLink to="/checkout"
-            class="btn-brand py-3 flex items-center justify-center gap-2 w-full">
-            تلاش مجدد
-          </NuxtLink>
-          <NuxtLink to="/user/orders"
-            class="py-3 rounded-xl border border-surface-border text-sm text-text-secondary hover:text-text-primary transition-colors w-full flex items-center justify-center">
-            مشاهده سفارشات
-          </NuxtLink>
-        </div>
-      </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import { toPersianDigits } from '~/utils/format'
 import { paymentService } from '~/services/payment.service'
-import { orderService }   from '~/services/order.service'
 
-definePageMeta({ layout: 'default', middleware: ['auth'] })
-useSeoMeta({ title: 'نتیجه پرداخت', robots: 'noindex' })
+definePageMeta({ layout: 'auth', middleware: 'auth' })
 
-const route     = useRoute()
-const cartStore = useCartStore()
+const route = useRoute()
 
-const verifying    = ref(true)
-const result       = ref(null)
-const refId        = ref('')
-const errorMessage = ref('')
-const orderId      = ref(route.query.orderId ?? '')
-const orderNumber  = ref('')
+const orderId = route.query.orderId || null
+const authority = route.query.authority || route.query.Authority || null
+const status = route.query.status || route.query.Status || ''
 
-onMounted(async () => {
-  const authority = (route.query.authority || route.query.Authority) ?? ''
-  const status    = (route.query.status    || route.query.Status)    ?? ''
-  const qOrderId  = route.query.orderId ?? ''
+const verifying = ref(true)
+const success = ref(false)
+const message = ref('')
+const refId = ref('')
 
-  // Direct wallet payment success (no gateway redirect)
-  if (status === 'success' && !authority) {
-    if (qOrderId) {
-      orderId.value = qOrderId
-      try {
-        const { data } = await orderService.getMyOrder(qOrderId)
-        orderNumber.value = data.orderNumber ?? ''
-      } catch { /* silent */ }
-    }
-    result.value    = 'success'
-    verifying.value = false
-    cartStore.items = []
-    return
-  }
-
-  // Gateway callback
+async function run() {
   if (!authority) {
-    result.value       = 'failed'
-    errorMessage.value = 'اطلاعات پرداخت یافت نشد'
-    verifying.value    = false
+    verifying.value = false
+    success.value = !!orderId
+    message.value = orderId
+      ? 'سفارش شما ثبت شد'
+      : 'اطلاعات پرداخت یافت نشد'
     return
   }
 
   try {
-    const { data } = await paymentService.verifyPayment({ authority, status })
-    if (data.success) {
-      refId.value  = data.refId ?? ''
-      result.value = 'success'
-      if (qOrderId) {
-        orderId.value = qOrderId
-        try {
-          const { data: ord } = await orderService.getMyOrder(qOrderId)
-          orderNumber.value = ord.orderNumber ?? ''
-        } catch { /* silent */ }
-      }
-      await cartStore.fetchCart()
-    } else {
-      result.value       = 'failed'
-      errorMessage.value = data.message ?? 'پرداخت تأیید نشد'
-    }
-  } catch (err) {
-    result.value       = 'failed'
-    errorMessage.value = err?.response?.data?.message ?? 'خطا در تأیید پرداخت'
+    const { data } = await paymentService.verify(authority, status)
+    success.value = !!data.success
+    message.value = data.message || (success.value ? 'پرداخت با موفقیت تایید شد' : 'پرداخت تایید نشد')
+    refId.value = data.refId || ''
+  } catch {
+    success.value = false
+    message.value = 'خطا در بررسی وضعیت پرداخت'
   } finally {
     verifying.value = false
   }
-})
+}
+
+run()
 </script>
+
+<style scoped>
+.result-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.result-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  border-radius: 22px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+[data-theme='light'] .result-card {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+
+.result-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  color: #fff;
+}
+.result-icon--pending { background: var(--glass-strong); color: var(--text-secondary); }
+.result-icon--success { background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%); }
+.result-icon--fail { background: linear-gradient(135deg, #E8848C 0%, #C24C55 100%); }
+
+.result-title { font-size: 15.5px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+.result-sub { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+.result-ref { font-size: 11.5px; color: var(--text-disabled); margin-top: 8px; }
+
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-top: 26px;
+}
+
+.btn-primary,
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.btn-primary {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, .25);
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .30);
+}
+[data-theme='light'] .btn-primary {
+  border-color: rgba(255, 255, 255, .3);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+}
+.btn-secondary {
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--glass-border);
+}
+</style>

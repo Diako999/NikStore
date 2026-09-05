@@ -1,69 +1,102 @@
-import axios    from 'axios'
-import { logger } from '@/utils/logger'
+import axios from 'axios'
 
 const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: '/api/v1',
   timeout: 15000,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
 })
 
-// Lazy store accessor — avoids circular import at module load time
-let _getToken = () => null
-export function setTokenProvider(fn) { _getToken = fn }
+// Lazy token accessor — avoids a circular import with the auth store.
+let getToken = () => null
+export function setTokenProvider(fn) {
+  getToken = fn
+}
 
-http.interceptors.request.use(
-  (config) => {
-    // Access token lives in Pinia store (memory only — never localStorage)
-    const token = _getToken()
-    if (token) config.headers.Authorization = `Bearer ${token}`
-    config.metadata = { startTime: Date.now() }
-    return config
-  },
-  (error) => {
-    logger.error('Request setup failed', error, {}, 'HTTP')
-    return Promise.reject(error)
-  },
-)
+let isRefreshing = false
+let pendingQueue = []
+
+function processQueue(error, token = null) {
+  pendingQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)))
+  pendingQueue = []
+}
+
+http.interceptors.request.use((config) => {
+  const token = getToken()
+  if (token && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
 http.interceptors.response.use(
   (response) => {
-    if (response.data && 'data' in response.data) response.data = response.data.data
-
-    const duration = Date.now() - (response.config.metadata?.startTime ?? 0)
-    if (duration > 3000) {
-      logger.warn('Slow API call', {
-        url:      response.config.url,
-        method:   response.config.method?.toUpperCase(),
-        duration: `${duration}ms`,
-      }, 'Performance')
+    // Backend wraps successful responses as { success, data } — unwrap so
+    // call sites work with the raw DTO instead of the envelope.
+    if (
+      response.data &&
+      typeof response.data === 'object' &&
+      'success' in response.data &&
+      'data' in response.data
+    ) {
+      response.data = response.data.data
     }
-
     return response
   },
-  (error) => {
-    const status   = error.response?.status
-    const url      = error.config?.url ?? 'unknown'
-    const method   = error.config?.method?.toUpperCase() ?? 'UNKNOWN'
-    const message  = error.response?.data?.message ?? error.message
-    const duration = Date.now() - (error.config?.metadata?.startTime ?? 0)
+  async (error) => {
+    const status = error.response?.status
+    const originalRequest = error.config
 
-    if (!error.config?.skipErrorLog) {
-      logger.apiError(`${method} ${url}`, status ?? 0, message, { duration: `${duration}ms` })
+    if (status === 503 && originalRequest && !originalRequest._503retried) {
+      originalRequest._503retried = true
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      return http(originalRequest)
+    }
 
-      if (!error.response) {
-        logger.error('Network error — no response from server', error, { url, method }, 'HTTP')
+    if (status === 401 && originalRequest && !originalRequest.url?.includes('/auth/refresh')) {
+      if (originalRequest._retry) {
+        getToken = () => null
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('nikstore:session-expired'))
+        }
+        return Promise.reject(error)
       }
-    }
 
-    // Skip redirect for requests that handle their own auth errors (e.g. /auth/refresh)
-    if (status === 401 && !error.config?.skipAuthRedirect) {
-      logger.warn('HTTP: 401 unauthorized — redirecting to login', { url }, 'HTTP')
-      window.location.href = '/login'
-    }
-    if (status === 403) {
-      logger.warn('HTTP: 403 forbidden — redirecting to login', { url }, 'HTTP')
-      window.location.href = '/login?error=forbidden'
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          pendingQueue.push({ resolve, reject })
+        }).then((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          return http(originalRequest)
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const { data } = await http.post('/auth/refresh')
+        const newToken = data.accessToken
+
+        const { useAuthStore } = await import('../stores/auth.store')
+        useAuthStore().token = newToken
+
+        processQueue(null, newToken)
+        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return http(originalRequest)
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        const { useAuthStore } = await import('../stores/auth.store')
+        const auth = useAuthStore()
+        auth.token = null
+        auth.user = null
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('nikstore:session-expired'))
+        }
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
     }
 
     return Promise.reject(error)

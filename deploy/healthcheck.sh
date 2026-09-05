@@ -20,8 +20,6 @@ check_service() {
 }
 
 check_service "nikstore-backend"  "http://localhost:3001/api/v1/health"
-check_service "nikstore-nuxt"     "http://localhost:3000/"
-check_service "nikstore-admin"    "http://localhost:4001/"
 
 if ! mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; then
     echo "$TIMESTAMP ⚠️  MongoDB DOWN → restarting..." >> "$LOG"

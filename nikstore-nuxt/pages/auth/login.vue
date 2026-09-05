@@ -1,124 +1,194 @@
 <template>
-  <div class="w-full max-w-sm mx-auto px-4">
-    <GlassCard padding="lg" radius="24px">
+  <div class="login">
+    <div class="login__mark">
+      <div class="login__ring">NK</div>
+      <p class="login__brand">نیک</p>
+    </div>
 
-      <!-- Wordmark already shown in layouts/auth.vue's header above — just
-           the mark here, linked home, to avoid repeating it twice on one
-           short screen. -->
-      <div class="text-center mb-8">
-        <NuxtLink to="/" class="inline-flex">
-          <img :src="settingsStore.logoUrl || '/nik-logo.png'" :alt="settingsStore.siteName" class="h-14 w-14 object-contain rounded-full" />
-        </NuxtLink>
-      </div>
+    <h1 class="login__title">ورود به حساب کاربری</h1>
+    <p class="login__sub">شماره موبایل خود را وارد کنید تا کد تایید برایتان پیامک شود</p>
 
-      <div class="mb-6">
-        <h1 class="text-xl font-bold text-glass-text-primary mb-1">ورود یا ثبت‌نام</h1>
-        <p class="text-glass-text-secondary text-sm">شماره موبایل خود را وارد کنید</p>
-      </div>
+    <form class="login__form" @submit.prevent="onSubmit">
+      <label class="field">
+        <span class="field__label">شماره موبایل</span>
+        <span class="field__box">
+          <AppIcon name="phone" :size="16" :stroke-width="1.8" />
+          <input
+            v-model="phone"
+            class="field__input"
+            type="tel"
+            inputmode="numeric"
+            dir="ltr"
+            placeholder="09xxxxxxxxx"
+            autocomplete="tel"
+            @input="error = ''"
+          >
+        </span>
+      </label>
 
-      <div class="mb-6" ref="phoneInputWrap">
-        <GlassInput
-          v-model="phone"
-          label="شماره موبایل"
-          type="tel"
-          inputmode="numeric"
-          dir="ltr"
-          placeholder="912 345 6789"
-          maxlength="11"
-          :disabled="authStore.loading"
-          :error="phoneError"
-          @blur="validatePhone()"
-          @enter="submit"
-          @update:model-value="phoneError = ''; isBlocked = false"
-        >
-          <template #append>
-            <span class="text-lg leading-none" aria-hidden="true">🇮🇷</span>
-            <span class="text-sm font-medium">98+</span>
-          </template>
-        </GlassInput>
-      </div>
+      <p v-if="error" class="login__error">{{ error }}</p>
 
-      <Transition name="fade-down">
-        <div v-if="isBlocked" class="mb-5 rounded-xl overflow-hidden border border-red-200">
-          <div class="bg-red-500 px-4 py-2.5"><span class="text-white text-sm font-bold">حساب کاربری مسدود شده</span></div>
-          <div class="bg-red-50 px-4 py-3"><p class="text-red-700 text-xs leading-6">دسترسی به حساب کاربری شما محدود شده است. با پشتیبانی تماس بگیرید.</p></div>
-        </div>
-      </Transition>
+      <button type="submit" class="login__submit" :disabled="loading || !phone">
+        {{ loading ? 'در حال ارسال...' : 'دریافت کد تایید' }}
+      </button>
+    </form>
 
-      <GlassButton variant="primary" size="lg" block :loading="authStore.loading" :disabled="authStore.loading || !phone || isBlocked" @click="submit">
-        {{ authStore.loading ? 'در حال ارسال...' : 'دریافت کد تأیید' }}
-      </GlassButton>
-
-      <p class="text-center text-glass-text-secondary text-xs mt-5 leading-6">
-        با ورود به {{ settingsStore.siteName }}،
-        <NuxtLink to="/pages/terms" class="underline hover:text-glass-brand transition-colors">قوانین و مقررات</NuxtLink>
-        را می‌پذیرم
-      </p>
-    </GlassCard>
+    <p class="login__hint">با ورود، شرایط استفاده از خدمات نیک را می‌پذیرید.</p>
   </div>
 </template>
 
 <script setup>
-import GlassCard   from '~/components/glass/GlassCard.vue'
-import GlassButton from '~/components/glass/GlassButton.vue'
-import GlassInput  from '~/components/glass/GlassInput.vue'
+import { ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import { authService } from '~/services/auth.service'
 
-definePageMeta({ layout: 'auth', middleware: ['guest'] })
+definePageMeta({ layout: 'auth', middleware: 'guest' })
+useSeoMeta({ title: 'ورود | نیک' })
 
-const router        = useRouter()
-const route         = useRoute()
-const authStore     = useAuthStore()
-const ui            = useUiStore()
-const settingsStore = useSettingsStore()
+const route = useRoute()
+const router = useRouter()
 
-const phone          = ref('')
-const phoneError     = ref('')
-const phoneInputWrap = ref(null)
-const isBlocked    = ref(false)
+const phone = ref('')
+const loading = ref(false)
+const error = ref('')
 
-useSeoMeta({ title: 'ورود یا ثبت‌نام', robots: 'noindex' })
+const PHONE_RE = /^(\+98|0)?9\d{9}$/
 
-onMounted(() => {
-  if (authStore.pendingPhone) phone.value = authStore.pendingPhone
-  // GlassInput doesn't expose a focus() method, so a component ref can't
-  // reach the underlying <input> reliably — use a plain DOM ref on the
-  // wrapping element instead and query into it.
-  phoneInputWrap.value?.querySelector('input')?.focus()
-})
+async function onSubmit() {
+  const value = phone.value.trim()
+  if (!PHONE_RE.test(value)) {
+    error.value = 'شماره موبایل وارد شده معتبر نیست'
+    return
+  }
 
-function validatePhone() {
-  const raw = phone.value.replace(/\D/g, '')
-  if (!raw) { phoneError.value = 'شماره موبایل را وارد کنید'; return false }
-  if (!/^0?9[0-9]{9}$/.test(raw)) { phoneError.value = 'شماره موبایل معتبر نیست (مثال: 09123456789)'; return false }
-  phoneError.value = ''
-  return true
-}
-
-function normalizePhone(raw) {
-  const digits = raw.replace(/\D/g, '')
-  if (digits.startsWith('9') && digits.length === 10) return '0' + digits
-  return digits
-}
-
-async function submit() {
-  if (authStore.loading) return
-  if (!validatePhone()) return
-  const normalized = normalizePhone(phone.value)
-  isBlocked.value = false
+  loading.value = true
+  error.value = ''
   try {
-    await authStore.sendOtp(normalized)
-    router.push({ path: '/auth/otp', query: route.query.redirect ? { redirect: route.query.redirect } : undefined })
-  } catch (err) {
-    const status = err.response?.status
-    if (status === 403) isBlocked.value = true
-    else if (status === 429) phoneError.value = 'تعداد درخواست‌ها بیش از حد مجاز است. لطفاً ۱۰ دقیقه صبر کنید.'
-    else if (status === 400) phoneError.value = 'شماره موبایل وارد شده معتبر نیست'
-    else ui.addToast(err.response?.data?.message || 'خطا در ارسال کد. دوباره تلاش کنید', 'error')
+    await authService.sendOtp(value)
+    router.push({
+      path: '/auth/otp',
+      query: {
+        phone: value,
+        ...(route.query.redirect ? { redirect: route.query.redirect } : {}),
+      },
+    })
+  } catch (e) {
+    error.value = e.response?.data?.message || 'ارسال کد با خطا مواجه شد. دوباره تلاش کنید'
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
-.fade-down-enter-active, .fade-down-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
-.fade-down-enter-from, .fade-down-leave-to { opacity: 0; transform: translateY(-4px); }
+.login {
+  padding: 48px 24px 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+.login__ring {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 18px;
+  color: #16241C;
+}
+.login__brand {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.login__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.login__sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.login__form { display: flex; flex-direction: column; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field__label { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.field__box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 16px;
+  padding: 14px 16px;
+  color: var(--text-secondary);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .field__box {
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
+.field__input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: .5px;
+  color: var(--text-primary);
+}
+.field__input::placeholder { color: var(--text-disabled); }
+
+.login__error {
+  font-size: 12px;
+  color: #E8837F;
+  margin-top: -4px;
+}
+
+.login__submit {
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .3);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
+  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+  cursor: pointer;
+}
+.login__submit:disabled { opacity: .55; cursor: not-allowed; }
+
+.login__hint {
+  margin-top: auto;
+  padding-top: 32px;
+  font-size: 11px;
+  color: var(--text-disabled);
+  text-align: center;
+  line-height: 1.7;
+}
 </style>

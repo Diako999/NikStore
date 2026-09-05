@@ -1,188 +1,190 @@
 <template>
-  <div class="space-y-5">
+  <div class="dashboard">
+    <h1 class="dashboard__title">داشبورد</h1>
 
-    <!-- ① Header: welcome + date + refresh -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-black text-text-primary">
-          خوش آمدید، {{ adminName }} 👋
-        </h1>
-        <p class="text-text-secondary text-sm mt-0.5 font-fanum">
-          {{ todayDatePersian }}
+    <div v-if="statsError" class="dashboard__error">
+      دریافت آمار با خطا مواجه شد. {{ statsError }}
+    </div>
+
+    <div class="dashboard__stats">
+      <AdminCard class="stat-card">
+        <p class="stat-card__label">درآمد کل</p>
+        <p class="stat-card__value">
+          <span v-if="loadingStats">—</span>
+          <span v-else>{{ formatToman(dashboard?.revenue?.allTime) }}</span>
         </p>
-      </div>
-
-      <button
-        @click="loadAll"
-        :class="[
-          'flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-          'border border-border text-text-secondary',
-          'hover:border-primary hover:text-primary transition-all',
-          loading ? 'opacity-70' : '',
-        ]"
-      >
-        <svg
-          :class="['w-4 h-4', loading ? 'animate-spin' : '']"
-          fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round"
-            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0
-               0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-        بروزرسانی
-      </button>
+      </AdminCard>
+      <AdminCard class="stat-card">
+        <p class="stat-card__label">درآمد این ماه</p>
+        <p class="stat-card__value">
+          <span v-if="loadingStats">—</span>
+          <span v-else>{{ formatToman(dashboard?.revenue?.thisMonth) }}</span>
+        </p>
+      </AdminCard>
+      <AdminCard class="stat-card">
+        <p class="stat-card__label">کل سفارش‌ها</p>
+        <p class="stat-card__value">
+          <span v-if="loadingStats">—</span>
+          <span v-else>{{ formatNumber(dashboard?.orders?.total) }}</span>
+        </p>
+      </AdminCard>
+      <AdminCard class="stat-card stat-card--warning">
+        <p class="stat-card__label">محصولات کم‌موجود</p>
+        <p class="stat-card__value">
+          <span v-if="loadingStats">—</span>
+          <span v-else>{{ formatNumber(dashboard?.products?.lowStock) }}</span>
+        </p>
+      </AdminCard>
     </div>
 
-    <!-- ② Quick actions -->
-    <QuickActions
-      :pending-orders="ui.pendingOrdersCount"
-      :pending-reviews="ui.pendingReviewsCount"
-    />
+    <div class="dashboard__panels">
+      <AdminCard title="کم‌موجودی‌ترین محصولات" flush>
+        <AdminTable :columns="lowStockColumns" :rows="lowStock" :loading="loadingLowStock">
+          <template #cell-totalStock="{ value }">
+            <AdminBadge variant="danger">{{ formatNumber(value) }} عدد</AdminBadge>
+          </template>
+          <template #empty>محصول کم‌موجودی وجود ندارد</template>
+        </AdminTable>
+      </AdminCard>
 
-    <!-- ③ Stat cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <StatCard
-        icon="💰" title="درآمد کل" color="blue" :loading="loading"
-        :value="formatPrice(stats.overview?.totalRevenue)"
-        sub-label="این ماه"
-        :sub-value="formatPrice(stats.overview?.monthRevenue)"
-      />
-      <StatCard
-        icon="📦" title="کل سفارشات" color="purple" :loading="loading"
-        :value="formatNumber(stats.overview?.totalOrders)"
-        sub-label="در انتظار"
-        :sub-value="formatNumber(stats.overview?.pendingOrders)"
-        :to="{ name: 'orders' }"
-      />
-      <StatCard
-        icon="👥" title="کاربران" color="green" :loading="loading"
-        :value="formatNumber(stats.overview?.totalUsers)"
-        sub-label="سفارش امروز"
-        :sub-value="formatNumber(stats.overview?.todayOrders)"
-        :to="{ name: 'users' }"
-      />
-      <StatCard
-        icon="🏪" title="محصولات" color="yellow" :loading="loading"
-        :value="formatNumber(stats.overview?.totalProducts)"
-        sub-label="درآمد امروز"
-        :sub-value="formatPrice(stats.overview?.todayRevenue)"
-        :to="{ name: 'products' }"
-      />
+      <AdminCard title="پرفروش‌ترین محصولات" flush>
+        <AdminTable :columns="topSellingColumns" :rows="topSelling" :loading="loadingTopSelling">
+          <template #cell-soldCount="{ value }">
+            {{ formatNumber(value) }}
+          </template>
+          <template #empty>هنوز فروشی ثبت نشده است</template>
+        </AdminTable>
+      </AdminCard>
     </div>
-
-    <!-- ③ Revenue chart (3/5) + Order status doughnut (2/5) -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      <div class="lg:col-span-3">
-        <RevenueChart :data="stats.revenueByDay ?? []" :loading="loading" />
-      </div>
-      <div class="lg:col-span-2">
-        <OrderStatusChart :data="stats.orderStatusStats ?? {}" :loading="loading" />
-      </div>
-    </div>
-
-    <!-- ④ Recent orders (3/5) + Top products bar (2/5) -->
-    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-      <div class="lg:col-span-3">
-        <RecentOrdersTable :orders="stats.recentOrders ?? []" :loading="loading" />
-      </div>
-      <div class="lg:col-span-2">
-        <TopProductsChart :data="stats.topProducts ?? []" :loading="loading" />
-      </div>
-    </div>
-
-
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore }       from '@/stores/auth.store'
-import { useUiStore }         from '@/stores/ui.store'
-import { dashboardService }   from '@/services/dashboard.service'
-import { reviewService }      from '@/services/review.service'
-import { formatPrice, formatNumber } from '@/utils/formatters'
+import { onMounted, ref } from 'vue'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import { adminService } from '../../services/admin.service'
 
-import StatCard          from './components/StatCard.vue'
-import RevenueChart      from './components/RevenueChart.vue'
-import OrderStatusChart  from './components/OrderStatusChart.vue'
-import TopProductsChart  from './components/TopProductsChart.vue'
-import RecentOrdersTable from './components/RecentOrdersTable.vue'
-import QuickActions      from './components/QuickActions.vue'
+const dashboard = ref(null)
+const lowStock = ref([])
+const topSelling = ref([])
 
-const auth = useAuthStore()
-const ui   = useUiStore()
+const loadingStats = ref(true)
+const loadingLowStock = ref(true)
+const loadingTopSelling = ref(true)
+const statsError = ref('')
 
-const loading = ref(true)
-const stats   = ref({})
+const lowStockColumns = [
+  { key: 'name', label: 'محصول' },
+  { key: 'totalStock', label: 'موجودی', align: 'end' },
+]
+const topSellingColumns = [
+  { key: 'name', label: 'محصول' },
+  { key: 'soldCount', label: 'تعداد فروش', align: 'end' },
+]
 
-const adminName = computed(() => auth.user?.firstName || 'مدیر')
-
-const todayDatePersian = computed(() =>
-  new Intl.DateTimeFormat('fa-IR', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  }).format(new Date())
-)
-
-async function loadStats() {
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const today        = new Date().toISOString().slice(0, 10)
-
-  const [dashRes, revenueRes, orderStatsRes, recentRes, topRes] = await Promise.allSettled([
-    dashboardService.getStats(),
-    dashboardService.getRevenue({ from: sevenDaysAgo, to: today }),
-    dashboardService.getOrderStats(),
-    dashboardService.getRecentOrders(10),
-    dashboardService.getTopProducts(10),
-  ])
-
-  const dash       = dashRes.status       === 'fulfilled' ? (dashRes.value?.data       ?? {}) : {}
-  const revenue    = revenueRes.status    === 'fulfilled' ? (revenueRes.value?.data    ?? {}) : {}
-  const orderStats = orderStatsRes.status === 'fulfilled' ? (orderStatsRes.value?.data ?? {}) : {}
-  const recent     = recentRes.status     === 'fulfilled' ? (recentRes.value?.data     ?? []) : []
-  const top        = topRes.status        === 'fulfilled' ? (topRes.value?.data        ?? []) : []
-
-  const pendingOrders = dash.orders?.pending ?? 0
-  stats.value = {
-    overview: {
-      totalRevenue:  dash.revenue?.allTime   ?? 0,
-      monthRevenue:  dash.revenue?.thisMonth ?? 0,
-      todayRevenue:  dash.revenue?.today     ?? 0,
-      totalOrders:   dash.orders?.total      ?? 0,
-      pendingOrders,
-      todayOrders:   orderStats.today        ?? 0,
-      totalUsers:    dash.users?.total       ?? 0,
-      totalProducts: dash.products?.total    ?? 0,
-    },
-    revenueByDay:     (revenue.byDay ?? []).map(d => ({ date: d.date, revenue: d.amount ?? 0, orders: d.count ?? 0 })),
-    orderStatusStats: dash.orders        ?? {},
-    recentOrders:     Array.isArray(recent) ? recent : [],
-    topProducts:      Array.isArray(top)    ? top    : [],
-  }
-  ui.setPendingOrdersCount(pendingOrders)
+function formatToman(value) {
+  if (value === undefined || value === null) return '—'
+  return `${Number(value).toLocaleString('fa-IR')} تومان`
 }
 
-async function loadPendingReviews() {
-  try {
-    const res = await reviewService.getAll({ status: 'pending', limit: 1 })
-    ui.setPendingReviewsCount(res.data?.total ?? res.data ?? 0)
-  } catch { /* non-critical */ }
+function formatNumber(value) {
+  if (value === undefined || value === null) return '—'
+  return Number(value).toLocaleString('fa-IR')
 }
 
-async function loadAll() {
-  loading.value = true
+onMounted(async () => {
   try {
-    await Promise.allSettled([
-      loadStats(),
-      loadPendingReviews(),
-    ])
-  } catch {
-    ui.addToast('خطا در بارگذاری داشبورد', 'error')
+    const { data } = await adminService.getDashboard()
+    dashboard.value = data
+  } catch (error) {
+    statsError.value = error.response?.data?.message || 'خطای غیرمنتظره'
   } finally {
-    loading.value = false
+    loadingStats.value = false
   }
-}
 
-onMounted(() => {
-  loadAll()
+  try {
+    const { data } = await adminService.getLowStockProducts()
+    lowStock.value = data ?? []
+  } catch {
+    lowStock.value = []
+  } finally {
+    loadingLowStock.value = false
+  }
+
+  try {
+    const { data } = await adminService.getTopSellingProducts()
+    topSelling.value = data ?? []
+  } catch {
+    topSelling.value = []
+  } finally {
+    loadingTopSelling.value = false
+  }
 })
 </script>
+
+<style scoped>
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dashboard__error {
+  font-size: 13px;
+  color: #D9534F;
+  background: rgba(217, 83, 79, .12);
+  border: 1px solid rgba(217, 83, 79, .3);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1023px) {
+  .dashboard__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stat-card {
+  padding: 4px;
+}
+.stat-card :deep(.admin-card__body) {
+  padding: 18px 20px;
+}
+.stat-card__label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.stat-card__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.stat-card--warning .stat-card__value {
+  color: #D9534F;
+}
+
+.dashboard__panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 1023px) {
+  .dashboard__panels {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

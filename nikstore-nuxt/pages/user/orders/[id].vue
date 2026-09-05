@@ -1,306 +1,139 @@
-﻿<template>
-  <div class="container-main py-8">
-
-    <!-- Back -->
-    <button
-      @click="$router.back()"
-      class="flex items-center gap-2 text-sm text-text-secondary hover:text-brand transition-colors mb-6"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-      </svg>
-      بازگشت به سفارش‌ها
-    </button>
-
-    <!-- Loading -->
-    <div v-if="loading" class="flex flex-col gap-4">
-      <div class="h-24 rounded-2xl skeleton" />
-      <div class="h-48 rounded-2xl skeleton" />
-      <div class="h-32 rounded-2xl skeleton" />
+<template>
+  <div class="order-detail">
+    <div class="head">
+      <NuxtLink to="/user/orders" class="back-link">
+        <AppIcon name="chevron-right" :size="15" :stroke-width="2" />
+        سفارش‌های من
+      </NuxtLink>
     </div>
 
-    <!-- Not found -->
-    <BaseEmpty
-      v-else-if="!order"
-      icon="🔍"
-      title="سفارش یافت نشد"
-      subtitle="این سفارش وجود ندارد یا متعلق به شما نیست"
-      action="بازگشت به سفارشات"
-      :to="'/user/orders'"
-    />
+    <div v-if="loading" class="empty-hint">در حال بارگذاری...</div>
+    <p v-else-if="!order" class="empty-hint">سفارش یافت نشد</p>
 
-    <!-- Order detail -->
-    <div v-else class="flex flex-col gap-6">
-
-      <!-- ── Header card ── -->
-      <GlassCard padding="lg">
-        <div class="flex flex-wrap items-start justify-between gap-4">
+    <template v-else>
+      <section class="panel summary">
+        <div class="summary__top">
           <div>
-            <p class="text-xs text-glass-text-secondary mb-1">شماره سفارش</p>
-            <div class="flex items-center gap-2">
-              <p class="text-xl font-black text-glass-text-primary font-fanum dir-ltr">
-                {{ order.orderNumber }}
+            <p class="summary__num">{{ toPersianDigits(order.orderNumber) }}</p>
+            <p class="summary__date">{{ formatDate(order.createdAt) }}</p>
+          </div>
+          <span class="status-badge" :class="`status-badge--${order.status}`">{{ statusLabel(order.status) }}</span>
+        </div>
+        <p v-if="order.status === 'cancelled' && order.cancelReason" class="summary__cancel-reason">
+          دلیل لغو: {{ order.cancelReason }}
+        </p>
+      </section>
+
+      <div class="section-gap" />
+
+      <SectionHead title="اقلام سفارش" />
+      <section class="panel">
+        <div class="items">
+          <div v-for="(item, i) in order.items" :key="i" class="item">
+            <div class="item__thumb">
+              <img v-if="item.thumbnail" :src="item.thumbnail" :alt="item.name" loading="lazy">
+            </div>
+            <div class="item__info">
+              <p class="item__name">{{ item.name }}</p>
+              <p v-if="item.attributes?.length" class="item__attrs">
+                {{ item.attributes.map(a => `${a.key}: ${a.value}`).join(' · ') }}
               </p>
-              <button
-                @click="copyOrderNumber(order.orderNumber)"
-                :title="copied ? 'کپی شد!' : 'کپی کد سفارش'"
-                :class="[
-                  'w-8 h-8 rounded-lg flex items-center justify-center transition-all flex-shrink-0',
-                  copied
-                    ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400'
-                    : 'bg-surface text-text-secondary hover:bg-primary/10 hover:text-primary border border-border',
-                ]"
-              >
-                <svg v-if="!copied" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                </svg>
-                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
-              </button>
-            </div>
-            <p class="text-sm text-glass-text-secondary mt-1">
-              ثبت شده در {{ formatDate(order.createdAt) }}
-            </p>
-          </div>
-          <span :class="['text-sm px-4 py-1.5 rounded-full font-medium', statusColor(order.status).badge]">
-            {{ statusLabel(order.status) }}
-          </span>
-        </div>
-
-        <!-- Status stepper (non-cancelled) -->
-        <div v-if="order.status !== 'cancelled'" class="mt-6">
-          <div class="flex items-center gap-0" role="list" aria-label="مراحل پردازش سفارش">
-            <template v-for="(step, i) in statusSteps" :key="step.value">
-              <div class="flex flex-col items-center gap-1.5 flex-shrink-0" role="listitem" :aria-label="`${step.label}: ${stepState(step.value) === 'done' ? 'انجام شده' : stepState(step.value) === 'current' ? 'در حال انجام' : 'در انتظار'}`">
-                <div
-                  :class="[
-                    'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all',
-                    stepState(step.value) === 'done'    ? 'bg-brand text-white' :
-                    stepState(step.value) === 'current' ? 'bg-brand text-white ring-4 ring-brand/20' :
-                                                          'bg-surface border-2 border-surface-border text-text-disabled',
-                  ]"
-                >
-                  <svg v-if="stepState(step.value) === 'done'" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
-                  </svg>
-                  <span v-else class="font-fanum">{{ i + 1 }}</span>
-                </div>
-                <p :class="['text-xs text-center leading-tight max-w-14', stepState(step.value) === 'upcoming' ? 'text-glass-text-disabled' : 'text-glass-text-primary font-medium']">
-                  {{ step.label }}
-                </p>
-              </div>
-              <div
-                v-if="i < statusSteps.length - 1"
-                :class="[
-                  'flex-1 h-0.5 mb-4 transition-all',
-                  stepIndex(order.status) > i ? 'bg-brand' : 'bg-surface-border',
-                ]"
-              />
-            </template>
-          </div>
-        </div>
-
-        <!-- Cancelled banner -->
-        <div v-else class="mt-4 flex items-center gap-2 p-3 rounded-xl bg-error/5 border border-error/20 text-error text-sm">
-          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          این سفارش لغو شده است
-        </div>
-      </GlassCard>
-
-      <!-- ── Items ── -->
-      <GlassCard padding="lg">
-        <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
-          کالاهای سفارش
-          <span class="text-glass-text-secondary font-normal text-sm font-fanum">({{ order.items.length }} کالا)</span>
-        </h2>
-
-        <div class="flex flex-col divide-y divide-surface-border">
-          <div
-            v-for="item in order.items" :key="item.variantId"
-            class="flex gap-3 py-4 first:pt-0 last:pb-0"
-          >
-            <img
-              :src="item.thumbnail || PLACEHOLDER"
-              :alt="item.name"
-              class="w-16 h-16 rounded-xl object-cover flex-shrink-0"
-              @error="e => e.target.src = PLACEHOLDER"
-            />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-glass-text-primary line-clamp-2">{{ item.name }}</p>
-              <div v-if="item.attributes?.length" class="flex flex-wrap gap-1 mt-1">
-                <span
-                  v-for="attr in item.attributes" :key="attr.key"
-                  class="text-xs text-glass-text-secondary bg-glass px-2 py-0.5 rounded-md"
-                >
-                  {{ attr.key }}: {{ attr.value }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between mt-2">
-                <span class="text-xs text-glass-text-secondary font-fanum">
-                  {{ formatNumber(item.quantity) }} عدد × {{ formatPrice(item.price) }}
-                </span>
-                <span class="text-sm font-bold text-glass-text-primary font-fanum">
-                  {{ formatPrice(item.price * item.quantity) }}
-                </span>
+              <div class="item__bottom">
+                <span class="item__qty">{{ toPersianDigits(item.quantity) }} عدد</span>
+                <span class="item__price">{{ formatPrice(item.price) }}</span>
               </div>
             </div>
           </div>
         </div>
-      </GlassCard>
+      </section>
 
-      <!-- ── Grid: Summary + Address ── -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="section-gap" />
 
-        <!-- Financial summary -->
-        <GlassCard padding="lg">
-          <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
-            خلاصه مالی
-          </h2>
-          <div class="flex flex-col gap-3 text-sm">
-            <div class="flex justify-between">
-              <span class="text-glass-text-secondary">جمع کالاها</span>
-              <span class="font-fanum text-glass-text-primary">{{ formatPrice(order.subtotal) }}</span>
-            </div>
-            <div v-if="order.discount > 0" class="flex justify-between text-success">
-              <span>
-                تخفیف
-                <span v-if="order.couponCode" class="font-fanum text-xs">({{ order.couponCode }})</span>
-              </span>
-              <span class="font-fanum">− {{ formatPrice(order.discount) }}</span>
-            </div>
-            <div class="flex justify-between font-bold text-base pt-3 border-t border-glass-border">
-              <span class="text-glass-text-primary">مبلغ پرداخت شده</span>
-              <span class="text-brand font-fanum">{{ formatPrice(order.total) }}</span>
-            </div>
-          </div>
-        </GlassCard>
-
-        <!-- Shipping address -->
-        <GlassCard padding="lg">
-          <h2 class="font-bold text-glass-text-primary mb-4 pb-3 border-b border-glass-border">
-            آدرس تحویل
-          </h2>
-          <div class="flex flex-col gap-2 text-sm text-glass-text-secondary leading-6">
-            <div class="flex items-center gap-2">
-              <span class="text-glass-text-primary font-medium">{{ order.shippingAddress.recipientName }}</span>
-              <span class="text-glass-text-disabled">|</span>
-              <span class="font-fanum dir-ltr">{{ order.shippingAddress.recipientPhone }}</span>
-            </div>
-            <p>
-              {{ order.shippingAddress.province }}،
-              {{ order.shippingAddress.city }}،
-              {{ order.shippingAddress.street }}،
-              {{ order.shippingAddress.detail }}
-            </p>
-            <p class="font-fanum text-xs">
-              کد پستی: {{ order.shippingAddress.postalCode }}
-            </p>
-          </div>
-        </GlassCard>
-      </div>
-
-      <!-- ── Cancel button ── -->
-      <div v-if="canCancel(order.status)" class="flex justify-end">
-        <button
-          v-if="!confirmingCancel"
-          @click="confirmingCancel = true"
-          class="text-sm text-error border border-error/40 px-5 py-2.5 rounded-xl hover:bg-error/5 transition-colors"
-        >
-          لغو سفارش
-        </button>
-        <div v-else class="flex items-center gap-3 text-sm">
-          <span class="text-text-secondary">از لغو مطمئن هستید؟</span>
-          <button
-            @click="handleCancel"
-            :disabled="cancelling"
-            class="text-error font-medium hover:underline disabled:opacity-50"
-          >
-            {{ cancelling ? 'در حال لغو...' : 'بله، لغو شود' }}
-          </button>
-          <button @click="confirmingCancel = false" class="text-text-secondary hover:underline">
-            خیر
-          </button>
+      <SectionHead title="آدرس ارسال" />
+      <section class="panel">
+        <div class="addr">
+          <p class="addr__line addr__line--strong">{{ order.shippingAddress.recipientName }} · <bdi>{{ toPersianDigits(order.shippingAddress.recipientPhone) }}</bdi></p>
+          <p class="addr__line">{{ order.shippingAddress.province }}، {{ order.shippingAddress.city }}، {{ order.shippingAddress.street }}</p>
+          <p class="addr__line">{{ order.shippingAddress.detail }}</p>
+          <p class="addr__line">کد پستی: <bdi>{{ toPersianDigits(order.shippingAddress.postalCode) }}</bdi></p>
         </div>
-      </div>
+      </section>
 
-    </div>
+      <div class="section-gap" />
+
+      <SectionHead title="جزئیات پرداخت" />
+      <section class="panel">
+        <div class="totals">
+          <div class="totals__row">
+            <span>جمع کالاها</span>
+            <span>{{ formatPrice(order.subtotal) }}</span>
+          </div>
+          <div v-if="order.discount" class="totals__row totals__row--discount">
+            <span>تخفیف{{ order.couponCode ? ` (${order.couponCode})` : '' }}</span>
+            <span>-{{ formatPrice(order.discount) }}</span>
+          </div>
+          <div class="totals__row totals__row--total">
+            <span>مبلغ نهایی</span>
+            <span>{{ formatPrice(order.total) }}</span>
+          </div>
+        </div>
+        <p v-if="order.note" class="order-note">یادداشت: {{ order.note }}</p>
+      </section>
+
+      <div v-if="cancellable" class="section-gap" />
+
+      <section v-if="cancellable" class="panel">
+        <p v-if="cancelError" class="msg msg--error">{{ cancelError }}</p>
+
+        <div v-if="!confirmingCancel" class="cancel-row">
+          <button type="button" class="btn-danger-outline" @click="confirmingCancel = true">لغو سفارش</button>
+        </div>
+        <div v-else class="cancel-confirm">
+          <p class="cancel-confirm__text">از لغو این سفارش مطمئن هستید؟</p>
+          <div class="cancel-confirm__actions">
+            <button type="button" class="btn-ghost" @click="confirmingCancel = false">انصراف</button>
+            <button type="button" class="btn-danger" :disabled="cancelling" @click="onCancel">
+              {{ cancelling ? 'در حال لغو...' : 'بله، لغو شود' }}
+            </button>
+          </div>
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import SectionHead from '~/components/ui/SectionHead.vue'
+import { orderService } from '~/services/order.service'
+import { formatPrice, toPersianDigits } from '~/utils/format'
 
-definePageMeta({ layout: 'default', middleware: ['auth'] })
-useSeoMeta({ title: 'جزئیات سفارش', robots: 'noindex,nofollow' })
+definePageMeta({ layout: 'default', middleware: 'auth' })
+useSeoMeta({ title: 'جزئیات سفارش | نیک' })
 
+const route = useRoute()
 
-import { ref, computed, onMounted } from 'vue'
-import { useRoute, useRouter }      from 'vue-router'
-import { orderService }             from '~/services/order.service'
-import { useUiStore }        from '~/stores/ui.store'
-import { useSettingsStore } from '~/stores/settings.store'
-import { formatPrice, formatNumber, formatDate } from '~/utils/formatters'
-import BaseEmpty from '~/components/common/BaseEmpty.vue'
-import GlassCard from '~/components/glass/GlassCard.vue'
-
-const PLACEHOLDER = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="%23334155"%3E%3Crect width="64" height="64" rx="8"/%3E%3C/svg%3E'
-
-const route         = useRoute()
-const router        = useRouter()
-const ui            = useUiStore()
-const settingsStore = useSettingsStore()
-
-const order            = ref(null)
-const copied           = ref(false)
-
-function copyOrderNumber(text) {
-  navigator.clipboard.writeText(text).then(() => {
-    copied.value = true
-    setTimeout(() => { copied.value = false }, 2000)
-  })
+const STATUS_LABELS = {
+  pending: 'در انتظار تایید',
+  confirmed: 'تایید شده',
+  processing: 'در حال پردازش',
+  shipped: 'ارسال شده',
+  delivered: 'تحویل داده شده',
+  cancelled: 'لغو شده',
 }
-const loading          = ref(true)
-const confirmingCancel = ref(false)
-const cancelling       = ref(false)
+function statusLabel(s) { return STATUS_LABELS[s] || s }
 
-const statusSteps = [
-  { value: 'pending',    label: 'ثبت سفارش' },
-  { value: 'confirmed',  label: 'تأیید' },
-  { value: 'processing', label: 'پردازش' },
-  { value: 'shipped',    label: 'ارسال' },
-  { value: 'delivered',  label: 'تحویل' },
-]
+const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'processing']
 
-const ORDER_IDX = { pending: 0, confirmed: 1, processing: 2, shipped: 3, delivered: 4 }
+const order = ref(null)
+const loading = ref(true)
 
-const STATUS_MAP = {
-  pending:    { label: 'در انتظار تأیید', badge: 'bg-warning/10 text-warning' },
-  confirmed:  { label: 'تأیید شده',       badge: 'bg-brand/10 text-brand' },
-  processing: { label: 'در حال پردازش',  badge: 'bg-blue-400/10 text-blue-400' },
-  shipped:    { label: 'ارسال شده',       badge: 'bg-purple-400/10 text-purple-400' },
-  delivered:  { label: 'تحویل داده شده', badge: 'bg-success/10 text-success' },
-  cancelled:  { label: 'لغو شده',        badge: 'bg-error/10 text-error' },
-}
-
-function statusLabel(s) { return STATUS_MAP[s]?.label ?? s }
-function statusColor(s) { return STATUS_MAP[s] ?? { badge: 'bg-gray-400/10 text-gray-400' } }
-function canCancel(s)   { return s === 'pending' || s === 'confirmed' }
-function stepIndex(s)   { return ORDER_IDX[s] ?? -1 }
-function stepState(stepValue) {
-  const cur = stepIndex(order.value?.status)
-  const idx = ORDER_IDX[stepValue] ?? -1
-  if (idx < cur)  return 'done'
-  if (idx === cur) return 'current'
-  return 'upcoming'
-}
-
-async function fetchOrder() {
+async function loadOrder() {
   loading.value = true
   try {
-    const { data } = await orderService.getMyOrder(route.params.id)
+    const { data } = await orderService.getMineById(route.params.id)
     order.value = data
   } catch {
     order.value = null
@@ -308,25 +141,171 @@ async function fetchOrder() {
     loading.value = false
   }
 }
+onMounted(loadOrder)
 
-async function handleCancel() {
+const cancellable = computed(() => order.value && CANCELLABLE_STATUSES.includes(order.value.status))
+
+const confirmingCancel = ref(false)
+const cancelling = ref(false)
+const cancelError = ref('')
+
+async function onCancel() {
   cancelling.value = true
+  cancelError.value = ''
   try {
-    const { data } = await orderService.cancelOrder(order.value._id)
-    order.value = data
+    await orderService.cancelMine(route.params.id)
+    await loadOrder()
     confirmingCancel.value = false
-    ui.addToast('سفارش با موفقیت لغو شد', 'success')
-  } catch (err) {
-    const msg = err?.response?.data?.message
-    ui.addToast(msg || 'خطا در لغو سفارش', 'error')
+  } catch (e) {
+    cancelError.value = e.response?.data?.message || 'لغو سفارش با خطا مواجه شد'
   } finally {
     cancelling.value = false
   }
 }
 
-onMounted(fetchOrder)
+function formatDate(value) {
+  if (!value) return ''
+  try {
+    return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
+  } catch {
+    return ''
+  }
+}
 </script>
 
 <style scoped>
-.dir-ltr { direction: ltr; unicode-bidi: embed; }
+.order-detail { padding: 20px 0 8px; }
+.section-gap { height: 22px; }
+
+.head { padding: 0 18px 16px; }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.panel { margin: 0 18px; }
+.empty-hint { font-size: 12.5px; color: var(--text-secondary); padding: 0 18px; }
+
+.summary {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(120deg, rgba(61, 139, 82, .38), rgba(122, 90, 220, .20)) padding-box,
+    linear-gradient(120deg, rgba(255, 255, 255, .4), rgba(255, 255, 255, .03) 60%) border-box;
+  backdrop-filter: blur(16px) saturate(160%);
+}
+[data-theme='light'] .summary {
+  border-width: 1.5px;
+  box-shadow: var(--glass-shadow);
+  background:
+    linear-gradient(120deg, rgba(110, 176, 130, .50), rgba(122, 90, 220, .22)) padding-box,
+    linear-gradient(120deg, rgba(255, 255, 255, 1), rgba(255, 255, 255, .2) 60%) border-box;
+}
+.summary__top { display: flex; align-items: flex-start; justify-content: space-between; }
+.summary__num { font-size: 14px; font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; margin-bottom: 3px; }
+.summary__date { font-size: 11.5px; color: var(--text-secondary); }
+.summary__cancel-reason { margin-top: 10px; font-size: 12px; color: #E8837F; }
+
+.status-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+}
+.status-badge--pending { background: linear-gradient(135deg, rgba(231, 175, 66, .95), rgba(180, 130, 40, .9)); }
+.status-badge--confirmed,
+.status-badge--processing { background: linear-gradient(135deg, rgba(122, 90, 220, .9), rgba(90, 60, 190, .9)); }
+.status-badge--shipped { background: linear-gradient(135deg, rgba(110, 176, 130, .95), rgba(61, 139, 82, .9)); }
+.status-badge--delivered { background: linear-gradient(135deg, rgba(61, 139, 82, .95), rgba(45, 107, 62, .92)); }
+.status-badge--cancelled { background: linear-gradient(135deg, rgba(232, 131, 127, .95), rgba(180, 70, 65, .9)); }
+
+.items { display: flex; flex-direction: column; gap: 14px; }
+.item { display: flex; gap: 12px; }
+.item__thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--glass);
+}
+.item__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.item__info { flex: 1; min-width: 0; }
+.item__name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.4; }
+.item__attrs { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+.item__bottom { display: flex; align-items: center; justify-content: space-between; }
+.item__qty { font-size: 11px; color: var(--text-secondary); }
+.item__price { font-size: 12.5px; font-weight: 700; color: var(--brand-light); }
+[data-theme='light'] .item__price { color: var(--brand-dark); }
+
+.addr { display: flex; flex-direction: column; gap: 6px; }
+.addr__line { font-size: 12.5px; color: var(--text-secondary); line-height: 1.6; }
+.addr__line--strong { color: var(--text-primary); font-weight: 600; }
+
+.totals { display: flex; flex-direction: column; gap: 8px; }
+.totals__row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--text-secondary); }
+.totals__row--discount { color: var(--brand-light); }
+[data-theme='light'] .totals__row--discount { color: var(--brand-dark); }
+.totals__row--total {
+  padding-top: 10px;
+  margin-top: 4px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.order-note { margin-top: 12px; font-size: 11.5px; color: var(--text-secondary); }
+
+.msg { font-size: 12px; margin: 0 0 10px; }
+.msg--error { color: #E8837F; }
+
+.cancel-row { display: flex; }
+.btn-danger-outline {
+  width: 100%;
+  padding: 13px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #E8837F;
+  background: transparent;
+  border: 1px solid rgba(232, 131, 127, .5);
+  cursor: pointer;
+}
+
+.cancel-confirm { text-align: center; }
+.cancel-confirm__text { font-size: 12.5px; color: var(--text-primary); margin-bottom: 12px; }
+.cancel-confirm__actions { display: flex; gap: 10px; }
+.btn-ghost {
+  flex: 1;
+  padding: 12px;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 13px;
+  font-family: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.btn-danger {
+  flex: 1;
+  padding: 12px;
+  border-radius: 999px;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: inherit;
+  background: linear-gradient(135deg, #E8837F, #C4544E);
+  cursor: pointer;
+}
+.btn-danger:disabled { opacity: .6; cursor: not-allowed; }
 </style>

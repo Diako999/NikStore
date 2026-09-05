@@ -1,246 +1,254 @@
 <template>
-  <div>
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-      <div>
-        <h1 class="page-title">مدیریت بلاگ</h1>
-        <p class="text-text-secondary text-sm mt-0.5">{{ total }} پست ثبت شده</p>
+  <div class="blogs">
+    <div class="blogs__head">
+      <h1 class="blogs__title">مقالات وبلاگ</h1>
+      <div class="blogs__head-actions">
+        <router-link to="/blog/comments">
+          <AdminButton variant="secondary" icon="message">مدیریت نظرات</AdminButton>
+        </router-link>
+        <router-link to="/blog/create">
+          <AdminButton icon="plus">مقاله جدید</AdminButton>
+        </router-link>
       </div>
-      <RouterLink :to="{ name: 'blog-create' }">
-        <AdminButton>+ پست جدید</AdminButton>
-      </RouterLink>
     </div>
 
-    <!-- Filters -->
-    <div class="admin-card mb-5 flex flex-wrap items-center gap-3">
-      <div class="flex-1 min-w-48 relative">
-        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-text-disabled text-sm">🔍</span>
-        <input
-          v-model="filters.search"
-          @input="onSearch"
-          type="text"
-          placeholder="جستجو در عنوان، تگ..."
-          class="field-input pr-9 w-full"
+    <AdminCard>
+      <div class="blogs__filters">
+        <AdminInput
+          v-model="search"
+          placeholder="جستجو در عنوان یا خلاصه..."
+          icon="search"
+          @keyup.enter="applyFilters"
         />
+        <AdminSelect
+          v-model="statusFilter"
+          :options="statusOptions"
+          placeholder="همه وضعیت‌ها"
+          @update:model-value="applyFilters"
+        />
+        <AdminButton variant="secondary" size="sm" @click="applyFilters">اعمال فیلتر</AdminButton>
+        <AdminButton variant="ghost" size="sm" @click="resetFilters">پاک کردن</AdminButton>
       </div>
+    </AdminCard>
 
-      <select v-model="filters.status" @change="fetchPosts" class="field-input min-w-36">
-        <option value="">همه وضعیت‌ها</option>
-        <option value="published">منتشر شده</option>
-        <option value="draft">پیش‌نویس</option>
-        <option value="archived">آرشیو</option>
-      </select>
-
-      <select v-model="filters.sortBy" @change="fetchPosts" class="field-input min-w-36">
-        <option value="newest">جدیدترین</option>
-        <option value="oldest">قدیمی‌ترین</option>
-        <option value="popular">محبوب‌ترین</option>
-      </select>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="space-y-3">
-      <AdminSkeleton v-for="i in 5" :key="i" height="76px" class="rounded-xl" />
-    </div>
-
-    <!-- Empty -->
-    <div v-else-if="!posts.length"
-         class="admin-card flex flex-col items-center py-16 gap-4">
-      <div class="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center text-3xl">📝</div>
-      <p class="text-text-secondary">
-        {{ filters.search || filters.status ? 'پستی با این فیلترها یافت نشد.' : 'هنوز پستی منتشر نشده.' }}
-      </p>
-      <RouterLink :to="{ name: 'blog-create' }">
-        <AdminButton>اولین پست را بنویسید</AdminButton>
-      </RouterLink>
-    </div>
-
-    <!-- Post list -->
-    <div v-else class="space-y-3">
-      <div
-        v-for="post in posts"
-        :key="post._id"
-        class="admin-card flex items-start gap-4 hover:shadow-md transition-shadow"
-      >
-        <!-- Featured image -->
-        <div class="w-24 h-16 rounded-xl overflow-hidden bg-surface flex-shrink-0">
-          <img
-            v-if="post.featuredImage"
-            :src="post.featuredImage"
-            :alt="post.title"
-            class="w-full h-full object-cover"
-          />
-          <div v-else class="w-full h-full flex items-center justify-center text-2xl text-text-disabled">📝</div>
-        </div>
-
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <RouterLink
-              :to="{ name: 'blog-edit', params: { id: post._id } }"
-              class="font-semibold text-text-primary text-sm hover:text-primary transition-colors truncate"
-            >
-              {{ post.title }}
-            </RouterLink>
-            <AdminBadge :variant="statusMeta(post.status).color" size="sm">
-              {{ statusMeta(post.status).label }}
-            </AdminBadge>
+    <AdminCard flush>
+      <AdminTable :columns="columns" :rows="posts" :loading="loading">
+        <template #cell-featuredImage="{ value }">
+          <div class="blogs__cover">
+            <img v-if="value" :src="value" alt="" loading="lazy">
+            <AppIcon v-else name="image" :size="18" />
           </div>
-
-          <p v-if="post.excerpt" class="text-text-secondary text-xs mt-1 line-clamp-1">
-            {{ post.excerpt }}
-          </p>
-
-          <div class="flex items-center gap-3 mt-1.5 text-xs text-text-disabled flex-wrap">
-            <span v-if="post.author">
-              ✍️ {{ post.author.firstName || '' }} {{ post.author.lastName || post.author.phone || '' }}
-            </span>
-            <span>📅 {{ formatDate(post.createdAt) }}</span>
-            <span v-if="post.status === 'published'">👁 {{ post.viewCount ?? 0 }} بازدید</span>
-            <div v-if="post.tags?.length" class="flex items-center gap-1 flex-wrap">
-              <span
-                v-for="tag in post.tags.slice(0, 3)"
-                :key="tag"
-                class="bg-surface px-1.5 py-0.5 rounded text-xs"
-              >
-                #{{ tag }}
-              </span>
-              <span v-if="post.tags.length > 3" class="text-text-disabled">
-                +{{ post.tags.length - 3 }}
-              </span>
-            </div>
+        </template>
+        <template #cell-title="{ row }">
+          <div class="blogs__title-cell">
+            <span class="blogs__title-text">{{ row.title }}</span>
+            <span class="blogs__slug">/{{ row.slug }}</span>
           </div>
-        </div>
+        </template>
+        <template #cell-status="{ value }">
+          <AdminBadge :variant="statusVariant(value)">{{ statusLabel(value) }}</AdminBadge>
+        </template>
+        <template #cell-publishedAt="{ row }">
+          {{ formatDate(row.publishedAt || row.createdAt) }}
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="blogs__row-actions">
+            <router-link :to="`/blog/${row._id}/edit`">
+              <AdminButton variant="ghost" size="sm" icon="edit">ویرایش</AdminButton>
+            </router-link>
+            <AdminButton variant="ghost" size="sm" icon="trash" @click="confirmDelete(row)">
+              حذف
+            </AdminButton>
+          </div>
+        </template>
+        <template #empty>هنوز مقاله‌ای ثبت نشده است</template>
+      </AdminTable>
 
-        <!-- Actions -->
-        <div class="flex items-center gap-1 flex-shrink-0">
-          <RouterLink :to="{ name: 'blog-edit', params: { id: post._id } }">
-            <button
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-text-secondary hover:bg-surface hover:text-primary transition-colors"
-              title="ویرایش"
-            >✏️</button>
-          </RouterLink>
-          <a
-            v-if="post.status === 'published'"
-            :href="`${siteUrl}/blog/${post.slug}`"
-            target="_blank"
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-text-secondary hover:bg-surface hover:text-info transition-colors"
-            title="مشاهده در سایت"
-          >🔗</a>
-          <button
-            @click="confirmDelete(post)"
-            class="w-8 h-8 rounded-lg flex items-center justify-center text-sm text-text-secondary hover:bg-error/10 hover:text-error transition-colors"
-            title="حذف"
-          >🗑</button>
-        </div>
-      </div>
-    </div>
+      <AdminPagination v-model:page="page" :page-size="limit" :total="total" @update:page="fetchPosts" />
+    </AdminCard>
 
-    <!-- Pagination -->
-    <div v-if="totalPages > 1" class="mt-5">
-      <AdminPagination v-model="page" :total-pages="totalPages" @update:model-value="fetchPosts" />
-    </div>
-
-    <!-- Delete confirm -->
     <AdminConfirm
-      v-model="deleteDialogOpen"
-      title="حذف پست"
-      :message="`پست «${deletingPost?.title}» حذف شود؟`"
-      confirm-label="بله، حذف شود"
+      v-model="confirmOpen"
+      title="حذف مقاله"
+      :message="`آیا از حذف «${toDelete?.title ?? ''}» مطمئن هستید؟`"
+      danger
       :loading="deleting"
-      @confirm="doDelete"
+      @confirm="handleDelete"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useDebounceFn } from '@vueuse/core'
-import { blogService }  from '@/services/blog.service'
-import { useUiStore }   from '@/stores/ui.store'
-import AdminButton     from '@/components/common/AdminButton.vue'
-import AdminBadge      from '@/components/common/AdminBadge.vue'
-import AdminSkeleton   from '@/components/common/AdminSkeleton.vue'
-import AdminConfirm    from '@/components/common/AdminConfirm.vue'
-import AdminPagination from '@/components/common/AdminPagination.vue'
+import { onMounted, ref } from 'vue'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminInput from '../../components/common/AdminInput.vue'
+import AdminSelect from '../../components/common/AdminSelect.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import AdminPagination from '../../components/common/AdminPagination.vue'
+import AdminConfirm from '../../components/common/AdminConfirm.vue'
+import AppIcon from '../../components/icons/AppIcon.vue'
+import { blogService } from '../../services/blog.service'
 
-const siteUrl = import.meta.env.VITE_SITE_URL || 'http://localhost:3000'
+const columns = [
+  { key: 'featuredImage', label: 'تصویر', width: '64px' },
+  { key: 'title', label: 'عنوان' },
+  { key: 'status', label: 'وضعیت' },
+  { key: 'publishedAt', label: 'تاریخ انتشار' },
+  { key: 'actions', label: '', width: '180px', align: 'end' },
+]
 
-const ui = useUiStore()
+const statusOptions = [
+  { label: 'پیش‌نویس', value: 'draft' },
+  { label: 'منتشرشده', value: 'published' },
+  { label: 'بایگانی‌شده', value: 'archived' },
+]
 
-const posts     = ref([])
-const loading   = ref(false)
-const total     = ref(0)
-const page      = ref(1)
-const totalPages = ref(1)
+const posts = ref([])
+const loading = ref(true)
+const search = ref('')
+const statusFilter = ref('')
+const page = ref(1)
+const limit = ref(20)
+const total = ref(0)
 
-const filters = reactive({
-  search: '',
-  status: '',
-  sortBy: 'newest',
-})
+const confirmOpen = ref(false)
+const deleting = ref(false)
+const toDelete = ref(null)
 
-const deleteDialogOpen = ref(false)
-const deletingPost     = ref(null)
-const deleting         = ref(false)
-
-const STATUS_META = {
-  published: { label: 'منتشر شده', color: 'success' },
-  draft:     { label: 'پیش‌نویس',  color: 'warning' },
-  archived:  { label: 'آرشیو',     color: 'gray'    },
+function statusLabel(status) {
+  return statusOptions.find((o) => o.value === status)?.label ?? status
 }
-function statusMeta(s) { return STATUS_META[s] ?? { label: s, color: 'gray' } }
-
-function formatDate(iso) {
-  if (!iso) return '—'
-  return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' }).format(new Date(iso))
+function statusVariant(status) {
+  if (status === 'published') return 'success'
+  if (status === 'archived') return 'danger'
+  return 'pending'
+}
+function formatDate(value) {
+  if (!value) return '—'
+  return new Date(value).toLocaleDateString('fa-IR')
 }
 
 async function fetchPosts() {
   loading.value = true
   try {
-    const { data } = await blogService.getAll({
-      page:   page.value,
-      limit:  15,
-      search: filters.search || undefined,
-      status: filters.status || undefined,
-      sortBy: filters.sortBy,
+    const { data } = await blogService.getAdminList({
+      page: page.value,
+      limit: limit.value,
+      search: search.value || undefined,
+      status: statusFilter.value || undefined,
     })
-    posts.value      = data.posts ?? []
-    total.value      = data.total ?? 0
-    totalPages.value = data.totalPages ?? 1
+    posts.value = data?.posts ?? []
+    total.value = data?.total ?? 0
   } catch {
-    ui.addToast('خطا در بارگذاری پست‌ها', 'error')
+    posts.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
 
-const onSearch = useDebounceFn(() => {
+function applyFilters() {
   page.value = 1
   fetchPosts()
-}, 350)
-
-function confirmDelete(post) {
-  deletingPost.value   = post
-  deleteDialogOpen.value = true
 }
 
-async function doDelete() {
-  if (!deletingPost.value) return
+function resetFilters() {
+  search.value = ''
+  statusFilter.value = ''
+  applyFilters()
+}
+
+function confirmDelete(row) {
+  toDelete.value = row
+  confirmOpen.value = true
+}
+
+async function handleDelete() {
+  if (!toDelete.value) return
   deleting.value = true
   try {
-    await blogService.remove(deletingPost.value._id)
-    posts.value       = posts.value.filter(p => p._id !== deletingPost.value._id)
-    total.value       = Math.max(0, total.value - 1)
-    deleteDialogOpen.value = false
-    ui.addToast('پست حذف شد', 'success')
-  } catch {
-    ui.addToast('خطا در حذف پست', 'error')
+    await blogService.remove(toDelete.value._id)
+    confirmOpen.value = false
+    await fetchPosts()
   } finally {
     deleting.value = false
+    toDelete.value = null
   }
 }
 
 onMounted(fetchPosts)
 </script>
+
+<style scoped>
+.blogs {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.blogs__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.blogs__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.blogs__head-actions {
+  display: flex;
+  gap: 10px;
+}
+.blogs__filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto auto;
+  gap: 12px;
+  align-items: end;
+}
+@media (max-width: 1023px) {
+  .blogs__filters {
+    grid-template-columns: 1fr;
+  }
+}
+.blogs__cover {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-disabled);
+}
+.blogs__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.blogs__title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.blogs__title-text {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.blogs__slug {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  direction: ltr;
+  text-align: start;
+}
+.blogs__row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+</style>

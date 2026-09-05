@@ -1,120 +1,94 @@
-﻿<template>
+<template>
   <div>
-    <!-- Loading skeleton grid -->
-    <div
-      v-if="loading"
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-    >
-      <GlassCard
-        v-for="i in skeletonCount"
-        :key="i"
-        padding="sm"
-        radius="14px"
-      >
-        <div class="skeleton rounded-lg h-44 mb-3" />
-        <div class="skeleton rounded h-4 mb-2" />
-        <div class="skeleton rounded h-3.5 w-3/5 mb-3" />
-        <div class="skeleton rounded h-5 w-1/2 mb-3" />
-        <div class="skeleton rounded-lg h-10" />
-      </GlassCard>
+    <div v-if="pending" class="p-grid">
+      <div v-for="i in skeletonCount" :key="i" class="p-skel" />
     </div>
-
-    <!-- Product grid -->
-    <div
-      v-else-if="products.length > 0"
-      ref="gridEl"
-      class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-    >
-      <BaseProductCard
-        v-for="product in products"
-        :key="product._id"
-        :product="product"
-        :wishlist="wishlistStore.isInWishlist(product._id)"
-        @add-to-cart="handleAddToCart(product)"
-        @buy-now="handleBuyNow(product)"
-        @toggle-wish="wishlistStore.toggle(product._id)"
+    <div v-else-if="products.length" class="p-grid">
+      <ProductCard
+        v-for="p in products"
+        :key="p._id || p.slug"
+        :product="mapProduct(p)"
+        :badge="badgeFor(p)"
+        :thumb-height="150"
       />
     </div>
-
-    <!-- Fetch failed — distinct from a genuine zero-result empty state -->
-    <BaseEmpty
-      v-else-if="error"
-      icon="📡"
-      title="ارتباط با سرور برقرار نشد"
-      subtitle="مشکلی در دریافت محصولات پیش آمد. لطفاً اتصال خود را بررسی و دوباره تلاش کنید"
-      action="تلاش دوباره"
-      @action="$emit('retry')"
-    />
-
-    <!-- Empty state — fetch succeeded, genuinely zero results -->
-    <BaseEmpty
-      v-else
-      icon="🛍️"
-      title="محصولی یافت نشد"
-      subtitle="فیلترهای انتخابی را تغییر دهید یا دسته‌بندی دیگری را بررسی کنید"
-      action="مشاهده همه محصولات"
-      to="/products"
-    />
+    <div v-else class="p-empty">
+      <div class="p-empty__ico">
+        <AppIcon name="bag" :size="28" :stroke-width="1.4" />
+      </div>
+      <p>{{ emptyText }}</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter }        from 'vue-router'
-import { useWishlistStore } from '~/stores/wishlist.store'
-import { useCartStore }     from '~/stores/cart.store'
-import { useUiStore }       from '~/stores/ui.store'
-import { useGsapReveal }    from '~/composables/useGsapReveal'
-import BaseProductCard from '~/components/common/BaseProductCard.vue'
-import BaseEmpty       from '~/components/common/BaseEmpty.vue'
-import GlassCard        from '~/components/glass/GlassCard.vue'
+import AppIcon from '~/components/icons/AppIcon.vue'
+import ProductCard from '~/components/ui/ProductCard.vue'
+import { toPersianDigits } from '~/utils/format'
 
-defineProps({
-  products:      { type: Array,   default: () => [] },
-  loading:       { type: Boolean, default: false },
-  skeletonCount: { type: Number,  default: 12 },
-  // True when the last fetch itself failed (network/5xx) rather than
-  // succeeding with zero matches — shows a distinct offline/error state.
-  error:         { type: Boolean, default: false },
+const props = defineProps({
+  products: { type: Array, default: () => [] },
+  pending: { type: Boolean, default: false },
+  skeletonCount: { type: Number, default: 6 },
+  emptyText: { type: String, default: 'محصولی یافت نشد' },
 })
 
-defineEmits(['retry'])
-
-const router         = useRouter()
-const wishlistStore = useWishlistStore()
-const cartStore     = useCartStore()
-const ui            = useUiStore()
-
-// Scroll-in stagger for the grid's initial paint — see useGsapReveal.js
-// (reduced-motion aware, SSR-safe, fires once).
-const gridEl = ref(null)
-useGsapReveal(gridEl, { y: 20, stagger: 0.04 })
-
-async function handleAddToCart(product) {
-  const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]
-  if (!variant?._id) {
-    ui.addToast('این محصول در حال حاضر قابل سفارش نیست', 'error')
-    return
-  }
-  try {
-    await cartStore.addItem(product._id, variant._id, 1)
-    ui.addToast('محصول به سبد خرید افزوده شد', 'success')
-  } catch {
-    ui.addToast('خطا در افزودن به سبد خرید', 'error')
+function mapProduct(p) {
+  return {
+    _id: p._id,
+    slug: p.slug,
+    name: p.name,
+    price: p.finalPrice ?? p.minPrice ?? 0,
+    image: p.thumbnail || p.images?.[0] || '',
   }
 }
 
-async function handleBuyNow(product) {
-  const variant = product.variants?.find(v => v.stock > 0 && v.isActive !== false) ?? product.variants?.[0]
-  if (!variant?._id) {
-    ui.addToast('این محصول در حال حاضر قابل سفارش نیست', 'error')
-    return
-  }
-  try {
-    await cartStore.addItem(product._id, variant._id, 1)
-    router.push('/checkout')
-  } catch {
-    ui.addToast('خطا در افزودن به سبد خرید', 'error')
-  }
+function badgeFor(p) {
+  if (p.discountPercentage > 0) return `٪${toPersianDigits(p.discountPercentage)}`
+  return null
 }
 </script>
+
+<style scoped>
+.p-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 18px;
+}
+
+.p-skel {
+  height: 230px;
+  border-radius: 18px;
+  background: var(--glass);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .6; }
+}
+
+.p-empty {
+  margin: 40px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.p-empty__ico {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--text-disabled);
+}
+</style>

@@ -1,238 +1,195 @@
 <template>
-  <div class="space-y-4">
-
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="page-title">دسته‌بندی‌ها</h1>
-        <p class="text-text-secondary text-sm mt-0.5 font-fanum">{{ flatList.length }} دسته‌بندی</p>
-      </div>
-      <AdminButton @click="openCreate">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M12 4v16m8-8H4"/>
-        </svg>
-        افزودن دسته‌بندی
-      </AdminButton>
+  <div class="categories">
+    <div class="categories__head">
+      <h1 class="categories__title">دسته‌بندی‌ها</h1>
+      <AdminButton icon="plus" @click="openCreate">دسته‌بندی جدید</AdminButton>
     </div>
 
-    <!-- Toolbar -->
-    <div class="admin-card">
-      <div class="flex gap-3 items-center flex-wrap">
-        <AdminInput v-model="search" placeholder="جستجو در نام دسته‌بندی..." prepend="🔍" class="flex-1 min-w-[200px]" />
-        <AdminButton variant="secondary" @click="loadTree" :loading="loading">
-          <svg :class="['w-4 h-4', loading ? 'animate-spin' : '']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          بارگذاری مجدد
-        </AdminButton>
-      </div>
-    </div>
+    <AdminCard flush>
+      <AdminTable :columns="columns" :rows="rows" :loading="loading">
+        <template #cell-name="{ row }">
+          <span :style="{ paddingInlineStart: row.depth * 18 + 'px' }" class="categories__name">
+            {{ row.name }}
+          </span>
+        </template>
+        <template #cell-gender="{ value }">
+          {{ genderLabel(value) }}
+        </template>
+        <template #cell-isActive="{ value }">
+          <AdminBadge :variant="value ? 'success' : 'neutral'">
+            {{ value ? 'فعال' : 'غیرفعال' }}
+          </AdminBadge>
+        </template>
+        <template #cell-actions="{ row }">
+          <div class="categories__row-actions">
+            <AdminButton variant="ghost" size="sm" icon="edit" @click="openEdit(row)">ویرایش</AdminButton>
+            <AdminButton variant="ghost" size="sm" icon="trash" @click="confirmDelete(row)">حذف</AdminButton>
+          </div>
+        </template>
+        <template #empty>هنوز دسته‌بندی‌ای ثبت نشده است</template>
+      </AdminTable>
+    </AdminCard>
 
-    <!-- Tree table -->
-    <div class="admin-card p-0 overflow-hidden">
-      <table class="w-full text-sm text-right">
-        <thead class="bg-surface border-b border-border">
-          <tr>
-            <th class="px-4 py-3 text-text-secondary font-medium">نام دسته‌بندی</th>
-            <th class="px-4 py-3 text-text-secondary font-medium w-32">والد</th>
-            <th class="px-4 py-3 text-text-secondary font-medium text-center w-24">محصولات</th>
-            <th class="px-4 py-3 text-text-secondary font-medium text-center w-24">ترتیب</th>
-            <th class="px-4 py-3 text-text-secondary font-medium text-center w-24">وضعیت</th>
-            <th class="px-4 py-3 w-20"></th>
-          </tr>
-        </thead>
+    <AdminModal v-model="modalOpen" :title="editing ? 'ویرایش دسته‌بندی' : 'دسته‌بندی جدید'">
+      <form class="categories__form" @submit.prevent="submit">
+        <AdminInput v-model="form.name" label="نام" />
+        <AdminSelect v-model="form.parent" label="دسته والد" :options="parentOptions" placeholder="بدون والد" />
+        <AdminSelect v-model="form.gender" label="جنسیت" :options="genderOptions" />
+        <AdminTextarea v-model="form.description" label="توضیحات" :rows="3" />
+        <label class="categories__checkbox">
+          <input v-model="form.isActive" type="checkbox">
+          فعال
+        </label>
+        <div class="categories__form-actions">
+          <AdminButton type="submit" :loading="saving">{{ editing ? 'ذخیره' : 'ایجاد' }}</AdminButton>
+          <AdminButton variant="secondary" type="button" @click="modalOpen = false">انصراف</AdminButton>
+        </div>
+      </form>
+    </AdminModal>
 
-        <!-- Loading -->
-        <tbody v-if="loading">
-          <tr v-for="i in 6" :key="i" class="border-b border-border">
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <AdminSkeleton width="32px" height="32px" class="rounded-lg flex-shrink-0" />
-                <div>
-                  <AdminSkeleton height="1rem" width="120px" class="mb-1.5" />
-                  <AdminSkeleton height="0.7rem" width="80px" />
-                </div>
-              </div>
-            </td>
-            <td class="px-4 py-3"><AdminSkeleton height="1rem" width="80px" /></td>
-            <td class="px-4 py-3 text-center"><AdminSkeleton height="1rem" width="30px" class="mx-auto" /></td>
-            <td class="px-4 py-3 text-center"><AdminSkeleton height="1rem" width="24px" class="mx-auto" /></td>
-            <td class="px-4 py-3 text-center"><AdminSkeleton height="22px" width="50px" class="mx-auto rounded-full" /></td>
-            <td class="px-4 py-3"></td>
-          </tr>
-        </tbody>
-
-        <!-- Empty -->
-        <tbody v-else-if="filteredRows.length === 0">
-          <tr>
-            <td colspan="6" class="py-16 text-center text-text-disabled">
-              <div class="text-4xl mb-2">📂</div>
-              <p>{{ search ? 'دسته‌ای با این نام یافت نشد' : 'دسته‌بندی‌ای ثبت نشده' }}</p>
-            </td>
-          </tr>
-        </tbody>
-
-        <!-- Rows -->
-        <tbody v-else>
-          <template v-for="row in filteredRows" :key="row.category._id">
-            <CategoryTreeRow
-              :category="row.category"
-              :depth="row.depth"
-              :expanded="expandedIds.has(row.category._id)"
-              @toggle-expand="toggleExpand"
-              @edit="openEdit"
-              @delete="confirmDelete"
-            />
-          </template>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Form modal -->
-    <CategoryFormModal
-      v-model="modalOpen"
-      :category="editingCategory"
-      :parent-options="allParentOptions"
-      @saved="onSaved"
-    />
-
-    <!-- Delete confirm -->
     <AdminConfirm
-      v-model="deleteDialog.open"
+      v-model="confirmOpen"
       title="حذف دسته‌بندی"
-      :message="`آیا از حذف دسته «${deleteDialog.category?.name}» مطمئنید؟`"
-      confirm-label="بله، حذف شود"
-      confirm-variant="danger"
-      :loading="deleteDialog.loading"
-      @confirm="doDelete"
+      :message="`آیا از حذف «${toDelete?.name ?? ''}» مطمئن هستید؟`"
+      danger
+      :loading="deleting"
+      @confirm="handleDelete"
     />
-
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { categoryService } from '@/services/category.service'
-import { useUiStore }      from '@/stores/ui.store'
+import { computed, onMounted, ref } from 'vue'
+import AdminCard from '../../components/common/AdminCard.vue'
+import AdminTable from '../../components/common/AdminTable.vue'
+import AdminButton from '../../components/common/AdminButton.vue'
+import AdminBadge from '../../components/common/AdminBadge.vue'
+import AdminModal from '../../components/common/AdminModal.vue'
+import AdminInput from '../../components/common/AdminInput.vue'
+import AdminSelect from '../../components/common/AdminSelect.vue'
+import AdminTextarea from '../../components/common/AdminTextarea.vue'
+import AdminConfirm from '../../components/common/AdminConfirm.vue'
+import { categoryService } from '../../services/category.service'
 
-import CategoryFormModal from './components/CategoryFormModal.vue'
-import CategoryTreeRow   from './components/CategoryTreeRow.vue'
-import AdminButton   from '@/components/common/AdminButton.vue'
-import AdminInput    from '@/components/common/AdminInput.vue'
-import AdminSkeleton from '@/components/common/AdminSkeleton.vue'
-import AdminConfirm  from '@/components/common/AdminConfirm.vue'
+const columns = [
+  { key: 'name', label: 'نام' },
+  { key: 'gender', label: 'جنسیت' },
+  { key: 'isActive', label: 'وضعیت' },
+  { key: 'actions', label: '', width: '180px', align: 'end' },
+]
 
-const ui = useUiStore()
+const genderOptions = [
+  { label: 'همه', value: '' },
+  { label: 'زنانه', value: 'women' },
+  { label: 'مردانه', value: 'men' },
+  { label: 'بچگانه', value: 'kids' },
+  { label: 'یونیسکس', value: 'unisex' },
+]
 
-const tree       = ref([])
-const loading    = ref(true)
-const search     = ref('')
-const expandedIds = ref(new Set())
-const modalOpen  = ref(false)
-const editingCategory = ref(null)
-const deleteDialog    = ref({ open: false, category: null, loading: false })
+const tree = ref([])
+const loading = ref(true)
 
-// ── Flatten tree (DFS) ────────────────────────────
-function flattenTree(nodes, depth = 0) {
-  const result = []
-  for (const node of nodes) {
-    result.push({ category: node, depth })
-    if (node.children?.length && expandedIds.value.has(node._id)) {
-      result.push(...flattenTree(node.children, depth + 1))
-    }
-  }
-  return result
+const modalOpen = ref(false)
+const editing = ref(null)
+const saving = ref(false)
+const form = ref(emptyForm())
+
+const confirmOpen = ref(false)
+const deleting = ref(false)
+const toDelete = ref(null)
+
+function emptyForm() {
+  return { name: '', parent: '', gender: '', description: '', isActive: true }
 }
 
-// All nodes flat (for count + search)
-const flatList = computed(() => {
-  const result = []
-  function flatten(nodes) {
-    for (const n of nodes) {
-      result.push(n)
-      if (n.children?.length) flatten(n.children)
-    }
-  }
-  flatten(tree.value)
-  return result
-})
+function flatten(nodes, depth = 0) {
+  return nodes.flatMap((n) => [{ ...n, depth }, ...flatten(n.children ?? [], depth + 1)])
+}
 
-const filteredRows = computed(() => {
-  if (!search.value.trim()) return flattenTree(tree.value)
-  const q = search.value.trim().toLowerCase()
-  return flatList.value
-    .filter(c => c.name.toLowerCase().includes(q))
-    .map(c => ({ category: c, depth: c.parentId ? 1 : 0 }))
-})
+const rows = computed(() => flatten(tree.value))
 
-const allParentOptions = computed(() => {
-  const result = []
-  function walk(nodes, depth = 0) {
-    for (const n of nodes) {
-      const prefix = depth === 0 ? '' : ('　'.repeat(depth - 1) + '└ ')
-      result.push({ value: n._id, label: prefix + n.name })
-      if (n.children?.length) walk(n.children, depth + 1)
-    }
-  }
-  walk(tree.value)
-  return result
-})
+const parentOptions = computed(() => [
+  { label: 'بدون والد', value: '' },
+  ...rows.value
+    .filter((c) => c._id !== editing.value?._id)
+    .map((c) => ({ label: '—'.repeat(c.depth) + ' ' + c.name, value: c._id })),
+])
 
-// ── Load ──────────────────────────────────────────
-async function loadTree() {
+function genderLabel(value) {
+  return genderOptions.find((o) => o.value === value)?.label || '—'
+}
+
+async function fetchCategories() {
   loading.value = true
   try {
-    const { data } = await categoryService.getTree()
-    tree.value = Array.isArray(data) ? data : []
-    // Expand all root nodes that have children
-    const newSet = new Set(expandedIds.value)
-    tree.value.forEach(c => { if (c.children?.length) newSet.add(c._id) })
-    expandedIds.value = newSet
+    const { data } = await categoryService.tree()
+    tree.value = data ?? []
   } catch {
-    ui.addToast('خطا در بارگذاری دسته‌بندی‌ها', 'error')
+    tree.value = []
   } finally {
     loading.value = false
   }
 }
 
-// ── Actions ───────────────────────────────────────
-function toggleExpand(id) {
-  const s = new Set(expandedIds.value)
-  if (s.has(id)) s.delete(id)
-  else            s.add(id)
-  expandedIds.value = s   // reassign for Vue reactivity
-}
-
 function openCreate() {
-  editingCategory.value = null
+  editing.value = null
+  form.value = emptyForm()
   modalOpen.value = true
 }
 
-function openEdit(category) {
-  editingCategory.value = category
+function openEdit(row) {
+  editing.value = row
+  form.value = {
+    name: row.name,
+    parent: row.parent || '',
+    gender: row.gender || '',
+    description: row.description || '',
+    isActive: row.isActive !== false,
+  }
   modalOpen.value = true
 }
 
-function onSaved() { loadTree() }
-
-function confirmDelete(category) {
-  deleteDialog.value = { open: true, category, loading: false }
-}
-
-async function doDelete() {
-  const cat = deleteDialog.value.category
-  deleteDialog.value.loading = true
+async function submit() {
+  saving.value = true
   try {
-    await categoryService.remove(cat._id)
-    ui.addToast(`دسته «${cat.name}» حذف شد`, 'success')
-    deleteDialog.value.open = false
-    loadTree()
-  } catch (err) {
-    ui.addToast(err.response?.data?.message ?? 'خطا در حذف دسته‌بندی', 'error')
+    const payload = { ...form.value, parent: form.value.parent || undefined }
+    if (editing.value) await categoryService.update(editing.value._id, payload)
+    else await categoryService.create(payload)
+    modalOpen.value = false
+    await fetchCategories()
   } finally {
-    deleteDialog.value.loading = false
+    saving.value = false
   }
 }
 
-onMounted(loadTree)
+function confirmDelete(row) {
+  toDelete.value = row
+  confirmOpen.value = true
+}
+
+async function handleDelete() {
+  if (!toDelete.value) return
+  deleting.value = true
+  try {
+    await categoryService.remove(toDelete.value._id)
+    confirmOpen.value = false
+    await fetchCategories()
+  } finally {
+    deleting.value = false
+    toDelete.value = null
+  }
+}
+
+onMounted(fetchCategories)
 </script>
+
+<style scoped>
+.categories { display: flex; flex-direction: column; gap: 20px; }
+.categories__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.categories__title { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.categories__name { font-weight: 600; color: var(--text-primary); }
+.categories__row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.categories__form { display: flex; flex-direction: column; gap: 14px; }
+.categories__checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); }
+.categories__form-actions { display: flex; gap: 10px; margin-top: 6px; }
+</style>

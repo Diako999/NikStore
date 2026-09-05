@@ -1,103 +1,102 @@
 <template>
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm text-right">
-
-      <!-- Head -->
-      <thead class="bg-surface border-b border-border">
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
         <tr>
           <th
-            v-for="col in columns"
-            :key="col.key"
-            :style="col.width ? `width:${col.width}` : ''"
-            :class="[
-              'px-4 py-3 font-medium text-text-secondary whitespace-nowrap',
-              col.sortable ? 'cursor-pointer hover:text-text-primary select-none' : '',
-              col.align === 'center' ? 'text-center' : 'text-right',
-            ]"
-            @click="col.sortable && emitSort(col.key)"
+            v-for="column in columns"
+            :key="column.key"
+            :style="{ width: column.width, textAlign: column.align || 'start' }"
           >
-            <span
-              class="inline-flex items-center gap-1"
-              :class="col.align === 'center' ? 'justify-center' : 'justify-end'"
-            >
-              {{ col.label }}
-              <span v-if="col.sortable" class="text-text-disabled text-xs">
-                {{ sortKey === col.key ? (sortDir === 'asc' ? '↑' : '↓') : '↕' }}
-              </span>
-            </span>
+            {{ column.label }}
           </th>
         </tr>
       </thead>
-
-      <!-- Body: skeleton -->
-      <tbody v-if="loading">
-        <tr v-for="i in skeletonRows" :key="i" class="border-b border-border">
-          <td v-for="col in columns" :key="col.key" class="px-4 py-3">
-            <AdminSkeleton
-              height="1.25rem"
-              :width="col.align === 'center' ? '60%' : '80%'"
-              :class="col.align === 'center' ? 'mx-auto' : 'mr-auto'"
-            />
+      <tbody>
+        <tr v-if="loading">
+          <td :colspan="columns.length" class="admin-table__state">
+            <span class="admin-table__spinner" aria-hidden="true" />
+            در حال بارگذاری...
           </td>
         </tr>
-      </tbody>
-
-      <!-- Body: empty -->
-      <tbody v-else-if="rows.length === 0">
-        <tr>
-          <td :colspan="columns.length" class="py-16 text-center text-text-disabled">
-            <div class="text-4xl mb-2">📭</div>
-            {{ emptyText }}
+        <tr v-else-if="!rows.length">
+          <td :colspan="columns.length" class="admin-table__state">
+            <slot name="empty">{{ emptyText }}</slot>
           </td>
         </tr>
+        <template v-else>
+          <tr v-for="(row, index) in rows" :key="row.id ?? index">
+            <td
+              v-for="column in columns"
+              :key="column.key"
+              :style="{ textAlign: column.align || 'start' }"
+            >
+              <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]" :index="index">
+                {{ row[column.key] }}
+              </slot>
+            </td>
+          </tr>
+        </template>
       </tbody>
-
-      <!-- Body: data -->
-      <tbody v-else>
-        <tr
-          v-for="row in rows"
-          :key="row[rowKey]"
-          class="border-b border-border hover:bg-surface/60 transition-colors duration-100"
-        >
-          <td
-            v-for="col in columns"
-            :key="col.key"
-            :class="['px-4 py-3 text-text-primary', col.align === 'center' ? 'text-center' : '']"
-          >
-            <slot :name="'cell-' + col.key" :row="row" :value="row[col.key]">
-              {{ row[col.key] ?? '—' }}
-            </slot>
-          </td>
-        </tr>
-      </tbody>
-
     </table>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import AdminSkeleton from './AdminSkeleton.vue'
-
 defineProps({
-  columns:      { type: Array,   default: () => [] },
-  rows:         { type: Array,   default: () => [] },
-  loading:      { type: Boolean, default: false },
-  rowKey:       { type: String,  default: '_id' },
-  skeletonRows: { type: Number,  default: 8 },
-  emptyText:    { type: String,  default: 'داده‌ای یافت نشد' },
+  columns: { type: Array, required: true }, // [{ key, label, width?, align? }]
+  rows: { type: Array, default: () => [] },
+  loading: { type: Boolean, default: false },
+  emptyText: { type: String, default: 'داده‌ای برای نمایش وجود ندارد' },
 })
-const emit    = defineEmits(['sort'])
-const sortKey = ref('')
-const sortDir = ref('asc')
-
-function emitSort(key) {
-  if (sortKey.value === key) {
-    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortDir.value = 'asc'
-  }
-  emit('sort', { key: sortKey.value, dir: sortDir.value })
-}
 </script>
+
+<style scoped>
+.admin-table-wrap {
+  overflow-x: auto;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.admin-table thead th {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-border);
+  white-space: nowrap;
+}
+.admin-table tbody td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--glass-border);
+  color: var(--text-primary);
+}
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.admin-table tbody tr:hover td {
+  background: var(--glass);
+}
+.admin-table__state {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.admin-table__spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  border-radius: 50%;
+  border: 2px solid var(--text-secondary);
+  border-inline-end-color: transparent;
+  animation: admin-table-spin .6s linear infinite;
+}
+@keyframes admin-table-spin {
+  to { transform: rotate(360deg); }
+}
+</style>
