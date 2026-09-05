@@ -14,6 +14,7 @@
     <circle v-if="name === 'search'" cx="11" cy="11" r="7" />
     <circle v-if="name === 'kids'" cx="12" cy="9.5" r="1" fill="currentColor" stroke="none" />
     <circle v-if="name === 'pin'" cx="12" cy="10" r="2.25" />
+    <circle v-if="name === 'sun'" cx="12" cy="12" r="4" />
   </svg>
 </template>
 
@@ -91,5 +92,9 @@ const paths = {
   send: ['M22 2 11 13', 'M22 2 15 22 11 13 2 9 22 2Z'],
   message: ['M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z'],
   alert: ['M12 2a10 10 0 100 20 10 10 0 000-20z', 'M12 7v6', 'M12 17h.01'],
+  sun: [
+    'M12 3v2.25M12 18.75V21M4.219 4.219l1.591 1.591M18.19 18.19l1.591 1.591M3 12h2.25M18.75 12H21M4.219 19.781l1.591-1.591M18.19 5.81l1.591-1.591',
+  ],
+  moon: ['M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 1020.354 15.354z'],
 }
 </script>

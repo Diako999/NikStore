@@ -3,7 +3,9 @@
   <ClientOnly>
     <AppSplash v-if="showSplash" @done="showSplash = false" />
   </ClientOnly>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
 
 <script setup>
