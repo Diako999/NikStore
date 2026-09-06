@@ -1,9 +1,9 @@
 <template>
   <div class="login">
-    <div class="login__mark">
+    <NuxtLink to="/" class="login__mark">
       <div class="login__ring">NK</div>
       <p class="login__brand">نیک</p>
-    </div>
+    </NuxtLink>
 
     <h1 class="login__title">ورود به حساب کاربری</h1>
     <p class="login__sub">شماره موبایل خود را وارد کنید تا کد تایید برایتان پیامک شود</p>

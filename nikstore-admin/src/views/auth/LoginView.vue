@@ -1,12 +1,12 @@
 <template>
   <AdminCard class="login-card">
-    <div class="login-card__brand">
+    <RouterLink to="/" class="login-card__brand">
       <span class="login-card__ring">NK</span>
       <div>
         <p class="login-card__name">نیک</p>
         <p class="login-card__tag">پنل مدیریت</p>
       </div>
-    </div>
+    </RouterLink>
 
     <form class="login-card__form" @submit.prevent="handleSubmit">
       <AdminInput
