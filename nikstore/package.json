@@ -24,7 +24,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:pages": "ts-node -r tsconfig-paths/register src/seeds/pages.seed.ts",
-    "seed:categories": "ts-node -r tsconfig-paths/register src/seeds/categories.seed.ts"
+    "seed:categories": "ts-node -r tsconfig-paths/register src/seeds/categories.seed.ts",
+    "seed:admin": "ts-node -r tsconfig-paths/register src/seeds/admin.seed.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.2",

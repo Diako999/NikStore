@@ -21,6 +21,10 @@ async function bootstrap() {
     bufferLogs: true,
   });
 
+  // Behind nginx (proxy_pass to 127.0.0.1) — without this, req.ip is always
+  // 127.0.0.1, which breaks per-client ThrottlerGuard limits and IP logging.
+  app.set('trust proxy', 'loopback');
+
   // Use Winston as NestJS built-in logger (replaces console.log in framework output)
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 

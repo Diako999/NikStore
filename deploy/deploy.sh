@@ -24,6 +24,16 @@ cd "$APP_DIR/nikstore"
 npm ci --prefer-offline
 npm run build
 
+echo ">>> Building Nuxt..."
+cd "$APP_DIR/nikstore-nuxt"
+npm ci --prefer-offline
+npm run build
+
+echo ">>> Building admin..."
+cd "$APP_DIR/nikstore-admin"
+npm ci --prefer-offline
+npm run build
+
 cd "$APP_DIR"
 if $FIRST_RUN; then
   echo ">>> Starting PM2 (first run)..."
@@ -45,6 +55,8 @@ echo ""
 echo "══════════════════════════════════════════"
 echo " Deploy complete!"
 VPS_IP=$(curl -s ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+echo " Frontend : http://$VPS_IP"
+echo " Admin    : http://$VPS_IP:4000"
 echo " API      : http://$VPS_IP/api/v1"
 echo "══════════════════════════════════════════"
 pm2 list

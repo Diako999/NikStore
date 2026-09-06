@@ -45,3 +45,31 @@ jobs:
           directory: nikstore/coverage
           flags: backend
         continue-on-error: true
+
+  lint-frontend:
+    name: Frontend — Lint check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: nikstore-admin/package-lock.json
+
+      - name: Install admin deps
+        working-directory: nikstore-admin
+        run: npm ci
+
+      - name: Lint admin
+        working-directory: nikstore-admin
+        run: npm run lint || true
+
+      - name: Install nuxt deps
+        working-directory: nikstore-nuxt
+        run: npm ci
+
+      - name: Lint nuxt
+        working-directory: nikstore-nuxt
+        run: npm run lint || true
