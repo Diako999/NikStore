@@ -1,31 +1,49 @@
 #!/bin/bash
 # ─────────────────────────────────────────────────────────────────────────────
-# NikStore — MongoDB Backup Script
+# NikStore — MongoDB + Uploads Backup Script
 # نصب cron: crontab -e → 0 3 * * * bash /var/www/nikstore/deploy/backup.sh
 # هر شب ساعت ۳ صبح اجرا می‌شود
+#
+# NOTE: this writes to local disk only (/var/backups) — a disk failure takes
+# both the live data and the backups with it. Sync BACKUP_DIR to off-box
+# storage (object storage, a second host, etc.) for real disaster recovery.
 # ─────────────────────────────────────────────────────────────────────────────
 
+APP_DIR="/var/www/nikstore"
 BACKUP_DIR="/var/backups/nikstore-mongo"
+UPLOADS_BACKUP_DIR="/var/backups/nikstore-uploads"
+UPLOADS_DIR="$APP_DIR/nikstore/uploads"
 DB_NAME="nikstore"
 KEEP_DAYS=7
 DATE=$(date +%Y-%m-%d_%H-%M)
 BACKUP_PATH="$BACKUP_DIR/$DATE"
 
-mkdir -p "$BACKUP_DIR"
+mkdir -p "$BACKUP_DIR" "$UPLOADS_BACKUP_DIR"
 
-echo "[$(date)] Starting backup..."
+echo "[$(date)] Starting MongoDB backup..."
 mongodump --db "$DB_NAME" --out "$BACKUP_PATH" --quiet
 
 if [ $? -eq 0 ]; then
     tar -czf "$BACKUP_PATH.tar.gz" -C "$BACKUP_DIR" "$DATE"
     rm -rf "$BACKUP_PATH"
-    echo "[$(date)] Backup saved: $BACKUP_PATH.tar.gz"
+    echo "[$(date)] Mongo backup saved: $BACKUP_PATH.tar.gz"
 
     find "$BACKUP_DIR" -name "*.tar.gz" -mtime +$KEEP_DAYS -delete
-    echo "[$(date)] Old backups cleaned (kept last $KEEP_DAYS days)"
 else
-    echo "[$(date)] ERROR: Backup failed!"
+    echo "[$(date)] ERROR: Mongo backup failed!"
     exit 1
 fi
 
-echo "[$(date)] Done. Disk usage: $(du -sh $BACKUP_DIR | cut -f1)"
+echo "[$(date)] Starting uploads backup..."
+if [ -d "$UPLOADS_DIR" ]; then
+    UPLOADS_TAR="$UPLOADS_BACKUP_DIR/$DATE.tar.gz"
+    tar -czf "$UPLOADS_TAR" -C "$APP_DIR/nikstore" uploads
+    echo "[$(date)] Uploads backup saved: $UPLOADS_TAR"
+    find "$UPLOADS_BACKUP_DIR" -name "*.tar.gz" -mtime +$KEEP_DAYS -delete
+else
+    echo "[$(date)] WARNING: $UPLOADS_DIR not found, skipping uploads backup"
+fi
+
+echo "[$(date)] Old backups cleaned (kept last $KEEP_DAYS days)"
+echo "[$(date)] Done. Disk usage:"
+du -sh "$BACKUP_DIR" "$UPLOADS_BACKUP_DIR"

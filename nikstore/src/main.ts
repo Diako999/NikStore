@@ -70,9 +70,16 @@ async function bootstrap() {
   // Helmet must disable crossOriginResourcePolicy on the API — the default
   // "same-origin" policy causes browsers to block cross-origin API responses
   // (frontend ↔ backend on different Railway subdomains).
+  // HSTS/frameguard/noSniff/CSP are disabled here because nginx (deploy/nginx*.conf)
+  // is the single source of truth for those headers in production — emitting them
+  // from both layers produced duplicate/conflicting header values.
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: false,
+      hsts: false,
+      frameguard: false,
+      noSniff: false,
     }),
   );
 

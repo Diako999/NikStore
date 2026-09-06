@@ -39,12 +39,39 @@ systemctl start mongod
 systemctl enable mongod
 echo "MongoDB: $(systemctl is-active mongod)"
 
+# ── MongoDB auth ──────────────────────────────────────────────────────────────
+# Both DBs bind to 127.0.0.1 and are firewalled off by ufw below, but auth is
+# added anyway as defense-in-depth against a local misconfiguration or a future
+# process on the box.
+echo ">>> Creating MongoDB app user..."
+MONGO_APP_PASSWORD=$(openssl rand -hex 24)
+mongosh --quiet --eval "
+  db = db.getSiblingDB('nikstore');
+  if (!db.getUser('nikstore_app')) {
+    db.createUser({
+      user: 'nikstore_app',
+      pwd: '$MONGO_APP_PASSWORD',
+      roles: [{ role: 'readWrite', db: 'nikstore' }]
+    });
+  }
+"
+if ! grep -q "^security:" /etc/mongod.conf; then
+  printf "\nsecurity:\n  authorization: enabled\n" >> /etc/mongod.conf
+fi
+systemctl restart mongod
+echo "MongoDB (auth enabled): $(systemctl is-active mongod)"
+
 # ── Redis ─────────────────────────────────────────────────────────────────────
 echo ">>> Installing Redis..."
 apt-get install -y redis-server
+REDIS_APP_PASSWORD=$(openssl rand -hex 24)
+if ! grep -q "^requirepass" /etc/redis/redis.conf; then
+  echo "requirepass $REDIS_APP_PASSWORD" >> /etc/redis/redis.conf
+fi
 systemctl start redis-server
 systemctl enable redis-server
-echo "Redis: $(systemctl is-active redis-server)"
+systemctl restart redis-server
+echo "Redis (auth enabled): $(systemctl is-active redis-server)"
 
 # ── Firewall ──────────────────────────────────────────────────────────────────
 echo ">>> Configuring UFW..."
@@ -60,8 +87,14 @@ mkdir -p /var/log/pm2
 
 echo ""
 echo "══════════════════════════════════════════"
+echo " Database credentials — save these now, shown only once:"
+echo "══════════════════════════════════════════"
+echo " MONGODB_URI=mongodb://nikstore_app:${MONGO_APP_PASSWORD}@localhost:27017/nikstore?authSource=nikstore"
+echo " REDIS_PASSWORD=${REDIS_APP_PASSWORD}"
+echo ""
+echo "══════════════════════════════════════════"
 echo " Setup complete! Next steps:"
 echo "══════════════════════════════════════════"
 echo "1. git clone https://github.com/Diako999/NikStore.git /var/www/nikstore"
-echo "2. Create .env files from deploy/*.env.example"
+echo "2. Create .env files from deploy/*.env.example, pasting in the credentials above"
 echo "3. bash /var/www/nikstore/deploy/deploy.sh --first-run"

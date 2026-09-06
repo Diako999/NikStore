@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule } from '@nestjs/config';
+import { WinstonModule } from 'nest-winston';
 import Redis from 'ioredis';
 import { RedisModule, REDIS_CLIENT } from './redis.module';
 import redisConfig from '../config/redis.config';
@@ -12,6 +13,7 @@ describe('RedisModule', () => {
           load: [redisConfig],
           isGlobal: true,
         }),
+        WinstonModule.forRoot({ transports: [] }),
         RedisModule,
       ],
     }).compile();

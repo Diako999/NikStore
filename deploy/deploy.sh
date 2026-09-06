@@ -16,6 +16,10 @@ echo " NikStore Deploy  $(date '+%Y-%m-%d %H:%M')"
 echo "══════════════════════════════════════════"
 
 cd "$APP_DIR"
+echo ">>> Recording current commit for rollback..."
+git rev-parse HEAD > "$APP_DIR/.last-deploy-sha"
+echo "Previous commit: $(cat "$APP_DIR/.last-deploy-sha")"
+
 echo ">>> Pulling latest code..."
 git pull origin master
 
@@ -49,6 +53,28 @@ if $FIRST_RUN; then
 else
   echo ">>> Reloading PM2..."
   pm2 reload deploy/ecosystem.config.js --update-env
+fi
+
+echo ">>> Waiting for backend health check..."
+HEALTHY=false
+for i in $(seq 1 10); do
+  if curl -sf --max-time 5 "http://localhost:3001/api/v1/health" > /dev/null; then
+    HEALTHY=true
+    break
+  fi
+  sleep 2
+done
+
+if ! $HEALTHY; then
+  echo ""
+  echo "══════════════════════════════════════════"
+  echo " ⚠️  Deploy FAILED health check!"
+  echo " Backend did not respond healthy after reload."
+  echo " Previous commit was: $(cat "$APP_DIR/.last-deploy-sha")"
+  echo " Rollback:  git checkout \$(cat $APP_DIR/.last-deploy-sha) && bash $APP_DIR/deploy/deploy.sh"
+  echo "══════════════════════════════════════════"
+  pm2 list
+  exit 1
 fi
 
 echo ""

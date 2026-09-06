@@ -1,6 +1,8 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 export const REDIS_CLIENT = 'REDIS_CLIENT';
 
@@ -10,7 +12,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
   providers: [
     {
       provide: REDIS_CLIENT,
-      useFactory: (configService: ConfigService): Redis => {
+      useFactory: (configService: ConfigService, logger: Logger): Redis => {
         const client = new Redis({
           host: configService.get<string>('redis.host'),
           port: configService.get<number>('redis.port'),
@@ -23,12 +25,16 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
           retryStrategy: (times) => Math.min(times * 200, 1000),
         });
 
-        client.on('connect', () => console.log('✅ Redis connected'));
-        client.on('error', (err) => console.error('❌ Redis error:', err));
+        client.on('connect', () =>
+          logger.info('Redis connected', { context: 'Redis' }),
+        );
+        client.on('error', (err) =>
+          logger.error(`Redis error: ${err.message}`, { context: 'Redis' }),
+        );
 
         return client;
       },
-      inject: [ConfigService],
+      inject: [ConfigService, WINSTON_MODULE_PROVIDER],
     },
   ],
   exports: [REDIS_CLIENT],

@@ -2,22 +2,28 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Connection } from 'mongoose';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { Logger } from 'winston';
 
 @Module({
   imports: [
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService, logger: Logger) => ({
         uri: configService.get<string>('database.uri'),
         connectionFactory: (connection: Connection) => {
-          connection.on('connected', () => console.log('✅ MongoDB connected'));
+          connection.on('connected', () =>
+            logger.info('MongoDB connected', { context: 'Database' }),
+          );
           connection.on('error', (err: Error) =>
-            console.error('❌ MongoDB error:', err),
+            logger.error(`MongoDB error: ${err.message}`, {
+              context: 'Database',
+            }),
           );
           return connection;
         },
       }),
-      inject: [ConfigService],
+      inject: [ConfigService, WINSTON_MODULE_PROVIDER],
     }),
   ],
 })

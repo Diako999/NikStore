@@ -16,8 +16,13 @@ import type { UploadFolder } from './storage/storage-provider.abstract';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '../../common/guards/admin.guard';
 
+// Read directly from process.env (mirrors config/upload.config.ts's own default) —
+// this object is built at module load, before Nest's DI container exists.
+const MAX_FILE_SIZE = parseInt(process.env.UPLOAD_MAX_FILE_SIZE || '5242880', 10);
+
 const multerOptions = {
   storage: memoryStorage(),
+  limits: { fileSize: MAX_FILE_SIZE },
 };
 
 @UseGuards(JwtAuthGuard)
