@@ -43,6 +43,11 @@ echo "MongoDB: $(systemctl is-active mongod)"
 # Both DBs bind to 127.0.0.1 and are firewalled off by ufw below, but auth is
 # added anyway as defense-in-depth against a local misconfiguration or a future
 # process on the box.
+echo ">>> Waiting for mongod to accept connections..."
+until mongosh --quiet --eval "db.adminCommand('ping')" > /dev/null 2>&1; do
+  sleep 1
+done
+
 echo ">>> Creating MongoDB app user..."
 MONGO_APP_PASSWORD=$(openssl rand -hex 24)
 mongosh --quiet --eval "
