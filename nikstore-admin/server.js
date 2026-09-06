@@ -10,12 +10,15 @@ const API_INTERNAL_URL = process.env.API_INTERNAL_URL || 'http://localhost:3001'
 
 const app = express()
 
-// pathFilter (rather than app.use('/api', proxy)) keeps the /api prefix
-// intact when the request is forwarded to the backend.
-const apiProxy = createProxyMiddleware({
+// The installed http-proxy-middleware major version (2.x) has no `pathFilter`
+// option at all — that key is silently ignored, so this was proxying every
+// request (including '/', SPA routes, and static assets) straight to the
+// backend. v2's own filtering API takes the path list as the first
+// positional argument instead — this is what actually restricts the proxy
+// to /api, /uploads, /socket.io, leaving the SPA and static files alone.
+const apiProxy = createProxyMiddleware(['/api', '/uploads', '/socket.io'], {
   target: API_INTERNAL_URL,
   changeOrigin: true,
-  pathFilter: ['/api', '/uploads', '/socket.io'],
   ws: true,
 })
 

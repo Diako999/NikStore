@@ -1,0 +1,74 @@
+- generic [ref=f4e3]:
+  - generic [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - generic [ref=f4e6]:
+        - generic [ref=f4e7]: NK
+        - generic [ref=f4e8]:
+          - generic [ref=f4e9]: نیک
+          - generic [ref=f4e10]: FASHION STORE
+      - generic [ref=f4e11]:
+        - button "علاقه‌مندی‌ها" [ref=f4e12] [cursor=pointer]
+        - generic "سبد خرید" [ref=f4e16] [cursor=pointer]
+    - generic [ref=f4e19]:
+      - generic [ref=f4e20]: پیشنهاد ویژه هفته
+      - heading "هودی پرفورمنس مردانه" [level=1] [ref=f4e21]
+      - generic [ref=f4e22]:
+        - generic [ref=f4e23]: ۴٬۲۰۰٬۰۰۰
+        - generic [ref=f4e24]: ۳٬۲۵۰٬۰۰۰ تومان
+      - link "خرید فوری" [ref=f4e25] [cursor=pointer]:
+        - /url: /product/hoodie-performance
+  - searchbox "جستجوی محصول، برند یا دسته‌بندی..." [ref=f4e32]
+  - generic [ref=f4e34]:
+    - generic [ref=f4e35]:
+      - generic [ref=f4e39]: زنانه
+      - generic [ref=f4e40]: مد و پوشاک زنانه
+    - generic [ref=f4e41]:
+      - generic [ref=f4e45]: مردانه
+      - generic [ref=f4e46]: استایل مردانه
+    - generic [ref=f4e47]:
+      - generic [ref=f4e52]: بچگانه
+      - generic [ref=f4e53]: راحت و شاد برای کودکان
+  - generic [ref=f4e55]:
+    - generic [ref=f4e56]:
+      - generic [ref=f4e57]: ⚡ فروش ویژه امروز
+      - generic [ref=f4e58]: تا ۴۰٪ تخفیف، فقط تا پایان امشب
+    - generic [ref=f4e59]:
+      - generic [ref=f4e60]: ۰۲
+      - generic [ref=f4e61]: ":"
+      - generic [ref=f4e62]: ۱۴
+      - generic [ref=f4e63]: ":"
+      - generic [ref=f4e64]: ۳۶
+  - generic [ref=f4e65]:
+    - generic [ref=f4e66]:
+      - heading "جدیدترین محصولات" [level=2] [ref=f4e67]
+      - link "مشاهده همه ←" [ref=f4e68] [cursor=pointer]:
+        - /url: /products?sort=newest
+    - paragraph [ref=f4e70]: هنوز محصولی ثبت نشده است
+  - generic [ref=f4e72]:
+    - generic [ref=f4e73]:
+      - generic [ref=f4e74]: کالکشن پاییزه
+      - heading "۲۰٪ تخفیف ویژه" [level=3] [ref=f4e75]
+      - generic [ref=f4e76]: مشاهده کالکشن
+    - generic [ref=f4e77]: ٪۲۰
+  - generic [ref=f4e78]:
+    - generic [ref=f4e79]:
+      - heading "پرفروش‌ترین‌ها" [level=2] [ref=f4e80]
+      - link "مشاهده همه ←" [ref=f4e81] [cursor=pointer]:
+        - /url: /products?sort=bestseller
+    - paragraph [ref=f4e82]: هنوز محصولی ثبت نشده است
+  - generic [ref=f4e84]:
+    - generic [ref=f4e85]: ارسال رایگان
+    - generic [ref=f4e92]: ضمانت اصالت
+    - generic [ref=f4e97]: پرداخت امن
+    - generic [ref=f4e102]: ۷ روز مهلت مرجوعی
+  - navigation [ref=f4e110]:
+    - link "خانه" [ref=f4e111] [cursor=pointer]:
+      - /url: /
+    - link "دسته‌بندی" [ref=f4e117] [cursor=pointer]:
+      - /url: /category
+    - link "سبد خرید" [ref=f4e124] [cursor=pointer]:
+      - /url: /cart
+    - link "علاقه‌مندی" [ref=f4e128] [cursor=pointer]:
+      - /url: /user/favorites
+    - link "حساب من" [ref=f4e132] [cursor=pointer]:
+      - /url: /user
