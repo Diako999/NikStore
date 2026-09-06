@@ -29,9 +29,12 @@ npm install -g pm2
 echo ">>> Installing MongoDB 7..."
 curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc \
   | gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-. /etc/os-release
+# MongoDB's apt repo only publishes for specific LTS codenames and lags behind
+# new/non-LTS Ubuntu releases (the actual $UBUNTU_CODENAME can 403). jammy's
+# packages are glibc-compatible with newer Ubuntu and are the standard fallback.
+MONGO_APT_CODENAME=jammy
 echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-https://repo.mongodb.org/apt/ubuntu ${UBUNTU_CODENAME}/mongodb-org/7.0 multiverse" \
+https://repo.mongodb.org/apt/ubuntu ${MONGO_APT_CODENAME}/mongodb-org/7.0 multiverse" \
   | tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 apt-get update -qq
 apt-get install -y mongodb-org
