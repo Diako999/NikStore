@@ -165,5 +165,21 @@ async function handleLogout() {
 .admin-layout__content {
   flex: 1;
   padding: 24px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+@media (max-width: 560px) {
+  .admin-layout__content {
+    padding: 14px;
+  }
+  .admin-layout__header {
+    padding: 12px 14px;
+  }
+  .admin-layout__user-name {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

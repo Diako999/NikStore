@@ -1,8 +1,6 @@
 <template>
   <NuxtLoadingIndicator color="linear-gradient(90deg, #6EB082, #E7C878)" :height="2" />
-  <ClientOnly>
-    <AppSplash v-if="showSplash" @done="showSplash = false" />
-  </ClientOnly>
+  <AppSplash v-if="showSplash" @done="showSplash = false" />
   <ThemeToggle />
   <NuxtLayout>
     <NuxtPage />

@@ -466,17 +466,32 @@ onMounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: 14px;
 }
+@media (max-width: 560px) {
+  .settings-view__fields--grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 .settings-view__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
+@media (max-width: 560px) {
+  .settings-view__row {
+    grid-template-columns: 1fr;
+  }
+}
 
 .settings-view__trust-row {
   display: grid;
   grid-template-columns: 70px 1fr 1.4fr 90px;
   gap: 10px;
+}
+@media (max-width: 560px) {
+  .settings-view__trust-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .settings-view__system {
