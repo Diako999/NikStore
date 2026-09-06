@@ -34,7 +34,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminSidebar from '../components/layout/AdminSidebar.vue'
 import ThemeToggle from '../components/common/ThemeToggle.vue'
@@ -44,6 +44,17 @@ import { useAuthStore } from '../stores/auth.store'
 const auth = useAuthStore()
 const router = useRouter()
 const sidebarOpen = ref(false)
+
+// Without this, a touch-scroll over the scrim/sidebar on mobile has no
+// scrollable target of its own to grab, so the gesture falls through to
+// the document body — scrolling the page underneath instead of the
+// sidebar's own nav list.
+watch(sidebarOpen, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+onUnmounted(() => {
+  document.body.style.overflow = ''
+})
 
 const displayName = computed(() => {
   const user = auth.user

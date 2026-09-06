@@ -1,12 +1,14 @@
 <template>
   <div class="page">
     <slot />
+    <ScrollTopButton />
     <BottomNav :cart-count="cartStore.totalCount" />
   </div>
 </template>
 
 <script setup>
 import BottomNav from '~/components/ui/BottomNav.vue'
+import ScrollTopButton from '~/components/ui/ScrollTopButton.vue'
 import { useCartStore } from '~/stores/cart.store'
 
 const cartStore = useCartStore()

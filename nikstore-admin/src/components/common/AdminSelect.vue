@@ -47,8 +47,6 @@ const model = defineModel({ type: [String, Number], default: '' })
   padding-inline: 12px;
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
   transition: border-color .15s ease;
 }
 .admin-field__control:focus-within {

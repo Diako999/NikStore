@@ -1,11 +1,11 @@
 <template>
-  <div class="brandmark">
+  <NuxtLink to="/" class="brandmark">
     <div class="brandmark__ring">NK</div>
     <div>
       <div class="brandmark__name">نیک</div>
       <div class="brandmark__tag">FASHION STORE</div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 
 <script setup>

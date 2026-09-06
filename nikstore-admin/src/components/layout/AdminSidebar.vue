@@ -1,12 +1,12 @@
 <template>
   <aside class="admin-sidebar" :class="{ 'admin-sidebar--open': open }">
-    <div class="admin-sidebar__brand">
+    <RouterLink to="/" class="admin-sidebar__brand">
       <span class="admin-sidebar__ring">NK</span>
       <div>
         <p class="admin-sidebar__name">نیک</p>
         <p class="admin-sidebar__tag">پنل مدیریت</p>
       </div>
-    </div>
+    </RouterLink>
 
     <nav class="admin-sidebar__nav">
       <RouterLink to="/" class="admin-sidebar__item" :class="{ 'admin-sidebar__item--active': isActive('/') }">
