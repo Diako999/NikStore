@@ -64,17 +64,12 @@ defineProps({
   position: relative;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(110, 176, 130, .30), rgba(231, 175, 66, .16));
-  border: 1px solid rgba(255, 255, 255, .18);
   color: var(--brand-light);
 }
 [data-theme='light'] .cat-tile__ico {
-  background: linear-gradient(135deg, rgba(61, 139, 82, .20), rgba(231, 175, 66, .14));
-  border-color: rgba(255, 255, 255, .6);
   color: var(--brand-dark);
 }
 

@@ -9,7 +9,7 @@
       class="home-hero"
       :image-dark="heroImageDark"
       :image-light="heroImageLight"
-      position-dark="85% 50%"
+      position-dark="50% 15%"
       position-light="50% 40%"
       :mode="mode"
     >
@@ -323,7 +323,7 @@ const trustItems = [
      26px gap alone looks visually tighter than the rest of the page's
      rhythm. A bit of extra top margin restores the same perceived spacing. */
   margin-top: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .flash-t1 { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: #fff; }

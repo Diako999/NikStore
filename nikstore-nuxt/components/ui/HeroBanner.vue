@@ -1,5 +1,5 @@
 <template>
-  <div ref="heroEl" class="hero">
+  <div class="hero">
     <div
       class="hero__bg"
       :class="{ 'hero__bg--visible': mode !== 'light' }"
@@ -16,50 +16,20 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
-
 // Full-bleed hero frame (spec §3) — pinned to the viewport via `position:
 // fixed` in the homepage's own CSS (see .home-hero override in pages/index),
 // with a same-height spacer taking its place in document flow so the page
-// below it can scroll up and over it. Owns the photo (theme-crossfaded) +
-// legibility scrim; callers compose topbar/hero-copy via the default slot.
+// below it can scroll up and over it. That fixed positioning IS the
+// parallax effect (classic `background-attachment: fixed` look, just done
+// via a dedicated fixed layer since that CSS property is unreliable on
+// mobile Safari) — the image itself must stay completely still, no
+// internal shifting on top of the fixed-container effect.
 defineProps({
   imageDark: { type: String, required: true },
   imageLight: { type: String, required: true },
   positionDark: { type: String, default: '50% 50%' },
   positionLight: { type: String, default: '50% 50%' },
   mode: { type: String, required: true },
-})
-
-const heroEl = ref(null)
-let ctx = null
-
-onMounted(async () => {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-
-  const { gsap } = await import('gsap')
-  const { ScrollTrigger } = await import('gsap/ScrollTrigger')
-  gsap.registerPlugin(ScrollTrigger)
-
-  ctx = gsap.context(() => {
-    // The bg layers are sized taller than their container (see .hero__bg
-    // inset) specifically so they have room to shift without exposing
-    // empty edges.
-    gsap.to(heroEl.value.querySelectorAll('.hero__bg'), {
-      yPercent: 15,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: heroEl.value,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: true,
-      },
-    })
-  }, heroEl.value)
-})
-
-onUnmounted(() => {
-  ctx?.revert()
 })
 </script>
 
@@ -73,12 +43,11 @@ onUnmounted(() => {
 
 .hero__bg {
   position: absolute;
-  inset: -8% 0;
+  inset: 0;
   background-size: cover;
   background-repeat: no-repeat;
   opacity: 0;
   transition: opacity .6s ease;
-  will-change: transform, opacity;
 }
 .hero__bg--visible {
   opacity: 1;
