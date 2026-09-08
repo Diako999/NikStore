@@ -256,6 +256,25 @@ groups.value.forEach((g) => { if (g.values.length === 1) selected[g.key] = g.val
 
 function onSelectVariant({ key, value }) {
   selected[key] = value
+
+  // If this combination has no matching variant (e.g. the previously
+  // chosen size isn't sold in the newly picked color), the selector was
+  // left on an impossible combo with no fallback — Add to Cart disabled
+  // with no way to recover except manually reselecting every option. Snap
+  // the other attributes to the first real variant that has this value.
+  const hasMatch = activeVariants.value.some((v) => attributeKeys.value.every(
+    (k) => (v.attributes ?? []).some((a) => a.key === k && a.value === selected[k]),
+  ))
+  if (hasMatch) return
+
+  const fallback = activeVariants.value.find((v) => (v.attributes ?? []).some(
+    (a) => a.key === key && a.value === value,
+  ))
+  if (!fallback) return
+  attributeKeys.value.forEach((k) => {
+    const attr = (fallback.attributes ?? []).find((a) => a.key === k)
+    if (attr) selected[k] = attr.value
+  })
 }
 
 const selectedVariant = computed(() => {

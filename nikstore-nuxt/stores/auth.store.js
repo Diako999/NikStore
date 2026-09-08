@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { setTokenProvider } from '~/services/http.service'
 import { authService } from '~/services/auth.service'
 import { userService } from '~/services/user.service'
+import { useWishlistStore } from '~/stores/wishlist.store'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -16,6 +17,8 @@ export const useAuthStore = defineStore('auth', () => {
     const { data } = await authService.verifyOtp(phone, code)
     token.value = data.accessToken
     await fetchMe()
+    // Carry over anything favorited as a guest into the now-known account.
+    useWishlistStore().mergeIntoAccount().catch(() => {})
     return data
   }
 

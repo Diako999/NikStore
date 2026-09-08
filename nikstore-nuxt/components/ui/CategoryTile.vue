@@ -2,7 +2,7 @@
   <component :is="to ? 'NuxtLink' : 'div'" :to="to || undefined" class="cat-tile">
     <div class="cat-tile__sheen" aria-hidden="true" />
     <div class="cat-tile__ico">
-      <AppIcon :name="icon" :size="20" :stroke-width="1.6" />
+      <AppIcon :name="icon" :size="22" :stroke-width="2.6" />
     </div>
     <span class="cat-tile__lbl">{{ label }}</span>
     <span v-if="sub" class="cat-tile__sub">{{ sub }}</span>
@@ -67,7 +67,7 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--brand-light);
+  color: #fff;
 }
 [data-theme='light'] .cat-tile__ico {
   color: var(--brand-dark);

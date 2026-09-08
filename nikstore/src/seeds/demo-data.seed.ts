@@ -30,6 +30,16 @@ const BrandSchema = new Schema(
   { timestamps: true, strict: false },
 );
 
+const ColorSchema = new Schema(
+  {
+    name: { type: String, unique: true },
+    hex: String,
+    isActive: { type: Boolean, default: true },
+    sortOrder: { type: Number, default: 0 },
+  },
+  { timestamps: true, strict: false },
+);
+
 const ProductSchema = new Schema(
   {
     name: String,
@@ -95,6 +105,24 @@ const BRANDS = [
   { name: 'استایل مدرن', slug: 'modern-style', description: 'طراحی امروزی برای نسل جدید' },
   { name: 'پوشاک آرتین', slug: 'artin-wear', description: 'کیفیت و راحتی در کنار هم' },
   { name: 'کالکشن رونیکا', slug: 'ronika-collection', description: 'مد و فشن زنانه' },
+];
+
+// Every رنگ (color) attribute value used by PRODUCTS below must have a
+// matching entry here — the storefront's variant swatches read their hex
+// from this collection (product.service.ts's findBySlug builds a colorMap
+// from it), and fall back to a flat gray when a name has no match here.
+const COLORS = [
+  { name: 'مشکی', hex: '#1A1A1A' },
+  { name: 'سفید', hex: '#F5F5F5' },
+  { name: 'طوسی', hex: '#9AA0A6' },
+  { name: 'سرمه‌ای', hex: '#1E2A4A' },
+  { name: 'آبی', hex: '#2F6FE0' },
+  { name: 'صورتی', hex: '#E893B5' },
+  { name: 'کرم', hex: '#E8DCC4' },
+  { name: 'قرمز', hex: '#D0342C' },
+  { name: 'زرد', hex: '#F2C230' },
+  { name: 'سبز', hex: '#3D8B52' },
+  { name: 'نارنجی', hex: '#E8792E' },
 ];
 
 type SeedProduct = {
@@ -182,7 +210,17 @@ async function run() {
   await mongoose.connect(MONGODB_URI);
   const CategoryModel = mongoose.model('Category', CategorySchema, 'categories');
   const BrandModel = mongoose.model('Brand', BrandSchema, 'brands');
+  const ColorModel = mongoose.model('Color', ColorSchema, 'colors');
   const ProductModel = mongoose.model('Product', ProductSchema, 'products');
+
+  for (const c of COLORS) {
+    await ColorModel.findOneAndUpdate(
+      { name: c.name },
+      { name: c.name, hex: c.hex, isActive: true },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
+  }
+  console.log(`Colors: ${COLORS.length} upserted`);
 
   const categoryIds: Record<string, Types.ObjectId> = {};
   for (const slug of CATEGORY_SLUGS) {

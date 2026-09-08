@@ -2,7 +2,7 @@
   <div class="trust-strip">
     <div v-for="item in items" :key="item.label" class="trust-strip__item">
       <div class="trust-strip__ico">
-        <AppIcon :name="item.icon" :size="16" :stroke-width="1.8" />
+        <AppIcon :name="item.icon" :size="19" :stroke-width="2.6" />
       </div>
       <span>{{ item.label }}</span>
     </div>
@@ -33,7 +33,7 @@ defineProps({
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--brand-light);
+  color: #fff;
 }
 [data-theme='light'] .trust-strip__ico {
   color: var(--brand-dark);

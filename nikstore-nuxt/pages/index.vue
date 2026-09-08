@@ -38,7 +38,8 @@
       </div>
     </div>
 
-    <div class="sheet">
+    <div class="sheet" :style="{ borderRadius: `${sheetRadius}px ${sheetRadius}px 0 0` }">
+    <div class="scroll-progress" :style="{ width: scrollProgress * 100 + '%' }" />
     <SearchBar />
 
     <!-- Categories -->
@@ -232,6 +233,36 @@ onMounted(() => {
 })
 onUnmounted(() => { if (timer) clearInterval(timer) })
 
+// ── Scroll-linked sheet radius + progress bar ──
+// The sheet starts flush (0 radius, per the "only the hero is rounded"
+// design) and smoothly gains rounded top corners as it scrolls up over the
+// hero, settling once fully covering it — then a thin bar on its top edge
+// tracks the rest of the page's scroll progress.
+const HERO_HEIGHT = 420
+const SHEET_MAX_RADIUS = 28
+const sheetRadius = ref(0)
+const scrollProgress = ref(0)
+let scrollTicking = false
+
+function onScroll() {
+  if (scrollTicking) return
+  scrollTicking = true
+  requestAnimationFrame(() => {
+    const y = window.scrollY
+    sheetRadius.value = Math.min(1, y / HERO_HEIGHT) * SHEET_MAX_RADIUS
+    const max = document.documentElement.scrollHeight - window.innerHeight
+    scrollProgress.value = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0
+    scrollTicking = false
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', onScroll, { passive: true })
+})
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+})
+
 const remainingMs = computed(() => (now.value === null ? null : Math.max(0, endsAt - now.value)))
 const hh = computed(() => (remainingMs.value === null ? '۰۲' : toPersianDigits2(Math.floor(remainingMs.value / 3_600_000))))
 const mm = computed(() => (remainingMs.value === null ? '۱۴' : toPersianDigits2(Math.floor((remainingMs.value % 3_600_000) / 60_000))))
@@ -277,11 +308,21 @@ const trustItems = [
 .sheet {
   position: relative;
   z-index: 1;
+  overflow: hidden;
   background: var(--glass-strong);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border-radius: 0;
   padding-top: 18px;
+  transition: border-radius .15s ease-out;
+}
+
+.scroll-progress {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  z-index: 2;
+  background: linear-gradient(90deg, #6EB082, #E7C878);
 }
 
 .topbar {
