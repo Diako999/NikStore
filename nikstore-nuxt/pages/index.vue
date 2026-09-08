@@ -13,27 +13,30 @@
       position-light="50% 40%"
       :mode="mode"
     >
-      <div class="topbar">
-        <BrandMark />
-        <div class="top-actions">
-          <IconButton type="button" :aria-label="mode === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'" @click="toggleTheme">
-            <Transition name="theme-swap" mode="out-in">
-              <AppIcon :key="mode" :name="mode === 'dark' ? 'sun' : 'moon'" :size="17" :stroke-width="2" />
-            </Transition>
-          </IconButton>
-          <IconButton dot aria-label="علاقه‌مندی‌ها">
-            <AppIcon name="heart" :size="17" :stroke-width="2" />
-          </IconButton>
-          <IconButton as="NuxtLink" to="/cart" aria-label="سبد خرید">
-            <AppIcon name="bag" :size="17" :stroke-width="2" />
-          </IconButton>
-        </div>
-      </div>
-
       <div class="hero-copy">
         <h1 class="hero-wordmark">نیک استور</h1>
       </div>
     </HeroBanner>
+
+    <!-- Top nav — fixed above both the hero and the sheet, so it stays
+         visible through the whole scroll instead of getting covered along
+         with the rest of the hero. -->
+    <div class="topbar">
+      <BrandMark />
+      <div class="top-actions">
+        <IconButton type="button" :aria-label="mode === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'" @click="toggleTheme">
+          <Transition name="theme-swap" mode="out-in">
+            <AppIcon :key="mode" :name="mode === 'dark' ? 'sun' : 'moon'" :size="17" :stroke-width="2" />
+          </Transition>
+        </IconButton>
+        <IconButton dot aria-label="علاقه‌مندی‌ها">
+          <AppIcon name="heart" :size="17" :stroke-width="2" />
+        </IconButton>
+        <IconButton as="NuxtLink" to="/cart" aria-label="سبد خرید">
+          <AppIcon name="bag" :size="17" :stroke-width="2" />
+        </IconButton>
+      </div>
+    </div>
 
     <div class="sheet">
     <SearchBar />
@@ -253,7 +256,13 @@ const trustItems = [
    the fixed hero stays put — naturally covering it as the user scrolls,
    with no JS needed for the cover itself. */
 .hero-spacer {
+  /* Sits directly behind the fixed hero at the exact same position, so the
+     tiny triangular gaps its rounded bottom corners cut away show this
+     same glass tone instead of the raw page background — otherwise those
+     slivers read as a mismatched color against the sheet's glass tint,
+     which is what the rest of the page actually looks like. */
   height: 420px;
+  background: var(--glass-strong);
 }
 .home-hero {
   position: fixed;
@@ -276,12 +285,15 @@ const trustItems = [
 }
 
 .topbar {
-  position: relative;
-  z-index: 3;
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  inset-inline: 18px;
+  z-index: 2;
+  max-width: 444px;
+  margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px 0;
 }
 .top-actions { display: flex; gap: 8px; }
 

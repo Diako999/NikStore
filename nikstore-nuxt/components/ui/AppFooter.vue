@@ -53,7 +53,6 @@ const socialLinks = computed(() => {
 
 <style scoped>
 .footer {
-  margin: 0 18px;
   padding: 24px 18px;
   display: flex;
   flex-direction: column;
@@ -62,8 +61,7 @@ const socialLinks = computed(() => {
   text-align: center;
   border-radius: 0;
   background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-bottom: none;
+  border-top: 1px solid var(--glass-border);
 }
 
 .footer__brand {

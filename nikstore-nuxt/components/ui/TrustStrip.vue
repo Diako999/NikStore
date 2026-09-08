@@ -30,18 +30,12 @@ defineProps({
   width: 40px;
   height: 40px;
   margin: 0 auto 7px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   color: var(--brand-light);
 }
 [data-theme='light'] .trust-strip__ico {
-  box-shadow: var(--glass-shadow);
   color: var(--brand-dark);
 }
 
