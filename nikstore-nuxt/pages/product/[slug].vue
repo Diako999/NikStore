@@ -152,6 +152,7 @@ const slug = route.params.slug
 const { data: product, error: productError } = await useAsyncData(
   `product-${slug}`,
   () => $fetch(`/api/v1/products/slug/${slug}`),
+  { transform: (r) => r?.data ?? r },
 )
 if (productError.value || !product.value) {
   throw createError({ statusCode: 404, statusMessage: 'محصول یافت نشد' })
@@ -160,6 +161,7 @@ if (productError.value || !product.value) {
 const { data: relatedRes } = await useAsyncData(
   `product-${slug}-related`,
   () => $fetch(`/api/v1/products/${slug}/related`),
+  { transform: (r) => r?.data ?? r },
 )
 const related = computed(() => relatedRes.value ?? [])
 
@@ -167,6 +169,7 @@ const REVIEW_LIMIT = 5
 const { data: reviewRes } = await useAsyncData(
   `product-${slug}-reviews`,
   () => $fetch('/api/v1/reviews', { params: { productId: product.value._id, limit: REVIEW_LIMIT } }),
+  { transform: (r) => r?.data ?? r },
 )
 
 const reviews = ref(reviewRes.value?.items ?? [])

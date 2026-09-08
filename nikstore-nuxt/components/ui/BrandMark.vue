@@ -2,15 +2,19 @@
   <NuxtLink to="/" class="brandmark">
     <div class="brandmark__ring">NK</div>
     <div>
-      <div class="brandmark__name">نیک</div>
+      <div class="brandmark__name">{{ settings.siteName }}</div>
       <div class="brandmark__tag">FASHION STORE</div>
     </div>
   </NuxtLink>
 </template>
 
 <script setup>
-// Matches the mockups' `.brandmark` — gold conic ring + "نیک" wordmark,
-// used in the hero topbar over the photo (always white/gold, not theme-reactive).
+// Matches the mockups' `.brandmark` — gold conic ring + wordmark, used in
+// the hero topbar over the photo (always white/gold, not theme-reactive).
+// The name itself comes from the admin-configured site settings rather
+// than being hardcoded, so renaming the store in the admin panel actually
+// takes effect here.
+const { settings } = useSiteSettings()
 </script>
 
 <style scoped>

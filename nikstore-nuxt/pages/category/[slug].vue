@@ -41,6 +41,7 @@ const slug = route.params.slug
 const { data, error } = await useAsyncData(
   `category-${slug}`,
   () => $fetch(`/api/v1/categories/slug/${slug}`),
+  { transform: (r) => r?.data ?? r },
 )
 
 if (error.value || !data.value?.category) {

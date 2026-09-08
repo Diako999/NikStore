@@ -45,15 +45,29 @@ const auth = useAuthStore()
 const router = useRouter()
 const sidebarOpen = ref(false)
 
-// Without this, a touch-scroll over the scrim/sidebar on mobile has no
-// scrollable target of its own to grab, so the gesture falls through to
-// the document body — scrolling the page underneath instead of the
-// sidebar's own nav list.
+// Plain `overflow: hidden` on body is not reliable enough on mobile —
+// touch-scroll can still drag the page underneath the open sidebar. Pinning
+// body in place (and restoring the exact scroll offset on close) is the
+// standard, actually-reliable way to lock background scroll while the
+// sidebar's own nav list (which has its own overflow-y: auto) scrolls freely.
+let lockedScrollY = 0
 watch(sidebarOpen, (open) => {
-  document.body.style.overflow = open ? 'hidden' : ''
+  if (open) {
+    lockedScrollY = window.scrollY
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${lockedScrollY}px`
+    document.body.style.width = '100%'
+  } else {
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.width = ''
+    window.scrollTo(0, lockedScrollY)
+  }
 })
 onUnmounted(() => {
-  document.body.style.overflow = ''
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.width = ''
 })
 
 const displayName = computed(() => {

@@ -1,10 +1,15 @@
 <template>
   <div>
     <!-- Hero -->
-    <HeroBanner image="/images/hero-photo.jpg">
+    <HeroBanner image="/images/hero-photo.jpg" image-position="center">
       <div class="topbar">
         <BrandMark />
         <div class="top-actions">
+          <IconButton type="button" :aria-label="mode === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'" @click="toggleTheme">
+            <Transition name="theme-swap" mode="out-in">
+              <AppIcon :key="mode" :name="mode === 'dark' ? 'sun' : 'moon'" :size="17" :stroke-width="2" />
+            </Transition>
+          </IconButton>
           <IconButton dot aria-label="علاقه‌مندی‌ها">
             <AppIcon name="heart" :size="17" :stroke-width="2" />
           </IconButton>
@@ -15,16 +20,7 @@
       </div>
 
       <div class="hero-copy">
-        <span class="eyebrow">پیشنهاد ویژه هفته</span>
-        <h1>هودی پرفورمنس مردانه</h1>
-        <div class="price-row">
-          <span class="compare">{{ formatNumber(4200000) }}</span>
-          <span class="price">{{ formatNumber(3250000) }}<small> تومان</small></span>
-        </div>
-        <NuxtLink to="/product/hoodie-performance" class="btn-primary">
-          خرید فوری
-          <AppIcon name="arrow" :size="16" :stroke-width="2" />
-        </NuxtLink>
+        <h1 class="hero-wordmark">نیک استور</h1>
       </div>
     </HeroBanner>
 
@@ -99,6 +95,23 @@
       <p v-else class="empty-hint">هنوز محصولی ثبت نشده است</p>
     </section>
 
+    <!-- Brands -->
+    <section v-if="brands.length" class="section">
+      <SectionHead title="برندهای ما" />
+      <div class="row-scroll">
+        <NuxtLink
+          v-for="b in brands"
+          :key="b._id || b.slug"
+          :to="`/products?brand=${b.slug}`"
+          class="brand-chip"
+        >
+          <img v-if="b.logo" :src="b.logo" :alt="b.name" class="brand-chip__logo">
+          <span v-else class="brand-chip__initial">{{ b.name?.[0] }}</span>
+          <span class="brand-chip__name">{{ b.name }}</span>
+        </NuxtLink>
+      </div>
+    </section>
+
     <!-- Trust strip -->
     <section class="section section--tight">
       <TrustStrip :items="trustItems" />
@@ -118,9 +131,15 @@ import GlassBanner from '~/components/ui/GlassBanner.vue'
 import SectionHead from '~/components/ui/SectionHead.vue'
 import ProductCard from '~/components/ui/ProductCard.vue'
 import TrustStrip from '~/components/ui/TrustStrip.vue'
-import { formatNumber, toPersianDigits2 } from '~/utils/format'
+import { toPersianDigits2 } from '~/utils/format'
 
 useSeoMeta({ title: 'فروشگاه پوشاک' })
+
+// In-flow theme toggle in the hero's own icon row — the site-wide fixed
+// ThemeToggle is suppressed on this page (see app.vue) since it used to sit
+// pinned right on top of this same row's cart icon and stayed stuck through
+// scroll, which is exactly what this in-flow version avoids.
+const { mode, toggle: toggleTheme } = useTheme()
 
 // ── Category grid — real data with fixed, spec-literal presentation ──
 // (labels/icons/order are the store's structural nav categories, same as
@@ -145,6 +164,14 @@ const categoryTiles = computed(() => {
     return { ...tile, to: match ? `/category/${match.slug}` : '/products' }
   })
 })
+
+// ── Brands — admin-managed catalog brands, shown once at least one exists ──
+const { data: brandsRes } = await useAsyncData(
+  'home-brands',
+  () => $fetch('/api/v1/brands').catch(() => []),
+  { transform: (r) => r?.data ?? r ?? [] },
+)
+const brands = computed(() => brandsRes.value ?? [])
 
 // ── Product rows — real data, sorted newest / bestseller ──
 const { data: newRes, pending: pendingNew } = await useAsyncData(
@@ -210,63 +237,20 @@ const trustItems = [
 .hero-copy {
   position: relative;
   z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  min-height: 240px;
   padding: 150px 20px 26px;
-  max-width: 80%;
+  text-align: left;
   color: #fff;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
+.hero-wordmark {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: .5px;
   color: #fff;
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 12px;
-  background: var(--glass-strong);
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
-}
-[data-theme='light'] .eyebrow {
-  background: rgba(9, 15, 12, .38);
-  border-color: rgba(255, 255, 255, .25);
-}
-.eyebrow::before {
-  content: '';
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--brand-light);
-}
-
-.hero-copy h1 {
-  font-size: 22px;
-  line-height: 1.4;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: #fff;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, .45);
-}
-
-.price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
-.compare { font-size: 12px; text-decoration: line-through; color: rgba(255, 255, 255, .55); }
-.price { font-size: 16px; font-weight: 700; color: #fff; }
-.price small { font-size: 11px; font-weight: 500; color: rgba(255, 255, 255, .7); }
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #fff;
-  font-weight: 700;
-  font-size: 13.5px;
-  padding: 12px 20px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #6EB082 0%, #3D8B52 55%, #2D6B3E 100%);
-  border: 1px solid rgba(255, 255, 255, .3);
-  box-shadow: 0 10px 22px rgba(40, 55, 46, .30), inset 0 1px 0 rgba(255, 255, 255, .35);
+  text-shadow: 0 2px 16px rgba(0, 0, 0, .5);
 }
 
 .section { margin-bottom: 26px; }
@@ -326,6 +310,58 @@ const trustItems = [
 [data-theme='light'] .promo-num { color: rgba(30, 40, 34, .10); }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 18px; }
+
+.brand-chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 78px;
+  text-align: center;
+}
+.brand-chip__logo,
+.brand-chip__initial {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+}
+.brand-chip__logo { object-fit: cover; }
+.brand-chip__initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.brand-chip__name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.theme-swap-enter-active,
+.theme-swap-leave-active {
+  transition: opacity .2s ease, transform .2s ease;
+}
+.theme-swap-enter-from {
+  opacity: 0;
+  transform: rotate(-45deg) scale(.6);
+}
+.theme-swap-leave-to {
+  opacity: 0;
+  transform: rotate(45deg) scale(.6);
+}
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }

@@ -25,7 +25,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed:pages": "ts-node -r tsconfig-paths/register src/seeds/pages.seed.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/seeds/categories.seed.ts",
-    "seed:admin": "ts-node -r tsconfig-paths/register src/seeds/admin.seed.ts"
+    "seed:admin": "ts-node -r tsconfig-paths/register src/seeds/admin.seed.ts",
+    "seed:demo": "ts-node -r tsconfig-paths/register src/seeds/demo-data.seed.ts"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^3.1.2",

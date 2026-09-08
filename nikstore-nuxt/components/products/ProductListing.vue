@@ -80,6 +80,7 @@ function buildParams(pageNum) {
 const { data: initialData } = await useAsyncData(
   `products-listing-${props.category || 'all'}`,
   () => $fetch('/api/v1/products', { params: buildParams(1) }),
+  { transform: (r) => r?.data ?? r },
 )
 
 const products = ref(initialData.value?.products ?? [])
@@ -95,7 +96,8 @@ async function load(reset) {
     loadingMore.value = true
   }
   try {
-    const res = await $fetch('/api/v1/products', { params: buildParams(page.value) })
+    const raw = await $fetch('/api/v1/products', { params: buildParams(page.value) })
+    const res = raw?.data ?? raw
     if (reset) products.value = res?.products ?? []
     else products.value = [...products.value, ...(res?.products ?? [])]
     total.value = res?.total ?? 0
@@ -132,9 +134,10 @@ watch(() => props.category, () => load(true))
 const brands = ref([])
 async function loadBrands() {
   try {
-    brands.value = await $fetch('/api/v1/products/brands', {
+    const raw = await $fetch('/api/v1/products/brands', {
       params: props.category ? { category: props.category } : {},
-    }) ?? []
+    })
+    brands.value = raw?.data ?? raw ?? []
   } catch {
     brands.value = []
   }

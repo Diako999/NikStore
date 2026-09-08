@@ -1,7 +1,7 @@
 <template>
   <NuxtLoadingIndicator color="linear-gradient(90deg, #6EB082, #E7C878)" :height="2" />
   <AppSplash v-if="showSplash" @done="showSplash = false" />
-  <ThemeToggle />
+  <ThemeToggle v-if="route.path !== '/'" />
   <NuxtLayout>
     <NuxtPage />
   </NuxtLayout>
@@ -9,6 +9,8 @@
 
 <script setup>
 import ThemeToggle from '~/components/ui/ThemeToggle.vue'
+
+const route = useRoute()
 
 // data-theme drives every glass/color token in assets/styles/theme.css.
 // useHead renders it server-side from the theme cookie so there is no

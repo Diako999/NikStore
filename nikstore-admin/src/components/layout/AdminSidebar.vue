@@ -92,12 +92,15 @@ const groups = [
   width: 264px;
   flex-shrink: 0;
   height: 100vh;
+  height: 100dvh;
   position: fixed;
   inset-block: 0;
   inset-inline-start: 0;
   z-index: 40;
   padding: 22px 16px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   background: var(--glass);
   border-inline-end: 1px solid var(--glass-border);
   backdrop-filter: blur(20px) saturate(160%);
