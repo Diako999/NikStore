@@ -32,8 +32,12 @@ defineProps({
   cursor: pointer;
 }
 [data-theme='light'] .icon-btn {
-  background: rgba(255, 255, 255, .25);
-  border-color: rgba(255, 255, 255, .4);
+  /* Dark icon + dark-tinted glass, not light-on-light — these buttons sit
+     over an admin-configurable hero photo of unknown brightness, and a
+     white icon on a light glass tint disappears against a bright photo. */
+  color: #1E2822;
+  background: rgba(30, 40, 34, .16);
+  border-color: rgba(30, 40, 34, .22);
 }
 
 .icon-btn__dot {

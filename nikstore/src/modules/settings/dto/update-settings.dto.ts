@@ -146,6 +146,10 @@ export class UpdateSettingsDto {
   @IsOptional() @IsString() logoUrl?: string;
   @IsOptional() @IsString() faviconUrl?: string;
 
+  // Homepage hero
+  @IsOptional() @IsString() heroImageDark?: string;
+  @IsOptional() @IsString() heroImageLight?: string;
+
   // SEO
   @IsOptional() @IsString() @MaxLength(160) description?: string;
   @IsOptional() @IsString() @MaxLength(250) keywords?: string;

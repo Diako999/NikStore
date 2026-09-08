@@ -105,6 +105,15 @@ export class SiteSettings {
   @Prop({ default: '' })
   faviconUrl: string;
 
+  // ── Homepage hero ─────────────────────────────────────────
+  // Empty string means "use the built-in default photo" — the storefront
+  // falls back to its own bundled image when these are unset.
+  @Prop({ default: '' })
+  heroImageDark: string;
+
+  @Prop({ default: '' })
+  heroImageLight: string;
+
   // ── SEO ───────────────────────────────────────────────────
   @Prop({ default: '' })
   description: string;

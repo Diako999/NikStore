@@ -28,6 +28,13 @@
           </div>
         </AdminCard>
 
+        <AdminCard title="هیرو صفحه اصلی">
+          <div class="settings-view__fields">
+            <AdminInput v-model="form.heroImageDark" label="تصویر پس‌زمینه (حالت تیره)" placeholder="خالی = تصویر پیش‌فرض" :disabled="readOnly" />
+            <AdminInput v-model="form.heroImageLight" label="تصویر پس‌زمینه (حالت روشن)" placeholder="خالی = تصویر پیش‌فرض" :disabled="readOnly" />
+          </div>
+        </AdminCard>
+
         <AdminCard title="سئو">
           <div class="settings-view__fields">
             <AdminTextarea v-model="form.description" label="توضیحات متا" :rows="3" :disabled="readOnly" />
@@ -306,6 +313,8 @@ function normalize(data) {
     tagline: data.tagline ?? '',
     logoUrl: data.logoUrl ?? '',
     faviconUrl: data.faviconUrl ?? '',
+    heroImageDark: data.heroImageDark ?? '',
+    heroImageLight: data.heroImageLight ?? '',
     description: data.description ?? '',
     keywords: data.keywords ?? '',
     ogImage: data.ogImage ?? '',

@@ -1,9 +1,14 @@
 <template>
   <div ref="heroEl" class="hero">
     <div
-      ref="bgEl"
       class="hero__bg"
-      :style="{ backgroundImage: `url(${image})`, backgroundPosition: imagePosition }"
+      :class="{ 'hero__bg--visible': mode !== 'light' }"
+      :style="{ backgroundImage: `url(${imageDark})`, backgroundPosition: positionDark }"
+    />
+    <div
+      class="hero__bg"
+      :class="{ 'hero__bg--visible': mode === 'light' }"
+      :style="{ backgroundImage: `url(${imageLight})`, backgroundPosition: positionLight }"
     />
     <div class="hero__scrim" />
     <slot />
@@ -13,20 +18,23 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 
-// Full-bleed rounded-bottom hero frame (spec §3). Owns only the photo +
-// legibility scrim + shape + parallax; callers compose topbar/hero-copy via
-// the default slot so this stays reusable for other pages later.
-const props = defineProps({
-  image: { type: String, required: true },
-  imagePosition: { type: String, default: '25% 45%' },
+// Full-bleed hero frame (spec §3) — pinned to the viewport via `position:
+// fixed` in the homepage's own CSS (see .home-hero override in pages/index),
+// with a same-height spacer taking its place in document flow so the page
+// below it can scroll up and over it. Owns the photo (theme-crossfaded) +
+// legibility scrim; callers compose topbar/hero-copy via the default slot.
+defineProps({
+  imageDark: { type: String, required: true },
+  imageLight: { type: String, required: true },
+  positionDark: { type: String, default: '50% 50%' },
+  positionLight: { type: String, default: '50% 50%' },
+  mode: { type: String, required: true },
 })
 
 const heroEl = ref(null)
-const bgEl = ref(null)
 let ctx = null
 
 onMounted(async () => {
-  // Respect reduced-motion and skip entirely rather than a static no-op tween.
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
   const { gsap } = await import('gsap')
@@ -34,9 +42,10 @@ onMounted(async () => {
   gsap.registerPlugin(ScrollTrigger)
 
   ctx = gsap.context(() => {
-    // The bg layer is sized taller than its container (see .hero__bg inset)
-    // specifically so it has room to shift without exposing empty edges.
-    gsap.to(bgEl.value, {
+    // The bg layers are sized taller than their container (see .hero__bg
+    // inset) specifically so they have room to shift without exposing
+    // empty edges.
+    gsap.to(heroEl.value.querySelectorAll('.hero__bg'), {
       yPercent: 15,
       ease: 'none',
       scrollTrigger: {
@@ -58,10 +67,8 @@ onUnmounted(() => {
 .hero {
   position: relative;
   width: 100%;
-  min-height: 392px;
-  margin-bottom: 28px;
+  height: 100%;
   overflow: hidden;
-  border-radius: 0 0 40px 40px;
 }
 
 .hero__bg {
@@ -69,7 +76,12 @@ onUnmounted(() => {
   inset: -8% 0;
   background-size: cover;
   background-repeat: no-repeat;
-  will-change: transform;
+  opacity: 0;
+  transition: opacity .6s ease;
+  will-change: transform, opacity;
+}
+.hero__bg--visible {
+  opacity: 1;
 }
 
 .hero__scrim {
@@ -89,7 +101,7 @@ onUnmounted(() => {
     rgba(9, 15, 12, .32) 0%,
     rgba(9, 15, 12, .05) 24%,
     rgba(9, 15, 12, .42) 58%,
-    rgba(var(--bg-rgb), .95) 100%
+    rgba(9, 15, 12, .55) 100%
   );
 }
 </style>

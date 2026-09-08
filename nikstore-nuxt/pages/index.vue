@@ -1,7 +1,18 @@
 <template>
   <div>
-    <!-- Hero — sticky, stays pinned while .sheet scrolls up and over it -->
-    <HeroBanner class="home-hero" image="/images/hero-photo.jpg" image-position="85% 50%">
+    <!-- Hero spacer — reserves the fixed hero's height in normal document
+         flow so the page has room to scroll before .sheet catches up to it. -->
+    <div class="hero-spacer" aria-hidden="true" />
+
+    <!-- Hero — fixed to the viewport; .sheet scrolls up and over it -->
+    <HeroBanner
+      class="home-hero"
+      :image-dark="heroImageDark"
+      :image-light="heroImageLight"
+      position-dark="85% 50%"
+      position-light="50% 40%"
+      :mode="mode"
+    >
       <div class="topbar">
         <BrandMark />
         <div class="top-actions">
@@ -143,6 +154,12 @@ useSeoMeta({ title: 'فروشگاه پوشاک' })
 // scroll, which is exactly what this in-flow version avoids.
 const { mode, toggle: toggleTheme } = useTheme()
 
+// ── Hero background — admin-configurable per theme, falls back to the
+// bundled defaults when unset ──
+const { settings } = useSiteSettings()
+const heroImageDark = computed(() => settings.value.heroImageDark || '/images/hero-photo.jpg')
+const heroImageLight = computed(() => settings.value.heroImageLight || '/images/hero-photo-light.jpg')
+
 // ── Category grid — real data with fixed, spec-literal presentation ──
 // (labels/icons/order are the store's structural nav categories, same as
 // the mockup; only the destination link is resolved from live category
@@ -226,21 +243,36 @@ const trustItems = [
 </script>
 
 <style scoped>
-/* Sticky hero + sliding sheet — the hero stays pinned to the top of the
-   viewport while .sheet (everything below it) scrolls up and over it,
-   covering it with a rounded top edge as the page scrolls down. */
+/* Fixed hero + sliding sheet — the hero is pinned to the viewport (not
+   sticky: a sticky element's "stuck" range is bounded by its own parent's
+   height, and since hero's parent here is the whole page, sticky made it
+   stay pinned for the entire scroll instead of just the reveal zone).
+   .hero-spacer reserves the hero's height in normal document flow; .sheet
+   then starts in ordinary flow right at the spacer's end (no negative
+   margin) and, being normal-flow content, slides upward with scroll while
+   the fixed hero stays put — naturally covering it as the user scrolls,
+   with no JS needed for the cover itself. */
+.hero-spacer {
+  height: 420px;
+}
 .home-hero {
-  position: sticky;
+  position: fixed;
   top: 0;
+  inset-inline: 0;
   z-index: 0;
+  height: 420px;
+  max-width: 480px;
+  margin-inline: auto;
+  border-radius: 0 0 40px 40px;
 }
 .sheet {
   position: relative;
   z-index: 1;
-  background: var(--page-bg);
-  border-radius: 28px 28px 0 0;
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-radius: 0;
   padding-top: 18px;
-  margin-top: -28px;
 }
 
 .topbar {
