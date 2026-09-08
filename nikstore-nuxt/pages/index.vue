@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- Hero -->
-    <HeroBanner image="/images/hero-photo.jpg" image-position="center">
+    <!-- Hero — sticky, stays pinned while .sheet scrolls up and over it -->
+    <HeroBanner class="home-hero" image="/images/hero-photo.jpg" image-position="85% 50%">
       <div class="topbar">
         <BrandMark />
         <div class="top-actions">
@@ -24,6 +24,7 @@
       </div>
     </HeroBanner>
 
+    <div class="sheet">
     <SearchBar />
 
     <!-- Categories -->
@@ -116,6 +117,7 @@
     <section class="section section--tight">
       <TrustStrip :items="trustItems" />
     </section>
+    </div>
   </div>
 </template>
 
@@ -224,6 +226,23 @@ const trustItems = [
 </script>
 
 <style scoped>
+/* Sticky hero + sliding sheet — the hero stays pinned to the top of the
+   viewport while .sheet (everything below it) scrolls up and over it,
+   covering it with a rounded top edge as the page scrolls down. */
+.home-hero {
+  position: sticky;
+  top: 0;
+  z-index: 0;
+}
+.sheet {
+  position: relative;
+  z-index: 1;
+  background: var(--page-bg);
+  border-radius: 28px 28px 0 0;
+  padding-top: 18px;
+  margin-top: -28px;
+}
+
 .topbar {
   position: relative;
   z-index: 3;
@@ -254,7 +273,14 @@ const trustItems = [
 }
 
 .section { margin-bottom: 26px; }
-.section--tight { margin-bottom: 8px; }
+.section--tight {
+  /* Trust strip has no SectionHead above it, unlike every other section —
+     without a heading's own margin to read as a "breather", the standard
+     26px gap alone looks visually tighter than the rest of the page's
+     rhythm. A bit of extra top margin restores the same perceived spacing. */
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
 
 .flash-t1 { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: #fff; }
 [data-theme='light'] .flash-t1 { color: var(--text-primary); }
