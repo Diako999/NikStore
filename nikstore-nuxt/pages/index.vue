@@ -14,7 +14,7 @@
       :mode="mode"
     >
       <div class="hero-copy">
-        <h1 class="hero-wordmark">نیک استور</h1>
+        <h1 class="hero-wordmark">{{ settings.siteName }}</h1>
       </div>
     </HeroBanner>
 
