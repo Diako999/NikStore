@@ -1,8 +1,7 @@
 <template>
   <div class="login">
     <NuxtLink to="/" class="login__mark">
-      <div class="login__ring">NK</div>
-      <p class="login__brand">نیک</p>
+      <img :src="logoSrc" alt="نیک" class="login__logo" />
     </NuxtLink>
 
     <h1 class="login__title">ورود به حساب کاربری</h1>
@@ -38,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '~/components/icons/AppIcon.vue'
 import { authService } from '~/services/auth.service'
@@ -48,6 +47,8 @@ useSeoMeta({ title: 'ورود | نیک' })
 
 const route = useRoute()
 const router = useRouter()
+const { mode } = useTheme()
+const logoSrc = computed(() => (mode.value === 'light' ? '/images/logo-dark.png' : '/images/logo-white.png'))
 
 const phone = ref('')
 const loading = ref(false)
@@ -96,22 +97,9 @@ async function onSubmit() {
   gap: 10px;
   margin-bottom: 36px;
 }
-.login__ring {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 18px;
-  color: #16241C;
-}
-.login__brand {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
+.login__logo {
+  height: 34px;
+  width: auto;
 }
 
 .login__title {

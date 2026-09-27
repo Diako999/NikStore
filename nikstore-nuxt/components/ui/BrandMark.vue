@@ -1,53 +1,52 @@
 <template>
   <NuxtLink to="/" class="brandmark">
-    <div class="brandmark__ring">NK</div>
-    <div>
-      <div class="brandmark__name">{{ settings.siteName }}</div>
-      <div class="brandmark__tag">FASHION STORE</div>
-    </div>
+    <span class="brandmark__logo-stack">
+      <img src="/images/logo-white.png" :alt="settings.siteName" class="brandmark__logo" />
+      <img
+        src="/images/logo-green.png"
+        alt=""
+        aria-hidden="true"
+        class="brandmark__logo brandmark__logo--fill"
+        :style="{ clipPath: `inset(${(1 - fill) * 100}% 0 0 0)` }"
+      >
+    </span>
   </NuxtLink>
 </template>
 
 <script setup>
-// Matches the mockups' `.brandmark` — gold conic ring + wordmark, used in
-// the hero topbar over the photo (always white/gold, not theme-reactive).
-// The name itself comes from the admin-configured site settings rather
-// than being hardcoded, so renaming the store in the admin panel actually
-// takes effect here.
+// Used in the hero topbar over the photo (always white by default, not
+// theme-reactive) — a second green copy is clipped on top of it and its
+// clip-path is driven by `fill` (0..1, scroll progress through the hero)
+// so the mark visually fills with brand green from the bottom up as the
+// page scrolls, like a level rising, rather than a straight opacity fade.
 const { settings } = useSiteSettings()
+
+defineProps({
+  fill: { type: Number, default: 0 },
+})
 </script>
 
 <style scoped>
 .brandmark {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-.brandmark__ring {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 12px;
-  color: #16241C;
-  flex-shrink: 0;
+.brandmark__logo-stack {
+  position: relative;
+  display: block;
+  height: 26px;
 }
 
-.brandmark__name {
-  font-size: 17px;
-  font-weight: 700;
-  color: #fff;
+.brandmark__logo {
+  height: 26px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, .35));
 }
 
-.brandmark__tag {
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  margin-top: 1px;
-  color: rgba(255, 255, 255, .78);
+.brandmark__logo--fill {
+  position: absolute;
+  inset: 0;
 }
 </style>

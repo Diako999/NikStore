@@ -1,11 +1,8 @@
 <template>
   <aside class="admin-sidebar" :class="{ 'admin-sidebar--open': open }">
     <RouterLink to="/" class="admin-sidebar__brand">
-      <span class="admin-sidebar__ring">NK</span>
-      <div>
-        <p class="admin-sidebar__name">نیک</p>
-        <p class="admin-sidebar__tag">پنل مدیریت</p>
-      </div>
+      <img :src="logoSrc" alt="نیک" class="admin-sidebar__logo" />
+      <p class="admin-sidebar__tag">پنل مدیریت</p>
     </RouterLink>
 
     <nav class="admin-sidebar__nav">
@@ -32,14 +29,18 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '../icons/AppIcon.vue'
+import { useTheme } from '../../composables/useTheme'
 
 defineProps({
   open: { type: Boolean, default: false },
 })
 
 const route = useRoute()
+const { mode } = useTheme()
+const logoSrc = computed(() => (mode.value === 'light' ? '/images/logo-dark.png' : '/images/logo-white.png'))
 
 function isActive(to) {
   if (to === '/') return route.path === '/'
@@ -110,32 +111,19 @@ const groups = [
 
 .admin-sidebar__brand {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   padding-inline: 6px;
 }
-.admin-sidebar__ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
-  color: #16241C;
-  font-weight: 800;
-  font-size: 12px;
-}
-.admin-sidebar__name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
+.admin-sidebar__logo {
+  height: 22px;
+  width: auto;
+  display: block;
 }
 .admin-sidebar__tag {
   font-size: 10px;
   color: var(--text-secondary);
-  margin-top: 1px;
 }
 
 .admin-sidebar__nav {

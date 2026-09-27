@@ -1,19 +1,9 @@
 <template>
   <div v-if="visible" ref="root" class="splash" :class="{ 'splash--leaving': leaving }">
     <div class="splash__stage">
-      <div ref="wordsEl" class="splash__words">
-        <span ref="wordNew" class="splash__word">NEW</span>
-        <span ref="barA" class="splash__bar" />
-        <span ref="wordIconic" class="splash__word">ICONIC</span>
-        <span ref="barB" class="splash__bar" />
-        <span ref="wordKnown" class="splash__word">KNOWN</span>
-      </div>
-
-      <div ref="markEl" class="splash__mark">
-        <span class="splash__mark-n">N</span>
-        <span ref="markBar" class="splash__mark-bar" />
-        <span class="splash__mark-k">K</span>
-      </div>
+      <p ref="sentenceEl" class="splash__sentence">
+        <span ref="letterN" class="splash__letter">N</span><span ref="restNew" class="splash__rest">EW</span><span ref="dotA" class="splash__dot">&middot;</span><span ref="letterI" class="splash__letter">I</span><span ref="restIconic" class="splash__rest">CONIC</span><span ref="dotB" class="splash__dot">&middot;</span><span ref="letterK" class="splash__letter">K</span><span ref="restKnown" class="splash__rest">NOWN</span>
+      </p>
     </div>
 
     <p ref="taglineEl" class="splash__tagline">NEW &middot; ICONIC &middot; KNOWN</p>
@@ -36,14 +26,15 @@ const visible = ref(true)
 const leaving = ref(false)
 
 const root = ref(null)
-const wordsEl = ref(null)
-const wordNew = ref(null)
-const wordIconic = ref(null)
-const wordKnown = ref(null)
-const barA = ref(null)
-const barB = ref(null)
-const markEl = ref(null)
-const markBar = ref(null)
+const sentenceEl = ref(null)
+const letterN = ref(null)
+const letterI = ref(null)
+const letterK = ref(null)
+const restNew = ref(null)
+const restIconic = ref(null)
+const restKnown = ref(null)
+const dotA = ref(null)
+const dotB = ref(null)
 const taglineEl = ref(null)
 const loadingEl = ref(null)
 const fillEl = ref(null)
@@ -56,11 +47,19 @@ onMounted(async () => {
   const { gsap } = await import('gsap')
   gsapInstance = gsap
 
+  const letters = [letterN.value, letterI.value, letterK.value]
+  const collapsibles = [restNew.value, dotA.value, restIconic.value, dotB.value, restKnown.value]
+  // Measure natural widths up front (while everything is still hidden via
+  // opacity/visibility, which doesn't affect layout) so the later width->0
+  // collapse animates from each span's real rendered size instead of
+  // snapping from an un-tweenable "auto".
+  const naturalWidths = collapsibles.map((el) => el.getBoundingClientRect().width)
+
   ctx = gsap.context(() => {
-    gsap.set([wordNew.value, wordIconic.value, wordKnown.value], { autoAlpha: 0, y: 10 })
-    gsap.set([barA.value, barB.value], { scaleY: 0, autoAlpha: 0 })
-    gsap.set(markEl.value, { autoAlpha: 0 })
-    gsap.set(markBar.value, { scaleY: 0 })
+    gsap.set(sentenceEl.value, { autoAlpha: 0, scale: 0.92, gap: '2px' })
+    collapsibles.forEach((el, i) => {
+      gsap.set(el, { width: naturalWidths[i], display: 'inline-block', overflow: 'hidden' })
+    })
     gsap.set(taglineEl.value, { autoAlpha: 0, y: 8 })
     gsap.set(loadingEl.value, { autoAlpha: 0 })
 
@@ -69,54 +68,63 @@ onMounted(async () => {
       onComplete: startExit,
     })
 
-    // 01 — words
-    tl.addLabel('words')
-    tl.to([wordNew.value, wordIconic.value, wordKnown.value], {
+    // 01 — the whole sentence stretches out (fades in as the gap between
+    // words widens), nothing hidden yet
+    tl.addLabel('stretch-out')
+    tl.to(sentenceEl.value, {
       autoAlpha: 1,
-      y: 0,
-      duration: 0.55,
-      stagger: 0.12,
-    }, 'words')
+      scale: 1,
+      duration: 0.7,
+      ease: 'power2.out',
+    }, 'stretch-out')
+    tl.to(sentenceEl.value, {
+      gap: '7px',
+      duration: 0.8,
+      ease: 'power2.out',
+    }, 'stretch-out')
 
-    // 02 — moving together
-    tl.addLabel('moving', '+=0.35')
-    tl.to([barA.value, barB.value], { autoAlpha: 1, scaleY: 1, duration: 0.4 }, 'moving')
-    tl.to(wordNew.value, { x: 26, duration: 0.55, ease: 'power3.inOut' }, 'moving')
-    tl.to(wordKnown.value, { x: -26, duration: 0.55, ease: 'power3.inOut' }, 'moving')
-    tl.to(wordIconic.value, { scale: 0.96, duration: 0.55, ease: 'power3.inOut' }, 'moving')
+    tl.addLabel('hold', '+=0.4')
 
-    // 03 — merging
-    tl.addLabel('merging', '+=0.15')
-    tl.to(wordNew.value, { x: 0, duration: 0.5, ease: 'power3.inOut' }, 'merging')
-    tl.to(wordKnown.value, { x: 0, duration: 0.5, ease: 'power3.inOut' }, 'merging')
-    tl.to(wordIconic.value, { autoAlpha: 0.55, duration: 0.5 }, 'merging')
-    tl.to([barA.value, barB.value], { scaleY: 2.6, duration: 0.5, ease: 'power3.inOut' }, 'merging')
+    // 02 — N · I · K (the first letters of NEW / ICONIC / KNOWN) highlight,
+    // bolder and bigger, one word at a time — the mark is already latent in
+    // the sentence, this just brings it forward
+    tl.addLabel('highlight', '+=0.05')
+    tl.to(letters, {
+      scale: 1.45,
+      color: '#FFFFFF',
+      textShadow: '0 0 16px rgba(231,175,66,.85)',
+      duration: 0.5,
+      stagger: 0.16,
+      ease: 'back.out(1.7)',
+    }, 'highlight')
 
-    // 04 — shaping: crossfade words -> N | K mark
-    tl.addLabel('shaping', '+=0.2')
-    tl.to([wordNew.value, wordIconic.value, wordKnown.value], { autoAlpha: 0, duration: 0.4 }, 'shaping')
-    tl.to(barB.value, { autoAlpha: 0, duration: 0.3 }, 'shaping')
-    tl.to(barA.value, { scaleY: 1, duration: 0.4 }, 'shaping')
-    tl.set(markEl.value, { autoAlpha: 1 }, 'shaping+=0.15')
-    tl.set([wordsEl.value], { display: 'none' }, 'shaping+=0.15')
-    tl.fromTo(
-      markEl.value.querySelectorAll('.splash__mark-n, .splash__mark-k'),
-      { autoAlpha: 0, y: 6 },
-      { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.08 },
-      'shaping+=0.15',
-    )
-    tl.to(markBar.value, { scaleY: 1, duration: 0.45, ease: 'power3.out' }, 'shaping+=0.15')
+    tl.addLabel('hold2', '+=0.3')
 
-    // 05 — NIK settles
-    tl.addLabel('settled', '+=0.15')
-    tl.fromTo(markEl.value, { scale: 0.94 }, { scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 'settled')
-    tl.to(taglineEl.value, { autoAlpha: 1, y: 0, duration: 0.5 }, 'settled+=0.1')
-    tl.to(loadingEl.value, { autoAlpha: 1, duration: 0.4 }, 'settled+=0.25')
+    // 03 — everything else dissolves and collapses in place (never a hard
+    // clear) so N · I · K flow together into NIK through the same
+    // continuous motion, no separate element swapped in
+    tl.addLabel('condense', '+=0.05')
+    tl.to(collapsibles, {
+      opacity: 0,
+      width: 0,
+      duration: 0.7,
+      ease: 'power2.inOut',
+    }, 'condense')
+    tl.to(sentenceEl.value, {
+      gap: '3px',
+      duration: 0.7,
+      ease: 'power2.inOut',
+    }, 'condense')
+
+    // 04 — settled
+    tl.addLabel('settled', '+=0.35')
+    tl.to(taglineEl.value, { autoAlpha: 1, y: 0, duration: 0.5 }, 'settled')
+    tl.to(loadingEl.value, { autoAlpha: 1, duration: 0.4 }, 'settled+=0.15')
     tl.fromTo(
       fillEl.value,
       { xPercent: -100 },
       { xPercent: 0, duration: 0.9, ease: 'power1.inOut' },
-      'settled+=0.35',
+      'settled+=0.25',
     )
   }, root.value)
 })
@@ -126,7 +134,7 @@ function startExit() {
   gsapInstance.to(root.value, {
     autoAlpha: 0,
     duration: 0.6,
-    delay: 0.35,
+    delay: 0.45,
     ease: 'power2.inOut',
     onComplete: () => {
       visible.value = false
@@ -159,67 +167,38 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 64px;
+  min-height: 84px;
   width: 100%;
   max-width: 480px;
   direction: ltr;
 }
 
-.splash__words {
-  position: absolute;
-  inset: 0;
+.splash__sentence {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
-  gap: 14px;
-  font-family: 'Vazirmatn', Tahoma, sans-serif;
-}
-
-.splash__word {
-  font-size: clamp(14px, 4vw, 20px);
-  font-weight: 700;
-  letter-spacing: 2px;
   white-space: nowrap;
-  background: linear-gradient(135deg, #FBEFC8 0%, #E7C878 55%, #C7A45C 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.splash__bar {
-  width: 2px;
-  height: 26px;
-  transform-origin: center;
-  background: linear-gradient(180deg, transparent, #E7C878, transparent);
-}
-
-.splash__mark {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-}
-
-.splash__mark-n,
-.splash__mark-k {
   font-family: 'Vazirmatn', Tahoma, sans-serif;
-  font-size: clamp(48px, 14vw, 84px);
-  font-weight: 800;
-  line-height: 1;
-  background: linear-gradient(135deg, #FBEFC8 0%, #E7C878 50%, #C7A45C 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-size: clamp(15px, 4.2vw, 21px);
+  font-weight: 700;
+  color: rgba(231, 175, 66, .8);
+  /* Baseline-hidden in plain CSS (not just via the JS gsap.set() call) so
+     there's no flash of every splash element stacked on screen at once
+     while the GSAP chunk is still being fetched/parsed before hydration. */
+  opacity: 0;
+  visibility: hidden;
 }
 
-.splash__mark-bar {
-  width: 3px;
-  height: 68px;
-  margin: 0 4px;
-  transform-origin: center;
-  background: linear-gradient(180deg, #FBEFC8, #E7C878 60%, #C7A45C);
-  box-shadow: 0 0 14px rgba(231, 175, 66, .5);
+.splash__letter {
+  display: inline-block;
+  font-weight: 800;
+  color: rgba(231, 175, 66, .8);
+  transform-origin: 50% 65%;
+}
+
+.splash__rest,
+.splash__dot {
+  display: inline-block;
 }
 
 .splash__tagline {
@@ -229,6 +208,8 @@ onUnmounted(() => {
   font-weight: 600;
   letter-spacing: 4px;
   color: rgba(245, 247, 243, .65);
+  opacity: 0;
+  visibility: hidden;
 }
 
 .splash__loading {
@@ -236,6 +217,8 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 10px;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .splash__loading-text {

@@ -1,11 +1,8 @@
 <template>
   <AdminCard class="login-card">
     <RouterLink to="/" class="login-card__brand">
-      <span class="login-card__ring">NK</span>
-      <div>
-        <p class="login-card__name">نیک</p>
-        <p class="login-card__tag">پنل مدیریت</p>
-      </div>
+      <img :src="logoSrc" alt="نیک" class="login-card__logo" />
+      <p class="login-card__tag">پنل مدیریت</p>
     </RouterLink>
 
     <form class="login-card__form" @submit.prevent="handleSubmit">
@@ -35,15 +32,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AdminCard from '../../components/common/AdminCard.vue'
 import AdminInput from '../../components/common/AdminInput.vue'
 import AdminButton from '../../components/common/AdminButton.vue'
 import { useAuthStore } from '../../stores/auth.store'
+import { useTheme } from '../../composables/useTheme'
 
 const auth = useAuthStore()
 const router = useRouter()
+const { mode } = useTheme()
+const logoSrc = computed(() => (mode.value === 'light' ? '/images/logo-dark.png' : '/images/logo-white.png'))
 
 const phone = ref('')
 const password = ref('')
@@ -70,27 +70,14 @@ async function handleSubmit() {
 }
 .login-card__brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-bottom: 24px;
 }
-.login-card__ring {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
-  color: #16241C;
-  font-weight: 800;
-  font-size: 14px;
-}
-.login-card__name {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--text-primary);
+.login-card__logo {
+  height: 30px;
+  width: auto;
 }
 .login-card__tag {
   font-size: 11px;

@@ -22,7 +22,7 @@
          visible through the whole scroll instead of getting covered along
          with the rest of the hero. -->
     <div class="topbar">
-      <BrandMark />
+      <BrandMark :fill="heroProgress" />
       <div class="top-actions">
         <IconButton type="button" :aria-label="mode === 'dark' ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره'" @click="toggleTheme">
           <Transition name="theme-swap" mode="out-in">
@@ -242,6 +242,10 @@ const HERO_HEIGHT = 420
 const SHEET_MAX_RADIUS = 28
 const sheetRadius = ref(0)
 const scrollProgress = ref(0)
+// How far scrolled through the hero itself (0 at top, 1 once fully
+// covered) — drives the BrandMark logo's green fill so it completes over
+// the same span as the sheet's corner rounding, not the whole page scroll.
+const heroProgress = ref(0)
 let scrollTicking = false
 
 function onScroll() {
@@ -249,7 +253,8 @@ function onScroll() {
   scrollTicking = true
   requestAnimationFrame(() => {
     const y = window.scrollY
-    sheetRadius.value = Math.min(1, y / HERO_HEIGHT) * SHEET_MAX_RADIUS
+    heroProgress.value = Math.min(1, y / HERO_HEIGHT)
+    sheetRadius.value = heroProgress.value * SHEET_MAX_RADIUS
     const max = document.documentElement.scrollHeight - window.innerHeight
     scrollProgress.value = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0
     scrollTicking = false

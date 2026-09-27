@@ -1,13 +1,10 @@
 <template>
   <footer class="footer">
     <div class="footer__brand">
-      <div class="footer__ring">NK</div>
-      <div>
-        <p class="footer__name">{{ settings.siteName }}</p>
-        <p v-if="settings.footerTagline || settings.tagline" class="footer__tagline">
-          {{ settings.footerTagline || settings.tagline }}
-        </p>
-      </div>
+      <img :src="logoSrc" :alt="settings.siteName" class="footer__logo" />
+      <p v-if="settings.footerTagline || settings.tagline" class="footer__tagline">
+        {{ settings.footerTagline || settings.tagline }}
+      </p>
     </div>
 
     <nav v-if="footerLinks.length" class="footer__links">
@@ -32,6 +29,8 @@
 import { computed } from 'vue'
 
 const { settings } = useSiteSettings()
+const { mode } = useTheme()
+const logoSrc = computed(() => (mode.value === 'light' ? '/images/logo-dark.png' : '/images/logo-white.png'))
 
 const footerLinks = computed(() => settings.value.footerLinks?.filter((l) => l.label && l.url) ?? [])
 
@@ -67,26 +66,13 @@ const socialLinks = computed(() => {
 
 .footer__brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
-.footer__ring {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 12px;
-  color: #16241C;
-  flex-shrink: 0;
-  background: conic-gradient(from 200deg, #E7C878, #FBEFC8, #E7C878);
-}
-.footer__name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
+.footer__logo {
+  height: 24px;
+  width: auto;
 }
 .footer__tagline {
   font-size: 11px;
