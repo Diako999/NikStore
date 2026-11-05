@@ -2,7 +2,7 @@
   <div class="product-page">
     <div class="product-page__topbar">
       <button type="button" class="product-page__back" aria-label="بازگشت" @click="$router.back()">
-        <AppIcon name="chevron-right" :size="16" :stroke-width="2" />
+        <AppIcon name="chevron-right" :size="18" :stroke-width="2" />
       </button>
       <button
         type="button"
@@ -11,7 +11,7 @@
         aria-label="افزودن به علاقه‌مندی‌ها"
         @click="wishlistStore.toggle(product._id)"
       >
-        <AppIcon name="heart" :size="16" :stroke-width="2" :filled="wished" />
+        <AppIcon name="heart" :size="18" :stroke-width="2" :filled="wished" />
       </button>
     </div>
 
@@ -373,8 +373,8 @@ useSeoMeta({
 }
 .product-page__back,
 .product-page__wish {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: flex;
   align-items: center;
