@@ -367,7 +367,9 @@ useSeoMeta({
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* leave room for the fixed ThemeToggle (42px + 14px offset) at the inline-end corner */
   padding: 14px 18px;
+  padding-inline-end: 68px;
 }
 .product-page__back,
 .product-page__wish {
