@@ -71,23 +71,10 @@ function mapProduct(p) {
   }
 }
 
-// Merge any products favorited while browsing as a guest (local store) into
-// the server wishlist so they show up here too.
-async function mergeGuestWishlist() {
-  const localIds = wishlistStore.ids.slice()
-  if (!localIds.length) return
-  const known = new Set(products.value.map((p) => p._id))
-  const missing = localIds.filter((id) => !known.has(id))
-  if (!missing.length) return
-  await Promise.all(missing.map((id) => wishlistService.toggle(id).catch(() => null)))
-  await loadWishlist()
-}
-
-onMounted(async () => {
-  await loadWishlist()
-  await mergeGuestWishlist()
-})
+onMounted(loadWishlist)
 watch(page, loadWishlist)
+// Un-favoriting from a card here updates the store; refresh the list to match.
+watch(() => wishlistStore.ids.length, loadWishlist)
 </script>
 
 <style scoped>

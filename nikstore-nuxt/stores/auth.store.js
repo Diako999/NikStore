@@ -34,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       token.value = null
       user.value = null
+      useWishlistStore().resetToGuest()
     }
   }
 
