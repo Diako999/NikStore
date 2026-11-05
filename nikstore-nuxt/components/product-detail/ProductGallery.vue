@@ -30,7 +30,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   images: { type: Array, default: () => [] },
@@ -40,19 +40,31 @@ const props = defineProps({
 const trackRef = ref(null)
 const active = ref(0)
 
+// In RTL, scrollLeft is 0 at the start and goes negative — so use its magnitude
+// for the index and its sign for the scroll target.
+function dirSign(el) {
+  return getComputedStyle(el).direction === 'rtl' ? -1 : 1
+}
+
 function onScroll() {
   const el = trackRef.value
-  if (!el) return
-  const idx = Math.round(el.scrollLeft / el.clientWidth)
+  if (!el || !el.clientWidth) return
+  const idx = Math.round(Math.abs(el.scrollLeft) / el.clientWidth)
   active.value = Math.min(Math.max(idx, 0), props.images.length - 1)
 }
 
 function scrollTo(i) {
   const el = trackRef.value
   if (!el) return
-  el.scrollTo({ left: el.clientWidth * i, behavior: 'smooth' })
+  el.scrollTo({ left: dirSign(el) * el.clientWidth * i, behavior: 'smooth' })
   active.value = i
 }
+
+// Reset to the first slide when the image set changes (e.g. variant switch)
+watch(() => props.images, () => {
+  active.value = 0
+  if (trackRef.value) trackRef.value.scrollLeft = 0
+})
 </script>
 
 <style scoped>
