@@ -1,5 +1,5 @@
 <template>
-  <component :is="as" class="icon-btn" v-bind="$attrs">
+  <component :is="tag" class="icon-btn" v-bind="$attrs">
     <slot />
     <span v-if="dot" class="icon-btn__dot" aria-hidden="true" />
   </component>
@@ -9,10 +9,18 @@
 // Matches the mockups' `.icon-btn` — the 38px glass circle used for the
 // hero's top-actions (heart/bag) and reused wherever a floating glass icon
 // button is needed.
-defineProps({
+import { computed } from 'vue'
+
+// `as="NuxtLink"` arrives as a plain string and would render an inert <nuxtlink>
+// tag, so that one value is mapped to the real component.
+const NuxtLink = resolveComponent('NuxtLink')
+
+const props = defineProps({
   as: { type: [String, Object], default: 'button' },
   dot: { type: Boolean, default: false },
 })
+
+const tag = computed(() => (props.as === 'NuxtLink' ? NuxtLink : props.as))
 </script>
 
 <style scoped>

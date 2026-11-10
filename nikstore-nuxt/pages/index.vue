@@ -29,7 +29,7 @@
             <AppIcon :key="mode" :name="mode === 'dark' ? 'sun' : 'moon'" :size="17" :stroke-width="2" />
           </Transition>
         </IconButton>
-        <IconButton dot aria-label="علاقه‌مندی‌ها">
+        <IconButton as="NuxtLink" to="/user/favorites" :dot="wishDot" aria-label="علاقه‌مندی‌ها">
           <AppIcon name="heart" :size="17" :stroke-width="2" />
         </IconButton>
         <IconButton as="NuxtLink" to="/cart" aria-label="سبد خرید">
@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppIcon from '~/components/icons/AppIcon.vue'
 import BrandMark from '~/components/ui/BrandMark.vue'
 import IconButton from '~/components/ui/IconButton.vue'
@@ -149,6 +149,7 @@ import SectionHead from '~/components/ui/SectionHead.vue'
 import ProductCard from '~/components/ui/ProductCard.vue'
 import TrustStrip from '~/components/ui/TrustStrip.vue'
 import { toPersianDigits2 } from '~/utils/format'
+import { useWishlistStore } from '~/stores/wishlist.store'
 
 useSeoMeta({ title: 'فروشگاه پوشاک' })
 
@@ -157,6 +158,14 @@ useSeoMeta({ title: 'فروشگاه پوشاک' })
 // pinned right on top of this same row's cart icon and stayed stuck through
 // scroll, which is exactly what this in-flow version avoids.
 const { mode, toggle: toggleTheme } = useTheme()
+
+// The dot on the hero heart means "you have saved favorites". Favorites live in the
+// browser, so it is decided after mount to keep server and client markup identical.
+const wishlist = useWishlistStore()
+const wishDot = ref(false)
+onMounted(() => {
+  watch(() => wishlist.count, (n) => { wishDot.value = n > 0 }, { immediate: true })
+})
 
 // ── Hero background — admin-configurable per theme, falls back to the
 // bundled defaults when unset ──

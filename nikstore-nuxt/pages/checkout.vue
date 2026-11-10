@@ -21,7 +21,7 @@
       <section class="checkout-section">
         <h2 class="checkout-section__title">خلاصه سفارش</h2>
         <ul class="order-summary">
-          <li v-for="item in cartStore.items" :key="item.productId + (item.variant || '')" class="order-summary__row">
+          <li v-for="item in cartStore.items" :key="`${item.productId}::${item.variantId}`" class="order-summary__row">
             <span class="order-summary__name">{{ item.name }} × {{ toPersianDigits(item.qty) }}</span>
             <span class="order-summary__price">{{ formatPrice(item.price * item.qty) }}</span>
           </li>
@@ -151,7 +151,7 @@ async function syncCartToServer() {
   for (const item of cartStore.items) {
     await cartService.addItem({
       productId: item.productId,
-      variantId: item.variant,
+      variantId: item.variantId,
       quantity: item.qty,
     })
   }
@@ -231,7 +231,7 @@ async function placeGuestOrder() {
     const { data } = await orderService.createGuest({
       items: cartStore.items.map((i) => ({
         productId: i.productId,
-        variantId: i.variant,
+        variantId: i.variantId,
         quantity: i.qty,
       })),
       shipping: { ...guestForm },
