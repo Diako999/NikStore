@@ -90,19 +90,19 @@ import { useCartStore } from '~/stores/cart.store'
 const cartStore = useCartStore()
 
 function lineKey(item) {
-  return item.variant ? `${item.productId}::${item.variant}` : item.productId
+  return `${item.productId}::${item.variantId}`
 }
 
 function inc(item) {
-  cartStore.updateQty(item.productId, item.variant, item.qty + 1)
+  cartStore.updateQty(item.productId, item.variantId, item.qty + 1)
 }
 
 function dec(item) {
-  cartStore.updateQty(item.productId, item.variant, item.qty - 1)
+  cartStore.updateQty(item.productId, item.variantId, item.qty - 1)
 }
 
 function remove(item) {
-  cartStore.removeItem(item.productId, item.variant)
+  cartStore.removeItem(item.productId, item.variantId)
 }
 </script>
 

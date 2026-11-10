@@ -325,6 +325,7 @@ function addToCart() {
   const variantLabel = attributeKeys.value.map((k) => `${k}: ${selected[k]}`).join('، ') || null
   cartStore.addItem({
     productId: product.value._id,
+    variantId: selectedVariant.value._id,
     name: product.value.name,
     image: product.value.thumbnail || product.value.images?.[0] || '',
     price: selectedVariant.value.price,

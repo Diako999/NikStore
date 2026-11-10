@@ -41,6 +41,7 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { swr: 60 },
     '/products': { swr: 60 },
+    '/category': { swr: 60 },
     '/category/**': { swr: 60 },
     '/product/**': { swr: 60 },
     '/blog/**': { swr: 60 },

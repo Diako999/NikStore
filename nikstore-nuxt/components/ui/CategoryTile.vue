@@ -1,5 +1,5 @@
 <template>
-  <component :is="to ? 'NuxtLink' : 'div'" :to="to || undefined" class="cat-tile">
+  <component :is="tag" :to="to || undefined" class="cat-tile">
     <div class="cat-tile__sheen" aria-hidden="true" />
     <div class="cat-tile__ico">
       <AppIcon :name="icon" :size="22" :stroke-width="2.6" />
@@ -10,14 +10,21 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import AppIcon from '~/components/icons/AppIcon.vue'
 
-defineProps({
+// A string 'NuxtLink' in `:is` is NOT resolved to the component (it renders an inert
+// <nuxtlink> tag), so the component has to be resolved explicitly.
+const NuxtLink = resolveComponent('NuxtLink')
+
+const props = defineProps({
   icon: { type: String, required: true },
   label: { type: String, required: true },
   sub: { type: String, default: '' },
   to: { type: [String, Object], default: null },
 })
+
+const tag = computed(() => (props.to ? NuxtLink : 'div'))
 </script>
 
 <style scoped>

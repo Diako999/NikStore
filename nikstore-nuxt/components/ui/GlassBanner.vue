@@ -1,5 +1,5 @@
 <template>
-  <component :is="to ? 'NuxtLink' : 'div'" :to="to || undefined" class="glass-banner" :class="`glass-banner--${variant}`">
+  <component :is="tag" :to="to || undefined" class="glass-banner" :class="`glass-banner--${variant}`">
     <slot />
   </component>
 </template>
@@ -9,10 +9,17 @@
 // banner (§10) — both are a rounded glass surface with a colored gradient
 // fill and space-between flex content, differing only in the fill recipe
 // and their inner composition (which callers own via the default slot).
-defineProps({
+import { computed } from 'vue'
+
+// See CategoryTile.vue — a string 'NuxtLink' is not resolved by `:is`.
+const NuxtLink = resolveComponent('NuxtLink')
+
+const props = defineProps({
   variant: { type: String, default: 'flash', validator: (v) => ['flash', 'promo'].includes(v) },
   to: { type: [String, Object], default: null },
 })
+
+const tag = computed(() => (props.to ? NuxtLink : 'div'))
 </script>
 
 <style scoped>
