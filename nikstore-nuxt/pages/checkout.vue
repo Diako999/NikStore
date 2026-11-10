@@ -313,7 +313,7 @@ async function placeOrder() {
 .checkout-header__spacer { width: 34px; }
 
 .checkout-state { padding: 60px 20px; text-align: center; color: var(--text-secondary); font-size: 13px; }
-.checkout-state--error { color: #E8848C; }
+.checkout-state--error { color: var(--danger-text); }
 .checkout-retry {
   margin-top: 12px;
   padding: 8px 18px;
@@ -374,7 +374,7 @@ async function placeOrder() {
 
 .checkout-place-error {
   font-size: 12px;
-  color: #E8848C;
+  color: var(--danger-text);
   margin-bottom: 12px;
   text-align: center;
 }

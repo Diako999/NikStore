@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
@@ -41,6 +42,15 @@ export class ProductQueryDto {
   @IsOptional()
   @IsEnum(ProductStatus)
   status?: ProductStatus;
+
+  // Comma-separated product ids (max 50) — lets the storefront load a guest's favorites,
+  // which only exist as ids in the browser.
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-f0-9]{24}(,[a-f0-9]{24}){0,49}$/i, {
+    message: 'ids باید فهرستی از حداکثر ۵۰ شناسه معتبر باشد',
+  })
+  ids?: string;
 
   @IsOptional()
   @IsString()

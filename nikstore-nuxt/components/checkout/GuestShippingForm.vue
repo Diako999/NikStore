@@ -49,9 +49,9 @@ defineProps({ model: { type: Object, required: true } })
   border: 1px solid var(--glass-border);
 }
 .guest-form__note { font-size: 12px; line-height: 1.9; color: var(--text-secondary); margin-bottom: 12px; }
-.guest-form__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.guest-form__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .gf--full { grid-column: 1 / -1; }
-.gf { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.gf { min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
 .gf input, .gf textarea {
   border-radius: 10px;
   border: 1px solid var(--glass-border);

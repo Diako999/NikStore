@@ -165,7 +165,7 @@ async function onSubmit() {
 
 .login__error {
   font-size: 12px;
-  color: #E8837F;
+  color: var(--danger-text);
   margin-top: -4px;
 }
 

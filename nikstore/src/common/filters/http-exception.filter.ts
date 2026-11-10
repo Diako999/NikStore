@@ -34,17 +34,36 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // (or ValidationError) — that's the client's fault (400), not a server crash.
     const errName = (exception as { name?: string } | null)?.name;
     const isBadInput = errName === 'CastError' || errName === 'ValidationError';
+    // Errors raised by the body parser (payload too large, malformed JSON) are plain
+    // `http-errors` objects carrying their own 4xx `status` — not Nest HttpExceptions.
+    // Without this they were reported as 500 "server crashes" with a stack trace.
+    const rawStatus = (exception as { status?: unknown } | null)?.status;
+    const clientStatus =
+      !isHttp &&
+      typeof rawStatus === 'number' &&
+      Number.isInteger(rawStatus) &&
+      rawStatus >= 400 &&
+      rawStatus < 500
+        ? rawStatus
+        : null;
+
     const statusCode = isHttp
       ? exception.getStatus()
-      : isBadInput
-        ? HttpStatus.BAD_REQUEST
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+      : clientStatus
+        ? clientStatus
+        : isBadInput
+          ? HttpStatus.BAD_REQUEST
+          : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const rawMessage = isHttp
       ? this.extractMessage(exception)
-      : isBadInput
-        ? 'ورودی نامعتبر است'
-        : 'Internal server error';
+      : clientStatus
+        ? clientStatus === 413
+          ? 'حجم درخواست بیش از حد مجاز است'
+          : 'درخواست نامعتبر است'
+        : isBadInput
+          ? 'ورودی نامعتبر است'
+          : 'Internal server error';
 
     const errorResponse = {
       success: false,

@@ -44,6 +44,15 @@
     font-family: inherit;
   }
 
+  /* Form controls have an intrinsic width (~190px) that can push a narrow layout wider
+     than the screen — never let one be wider than its container. */
+  input,
+  textarea,
+  select {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   ::selection {
     background: var(--brand);
     color: #fff;

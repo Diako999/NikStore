@@ -200,13 +200,15 @@ watch(activeIndex, (index) => {
   position: absolute;
   top: -4px;
   inset-inline-start: -8px;
-  background: var(--brand);
+  background: var(--brand-dark); /* white on #2D6B3E = 6.5:1 (was 4.2:1 on --brand) */
   color: #fff;
-  font-size: 8.5px;
+  font-size: 10px;
   font-weight: 800;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  box-sizing: border-box;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -169,7 +169,7 @@ async function onLogout() {
   font-size: 13.5px;
   font-weight: 700;
   font-family: inherit;
-  color: #E8837F;
+  color: var(--danger-text);
   background: var(--glass);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(16px) saturate(160%);

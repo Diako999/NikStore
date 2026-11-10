@@ -18,8 +18,11 @@ const { mode, toggle } = useTheme()
 </script>
 
 <style scoped>
+/* `absolute` (not `fixed`): it sits in the top corner and scrolls away with the page, so it
+   never floats over product cards or inputs further down. Pages that start with a full-width
+   control (e.g. search) leave room for it. */
 .theme-toggle {
-  position: fixed;
+  position: absolute;
   top: max(14px, env(safe-area-inset-top));
   inset-inline-end: 14px;
   z-index: 60;
