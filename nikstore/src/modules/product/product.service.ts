@@ -1,3 +1,4 @@
+import { escapeRegex } from '../../common/utils/escape-regex';
 import {
   BadRequestException,
   Injectable,
@@ -540,8 +541,8 @@ export class ProductService {
     if (catIds2?.length) filter.category = { $in: catIds2 };
     if (search)
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { tags: { $regex: search, $options: 'i' } },
+        { name: { $regex: escapeRegex(search), $options: 'i' } },
+        { tags: { $regex: escapeRegex(search), $options: 'i' } },
       ];
 
     const sortMap: Record<string, Record<string, SortOrder>> = {
@@ -922,6 +923,51 @@ export class ProductService {
       })),
     );
 
+    const uniqueIds = [...new Set(items.map((i) => i.productId))];
+    await Promise.all(uniqueIds.map((id) => this.recalcDenormalized(id)));
+  }
+
+  /**
+   * Atomically reserves stock: each variant is decremented only if it still has
+   * enough units (`stock >= qty`), so concurrent checkouts can never oversell.
+   * If any line fails, everything already reserved is released and a
+   * BadRequestException is thrown.
+   */
+  async reserveStock(
+    items: { productId: string; variantId: string; quantity: number }[],
+  ): Promise<void> {
+    const reserved: typeof items = [];
+    try {
+      for (const item of items) {
+        const res = await this.productModel.updateOne(
+          {
+            _id: new Types.ObjectId(item.productId),
+            variants: {
+              $elemMatch: {
+                _id: new Types.ObjectId(item.variantId),
+                stock: { $gte: item.quantity },
+              },
+            },
+          },
+          { $inc: { 'variants.$.stock': -item.quantity } },
+        );
+        if (res.modifiedCount !== 1)
+          throw new BadRequestException(
+            'موجودی یکی از کالاها کافی نیست. سبد خرید را بررسی کنید',
+          );
+        reserved.push(item);
+      }
+    } catch (err) {
+      if (reserved.length)
+        await this.bulkAdjustStock(
+          reserved.map((i) => ({
+            productId: i.productId,
+            variantId: i.variantId,
+            delta: i.quantity,
+          })),
+        );
+      throw err;
+    }
     const uniqueIds = [...new Set(items.map((i) => i.productId))];
     await Promise.all(uniqueIds.map((id) => this.recalcDenormalized(id)));
   }

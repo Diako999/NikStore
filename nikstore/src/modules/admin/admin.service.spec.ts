@@ -6,7 +6,6 @@ import { AdminService } from './admin.service';
 import { User, UserDocument } from '../user/entities/user.schema';
 import { Order } from '../order/entities/order.schema';
 import { Product } from '../product/entities/product.schema';
-import { Transaction } from '../payment/entities/transaction.schema';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 
 const userId = new Types.ObjectId().toString();
@@ -42,10 +41,6 @@ interface MockProductModel {
   find: jest.Mock;
 }
 
-interface MockTxModel {
-  aggregate: jest.Mock;
-}
-
 interface MockRedis {
   get: jest.Mock;
   setex: jest.Mock;
@@ -59,7 +54,6 @@ describe('AdminService', () => {
   let userModel: MockUserModel;
   let orderModel: MockOrderModel;
   let productModel: MockProductModel;
-  let txModel: MockTxModel;
   let redis: MockRedis;
 
   const lean = (v: unknown) => ({ lean: jest.fn().mockResolvedValue(v) });
@@ -103,10 +97,6 @@ describe('AdminService', () => {
       find: jest.fn().mockReturnValue(selSort([])),
     };
 
-    txModel = {
-      aggregate: jest.fn().mockResolvedValue([]),
-    };
-
     redis = {
       get: jest.fn().mockResolvedValue(null),
       setex: jest.fn(),
@@ -121,7 +111,6 @@ describe('AdminService', () => {
         { provide: getModelToken(User.name), useValue: userModel },
         { provide: getModelToken(Order.name), useValue: orderModel },
         { provide: getModelToken(Product.name), useValue: productModel },
-        { provide: getModelToken(Transaction.name), useValue: txModel },
         { provide: REDIS_CLIENT, useValue: redis },
       ],
     }).compile();

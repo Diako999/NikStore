@@ -1,3 +1,4 @@
+import { clampPagination } from '../../common/utils/pagination';
 import {
   Body,
   Controller,
@@ -90,8 +91,7 @@ export class BlogController {
     @Query('search') search?: string,
   ) {
     return this.blogService.getAllCommentsAdmin({
-      page: page ? +page : 1,
-      limit: limit ? +limit : 20,
+      ...clampPagination(page, limit),
       status,
       search,
     });

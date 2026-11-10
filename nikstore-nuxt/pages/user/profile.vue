@@ -394,7 +394,7 @@ async function onDeleteAddress(addr) {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 999px;
@@ -403,7 +403,7 @@ async function onDeleteAddress(addr) {
 }
 
 .addr-card__line { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
-.addr-card__meta { margin-top: 4px; font-size: 11px; }
+.addr-card__meta { margin-top: 4px; font-size: 12px; }
 
 .addr-card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .addr-card__action {
@@ -411,7 +411,7 @@ async function onDeleteAddress(addr) {
   align-items: center;
   gap: 4px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 7px 10px;
   border-radius: 999px;

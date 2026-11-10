@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
+import { OrderExpiryService } from './order-expiry.service';
 import { Order, OrderSchema } from './entities/order.schema';
 import { CartModule } from '../cart/cart.module';
 import { ProductModule } from '../product/product.module';
@@ -20,7 +21,7 @@ import { DiscountsModule } from '../../discounts/discounts.module';
     DiscountsModule,
   ],
   controllers: [OrderController],
-  providers: [OrderService, AppLoggerService],
+  providers: [OrderService, OrderExpiryService, AppLoggerService],
   exports: [OrderService, MongooseModule],
 })
 export class OrderModule {}

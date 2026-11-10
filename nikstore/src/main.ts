@@ -69,7 +69,7 @@ async function bootstrap() {
 
   // Helmet must disable crossOriginResourcePolicy on the API — the default
   // "same-origin" policy causes browsers to block cross-origin API responses
-  // (frontend ↔ backend on different Railway subdomains).
+  // (frontend ↔ backend on different subdomains).
   // HSTS/frameguard/noSniff/CSP are disabled here because nginx (deploy/nginx*.conf)
   // is the single source of truth for those headers in production — emitting them
   // from both layers produced duplicate/conflicting header values.
@@ -91,7 +91,7 @@ async function bootstrap() {
   });
 
   winstonLogger.info(
-    `🔒 CORS origins: ${allowedOrigins.join(', ')} | NODE_ENV: ${process.env.NODE_ENV} | build: 2026-06-20`,
+    `🔒 CORS origins: ${allowedOrigins.join(', ')} | NODE_ENV: ${process.env.NODE_ENV}`,
     { context: 'Bootstrap' },
   );
 

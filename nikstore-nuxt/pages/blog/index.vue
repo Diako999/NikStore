@@ -198,7 +198,7 @@ useSeoMeta({ title: 'وبلاگ' })
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.post-card__meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-disabled); }
+.post-card__meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-disabled); }
 .post-card__dot { opacity: .6; }
 
 .post-skel { height: 220px; border-radius: 18px; background: var(--glass); animation: pulse 1.6s ease-in-out infinite; }

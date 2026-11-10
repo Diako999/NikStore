@@ -32,6 +32,11 @@
       </button>
     </form>
 
+    <p v-if="registrationClosed" class="login__notice">
+      ثبت‌نام کاربران جدید فعلاً غیرفعال است. برای خرید نیازی به حساب کاربری نیست؛ می‌توانید مستقیم سفارش دهید.
+    </p>
+    <NuxtLink to="/my-orders" class="login__track">پیگیری سفارش‌ها (بدون حساب)</NuxtLink>
+
     <p class="login__hint">با ورود، شرایط استفاده از خدمات نیک را می‌پذیرید.</p>
   </div>
 </template>
@@ -49,6 +54,10 @@ const route = useRoute()
 const router = useRouter()
 const { mode } = useTheme()
 const logoSrc = computed(() => (mode.value === 'light' ? '/images/logo-dark.png' : '/images/logo-white.png'))
+
+const { settings } = useSiteSettings()
+// Absent/false = new accounts are closed (matches the backend's fail-closed default).
+const registrationClosed = computed(() => settings.value?.registrationEnabled !== true)
 
 const phone = ref('')
 const loading = ref(false)
@@ -83,6 +92,9 @@ async function onSubmit() {
 </script>
 
 <style scoped>
+.login__notice { margin-top: 14px; font-size: 12px; line-height: 1.9; color: var(--text-secondary); text-align: center; }
+.login__track { display: block; margin-top: 10px; text-align: center; font-size: 12.5px; font-weight: 700; color: var(--text-primary); text-decoration: underline; }
+
 .login {
   padding: 48px 24px 40px;
   min-height: 100vh;
@@ -174,7 +186,7 @@ async function onSubmit() {
 .login__hint {
   margin-top: auto;
   padding-top: 32px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-disabled);
   text-align: center;
   line-height: 1.7;

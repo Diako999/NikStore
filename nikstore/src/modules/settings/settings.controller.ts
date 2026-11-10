@@ -12,7 +12,13 @@ export class SettingsController {
   @Public()
   @Get()
   findSettings() {
-    return this.settingsService.findSettings();
+    return this.settingsService.findPublicSettings();
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, SuperAdminGuard)
+  findAdminSettings() {
+    return this.settingsService.findAdminSettings();
   }
 
   @Patch()

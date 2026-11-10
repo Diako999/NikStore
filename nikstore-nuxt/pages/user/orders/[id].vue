@@ -19,6 +19,9 @@
           </div>
           <span class="status-badge" :class="`status-badge--${order.status}`">{{ statusLabel(order.status) }}</span>
         </div>
+        <p class="summary__pay" :class="order.paymentStatus === 'paid' ? 'summary__pay--paid' : 'summary__pay--unpaid'">
+          {{ order.paymentStatus === 'paid' ? 'پرداخت شده' : 'پرداخت نشده' }}
+        </p>
         <p v-if="order.status === 'cancelled' && order.cancelReason" class="summary__cancel-reason">
           دلیل لغو: {{ order.cancelReason }}
         </p>
@@ -80,6 +83,16 @@
         <p v-if="order.note" class="order-note">یادداشت: {{ order.note }}</p>
       </section>
 
+      <template v-if="awaitingPayment">
+        <div class="section-gap" />
+        <section class="panel pay-panel">
+          <p class="pay-panel__text">
+            پرداخت این سفارش هنوز انجام نشده است. برای پرداخت با ادمین در تلگرام یا روبیکا گفتگو کنید.
+          </p>
+          <PayWithAdmin :order-number="order.orderNumber" :total="order.total" />
+        </section>
+      </template>
+
       <div v-if="cancellable" class="section-gap" />
 
       <section v-if="cancellable" class="panel">
@@ -107,6 +120,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppIcon from '~/components/icons/AppIcon.vue'
 import SectionHead from '~/components/ui/SectionHead.vue'
+import PayWithAdmin from '~/components/order/PayWithAdmin.vue'
 import { orderService } from '~/services/order.service'
 import { formatPrice, toPersianDigits } from '~/utils/format'
 
@@ -125,7 +139,6 @@ const STATUS_LABELS = {
 }
 function statusLabel(s) { return STATUS_LABELS[s] || s }
 
-const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'processing']
 
 const order = ref(null)
 const loading = ref(true)
@@ -143,7 +156,10 @@ async function loadOrder() {
 }
 onMounted(loadOrder)
 
-const cancellable = computed(() => order.value && CANCELLABLE_STATUSES.includes(order.value.status))
+// Customers can only cancel while the order is pending and unpaid — once the
+// admin has recorded a payment, cancelling/refunding goes through support.
+const cancellable = computed(() => order.value?.status === 'pending' && order.value?.paymentStatus !== 'paid')
+const awaitingPayment = computed(() => order.value?.status === 'pending' && order.value?.paymentStatus !== 'paid')
 
 const confirmingCancel = ref(false)
 const cancelling = ref(false)
@@ -174,6 +190,11 @@ function formatDate(value) {
 </script>
 
 <style scoped>
+.summary__pay { margin-top: 8px; font-size: 12px; font-weight: 700; }
+.summary__pay--paid { color: #3D8B52; }
+.summary__pay--unpaid { color: #D9A441; }
+.pay-panel__text { font-size: 12.5px; line-height: 1.9; color: var(--text-secondary); margin-bottom: 12px; }
+
 .order-detail { padding: 20px 0 8px; }
 .section-gap { height: 22px; }
 
@@ -208,11 +229,11 @@ function formatDate(value) {
 }
 .summary__top { display: flex; align-items: flex-start; justify-content: space-between; }
 .summary__num { font-size: 14px; font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; margin-bottom: 3px; }
-.summary__date { font-size: 11.5px; color: var(--text-secondary); }
+.summary__date { font-size: 12px; color: var(--text-secondary); }
 .summary__cancel-reason { margin-top: 10px; font-size: 12px; color: #E8837F; }
 
 .status-badge {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 5px 10px;
   border-radius: 999px;
@@ -239,9 +260,9 @@ function formatDate(value) {
 .item__thumb img { width: 100%; height: 100%; object-fit: cover; }
 .item__info { flex: 1; min-width: 0; }
 .item__name { font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.4; }
-.item__attrs { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+.item__attrs { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
 .item__bottom { display: flex; align-items: center; justify-content: space-between; }
-.item__qty { font-size: 11px; color: var(--text-secondary); }
+.item__qty { font-size: 12px; color: var(--text-secondary); }
 .item__price { font-size: 12.5px; font-weight: 700; color: var(--brand-light); }
 [data-theme='light'] .item__price { color: var(--brand-dark); }
 
@@ -261,7 +282,7 @@ function formatDate(value) {
   font-weight: 700;
   color: var(--text-primary);
 }
-.order-note { margin-top: 12px; font-size: 11.5px; color: var(--text-secondary); }
+.order-note { margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
 
 .msg { font-size: 12px; margin: 0 0 10px; }
 .msg--error { color: #E8837F; }

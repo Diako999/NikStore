@@ -12,7 +12,7 @@ import { Logger } from 'winston';
 
 type RequestWithContext = Request & {
   requestId?: string;
-  user?: { userId?: string };
+  user?: { _id?: { toString(): string } };
 };
 
 @Catch()
@@ -27,16 +27,24 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const request = ctx.getRequest<RequestWithContext>();
     const response = ctx.getResponse<Response>();
     const requestId = request.requestId;
-    const userId = request.user?.userId;
+    const userId = request.user?._id?.toString();
 
     const isHttp = exception instanceof HttpException;
+    // A malformed ObjectId in a route param / body makes Mongoose throw a CastError
+    // (or ValidationError) — that's the client's fault (400), not a server crash.
+    const errName = (exception as { name?: string } | null)?.name;
+    const isBadInput = errName === 'CastError' || errName === 'ValidationError';
     const statusCode = isHttp
       ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+      : isBadInput
+        ? HttpStatus.BAD_REQUEST
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
     const rawMessage = isHttp
       ? this.extractMessage(exception)
-      : 'Internal server error';
+      : isBadInput
+        ? 'ورودی نامعتبر است'
+        : 'Internal server error';
 
     const errorResponse = {
       success: false,

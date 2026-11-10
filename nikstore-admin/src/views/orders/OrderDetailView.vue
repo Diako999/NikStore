@@ -6,6 +6,9 @@
         <AdminBadge v-if="order" :variant="ORDER_STATUS_BADGE[order.status] || 'neutral'">
           {{ ORDER_STATUS_LABELS[order.status] || order.status }}
         </AdminBadge>
+        <AdminBadge v-if="order" :variant="PAYMENT_STATUS_BADGE[paymentStatus] || 'neutral'">
+          {{ PAYMENT_STATUS_LABELS[paymentStatus] }}
+        </AdminBadge>
       </div>
       <router-link to="/orders">
         <AdminButton variant="secondary" size="sm">بازگشت به فهرست</AdminButton>
@@ -32,6 +35,13 @@
             <template #cell-price="{ value }">{{ formatPrice(value) }}</template>
             <template #cell-quantity="{ value }">{{ value }}</template>
           </AdminTable>
+        </AdminCard>
+
+        <AdminCard v-if="order.isGuest" title="مشتری مهمان">
+          <p class="order-detail__note">
+            این سفارش بدون حساب کاربری ثبت شده است. برای هماهنگی با شماره
+            <bdi>{{ order.shippingAddress?.recipientPhone }}</bdi> تماس بگیرید.
+          </p>
         </AdminCard>
 
         <AdminCard title="آدرس ارسال">
@@ -64,6 +74,41 @@
           <p v-if="order.cancelReason" class="order-detail__note">دلیل لغو: {{ order.cancelReason }}</p>
         </AdminCard>
 
+        <AdminCard title="وضعیت پرداخت">
+          <AdminBadge :variant="PAYMENT_STATUS_BADGE[paymentStatus] || 'neutral'">
+            {{ PAYMENT_STATUS_LABELS[paymentStatus] }}
+          </AdminBadge>
+          <p v-if="order.paidAt" class="order-detail__note">زمان ثبت پرداخت: {{ formatDateTime(order.paidAt) }}</p>
+          <p class="order-detail__note">
+            مشتری پرداخت را در گفتگوی تلگرام/روبیکا با شماره سفارش <bdi>{{ order.orderNumber }}</bdi> انجام می‌دهد.
+            پس از دریافت وجه، پرداخت را اینجا ثبت کنید.
+          </p>
+          <p v-if="paymentError" class="order-detail__error">{{ paymentError }}</p>
+
+          <div v-if="order.status !== 'cancelled'" class="order-detail__transitions">
+            <template v-if="paymentStatus === 'unpaid'">
+              <AdminButton v-if="!confirmingPaid" size="sm" @click="confirmingPaid = true">
+                ثبت پرداخت
+              </AdminButton>
+              <template v-else>
+                <AdminButton size="sm" :loading="updating" @click="setPayment('paid')">
+                  تایید: مبلغ {{ formatPrice(order.total) }} دریافت شد
+                </AdminButton>
+                <AdminButton variant="secondary" size="sm" @click="confirmingPaid = false">انصراف</AdminButton>
+              </template>
+            </template>
+            <AdminButton
+              v-else-if="['pending', 'confirmed'].includes(order.status)"
+              variant="secondary"
+              size="sm"
+              :loading="updating"
+              @click="setPayment('unpaid')"
+            >
+              بازگرداندن به «پرداخت نشده»
+            </AdminButton>
+          </div>
+        </AdminCard>
+
         <AdminCard title="تغییر وضعیت">
           <div v-if="availableTransitions.length" class="order-detail__transitions">
             <AdminButton
@@ -92,13 +137,21 @@ import AdminTable from '../../components/common/AdminTable.vue'
 import AdminButton from '../../components/common/AdminButton.vue'
 import AdminBadge from '../../components/common/AdminBadge.vue'
 import { orderService } from '../../services/order.service'
-import { formatPrice } from '../../utils/format'
-import { ORDER_STATUS_LABELS, ORDER_STATUS_BADGE, ORDER_TRANSITIONS } from '../../constants/orderStatus'
+import { formatPrice, formatDateTime } from '../../utils/format'
+import {
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_BADGE,
+  ORDER_TRANSITIONS,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_BADGE,
+} from '../../constants/orderStatus'
 
 const route = useRoute()
 const order = ref(null)
 const loadError = ref('')
 const updating = ref(false)
+const confirmingPaid = ref(false)
+const paymentError = ref('')
 
 const itemColumns = [
   { key: 'name', label: 'کالا' },
@@ -106,6 +159,7 @@ const itemColumns = [
   { key: 'quantity', label: 'تعداد', align: 'center', width: '90px' },
 ]
 
+const paymentStatus = computed(() => order.value?.paymentStatus || 'unpaid')
 const availableTransitions = computed(() => ORDER_TRANSITIONS[order.value?.status] || [])
 
 async function load() {
@@ -123,6 +177,20 @@ async function changeStatus(status) {
   try {
     await orderService.updateStatus(route.params.id, { status })
     await load()
+  } finally {
+    updating.value = false
+  }
+}
+
+async function setPayment(next) {
+  updating.value = true
+  paymentError.value = ''
+  try {
+    await orderService.updatePaymentStatus(route.params.id, { paymentStatus: next })
+    confirmingPaid.value = false
+    await load()
+  } catch (error) {
+    paymentError.value = error.response?.data?.message || 'ثبت وضعیت پرداخت با خطا مواجه شد'
   } finally {
     updating.value = false
   }

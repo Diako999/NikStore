@@ -110,20 +110,26 @@
           </div>
         </AdminCard>
 
-        <AdminCard title="درگاه پرداخت">
+        <AdminCard title="ثبت‌نام کاربران">
+          <p class="settings-view__hint">
+            تا زمانی که پیامک تایید (OTP) فعال نشده، ثبت‌نام کاربران جدید بسته بماند. مشتریان بدون حساب هم می‌توانند سفارش دهند.
+            کاربران قبلی همچنان می‌توانند وارد شوند.
+          </p>
+          <ToggleField
+            v-model="form.registrationEnabled"
+            label="اجازه ثبت‌نام کاربران جدید"
+            :disabled="readOnly"
+          />
+        </AdminCard>
+
+        <AdminCard title="پرداخت دستی (تلگرام / روبیکا)">
+          <p class="settings-view__hint">
+            پرداخت آنلاین غیرفعال است. پس از ثبت سفارش، مشتری برای پرداخت به این آیدی‌ها هدایت می‌شود
+            (بدون @، فقط حروف انگلیسی، عدد و _).
+          </p>
           <div class="settings-view__fields settings-view__fields--grid">
-            <AdminSelect
-              v-model="form.payment.gateway"
-              label="درگاه فعال"
-              :options="gatewayOptions"
-              :disabled="readOnly"
-            />
-            <AdminInput v-model="form.payment.zarinpalMerchantId" label="کد پذیرنده زرین‌پال" :disabled="readOnly" />
-            <ToggleField
-              v-model="form.payment.zarinpalSandbox"
-              label="حالت آزمایشی (Sandbox)"
-              :disabled="readOnly"
-            />
+            <AdminInput v-model="form.orderContact.telegram" label="آیدی تلگرام ادمین" dir="ltr" :disabled="readOnly" />
+            <AdminInput v-model="form.orderContact.rubika" label="آیدی روبیکا ادمین" dir="ltr" :disabled="readOnly" />
           </div>
         </AdminCard>
 
@@ -288,10 +294,6 @@ const themeModeOptions = [
   { label: 'تاریک', value: 'dark' },
   { label: 'سیستم', value: 'system' },
 ]
-const gatewayOptions = [
-  { label: 'آزمایشی (mock)', value: 'mock' },
-  { label: 'زرین‌پال', value: 'zarinpal' },
-]
 const smsProviderOptions = [
   { label: 'آزمایشی (mock)', value: 'mock' },
   { label: 'کاوه‌نگار', value: 'kavenegar' },
@@ -335,7 +337,8 @@ function normalize(data) {
       navbarBgDark: '', navbarBorderDark: '', footerBgDark: '', footerTextDark: '', sidebarBgDark: '', pageBgDark: '',
       ...data.theme,
     },
-    payment: { gateway: 'mock', zarinpalMerchantId: '', zarinpalSandbox: true, ...data.payment },
+    registrationEnabled: data.registrationEnabled === true,
+    orderContact: { telegram: 's_nikstore', rubika: 's_nikstore', ...data.orderContact },
     sms: { provider: 'mock', kavenegarApiKey: '', kavenegarSender: '', kavenegarOtpTemplate: '', ...data.sms },
     trustItems: (data.trustItems ?? []).map((t) => ({ ...t })),
     announcementBar: { isActive: false, text: '', bgColor: '#1A3620', textColor: '#FFFFFF', link: '', ...data.announcementBar },
@@ -399,6 +402,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.settings-view__hint { font-size: 12.5px; line-height: 1.9; color: var(--text-secondary); margin-bottom: 12px; }
 .settings-view {
   display: flex;
   flex-direction: column;

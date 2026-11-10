@@ -19,11 +19,11 @@
       </div>
 
       <div v-if="totalPages > 1" class="pager">
-        <button type="button" class="pager__btn" :disabled="page <= 1" @click="page--">
+        <button type="button" class="pager__btn" :disabled="page <= 1" aria-label="صفحه قبل" @click="page--">
           <AppIcon name="chevron-right" :size="14" :stroke-width="2" />
         </button>
         <span class="pager__label">{{ toPersianDigits(page) }} از {{ toPersianDigits(totalPages) }}</span>
-        <button type="button" class="pager__btn" :disabled="page >= totalPages" @click="page++">
+        <button type="button" class="pager__btn" :disabled="page >= totalPages" aria-label="صفحه بعد" @click="page++">
           <AppIcon name="chevron-left" :size="14" :stroke-width="2" />
         </button>
       </div>

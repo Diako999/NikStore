@@ -20,10 +20,6 @@ import {
   ProductDocument,
   ProductStatus,
 } from '../product/entities/product.schema';
-import {
-  Transaction,
-  TransactionDocument,
-} from '../payment/entities/transaction.schema';
 import { DateRangeDto } from './dto/date-range.dto';
 
 const CACHE_TTL = 60 * 5;
@@ -85,7 +81,6 @@ export class AdminService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(Transaction.name) private txModel: Model<TransactionDocument>,
     @Inject(REDIS_CLIENT) private redis: Redis,
   ) {}
 

@@ -32,6 +32,33 @@ export class SettingsService {
     return this.settingsModel.create({ _key: SINGLETON_KEY });
   }
 
+  /**
+   * Settings safe to expose to anyone (storefront, anonymous visitors).
+   * `sms` holds the Kavenegar API key and `payment` is a legacy field from the
+   * removed online gateway — neither may ever leave the server unauthenticated.
+   */
+  async findPublicSettings(): Promise<Omit<SiteSettingsDocument, 'sms'>> {
+    const doc = (await this.findSettings()) as unknown as Record<
+      string,
+      unknown
+    >;
+    const { sms: _sms, payment: _payment, ...rest } = doc;
+    void _sms;
+    void _payment;
+    return rest as unknown as Omit<SiteSettingsDocument, 'sms'>;
+  }
+
+  /** Full settings for the super-admin panel (includes SMS credentials). */
+  async findAdminSettings(): Promise<SiteSettingsDocument> {
+    const doc = (await this.findSettings()) as unknown as Record<
+      string,
+      unknown
+    >;
+    const { payment: _payment, ...rest } = doc;
+    void _payment;
+    return rest as unknown as SiteSettingsDocument;
+  }
+
   async updateSettings(dto: UpdateSettingsDto): Promise<SiteSettingsDocument> {
     const doc = await this.settingsModel
       .findOneAndUpdate(

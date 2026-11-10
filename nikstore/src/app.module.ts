@@ -26,7 +26,6 @@ import { ProductModule } from './modules/product/product.module';
 import { SearchModule } from './modules/search/search.module';
 import { CartModule } from './modules/cart/cart.module';
 import { OrderModule } from './modules/order/order.module';
-import { PaymentModule } from './modules/payment/payment.module';
 import { ReviewModule } from './modules/review/review.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -51,7 +50,12 @@ import { HttpLoggerMiddleware } from './common/middleware/http-logger.middleware
   imports: [
     LoggerModule,
     GatewayModule,
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRoot({
+      throttlers: [{ ttl: 60000, limit: 100 }],
+      // The e2e suite fires dozens of requests from one IP; rate limits are
+      // covered by unit tests / manual checks, not by the e2e run.
+      skipIf: () => process.env.NODE_ENV === 'test',
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -80,14 +84,13 @@ import { HttpLoggerMiddleware } from './common/middleware/http-logger.middleware
         UPLOAD_DEST: Joi.string().default('./uploads'),
         UPLOAD_MAX_FILE_SIZE: Joi.number().default(5242880),
         UPLOAD_BASE_URL: Joi.string().default('http://localhost:3000'),
-        PAYMENT_GATEWAY: Joi.string().valid('mock', 'zarinpal').default('mock'),
-        ZARINPAL_MERCHANT_ID: Joi.string().optional().allow(''),
         SMS_PROVIDER: Joi.string().valid('mock', 'kavenegar').default('mock'),
         KAVENEGAR_API_KEY: Joi.string().optional().allow(''),
         KAVENEGAR_SENDER: Joi.string().optional().allow(''),
         KAVENEGAR_OTP_TEMPLATE: Joi.string().optional().allow(''),
         ALLOWED_ORIGINS: Joi.string().required(),
-        PAYMENT_CALLBACK_URL: Joi.string().uri().required(),
+        // Hours an unpaid order may stay pending before it is auto-cancelled
+        ORDER_UNPAID_EXPIRY_HOURS: Joi.number().positive().default(48),
       }),
     }),
     ScheduleModule.forRoot(),
@@ -109,7 +112,6 @@ import { HttpLoggerMiddleware } from './common/middleware/http-logger.middleware
     SearchModule,
     CartModule,
     OrderModule,
-    PaymentModule,
     ReviewModule,
     WishlistModule,
     DiscountsModule,

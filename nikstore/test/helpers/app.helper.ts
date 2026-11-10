@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import RedisMock from 'ioredis-mock';
 import { AppModule } from 'src/app.module';
 import { REDIS_CLIENT } from 'src/redis/redis.module';
+import { SettingsService } from 'src/modules/settings/settings.service';
 
 /**
  * Creates an isolated NestJS test application.
@@ -38,6 +39,10 @@ export async function createTestApp(): Promise<INestApplication> {
   );
 
   await app.init();
+
+  // New-account registration is closed by default in production (SMS provider not
+  // active yet). The e2e suite signs up fresh users via OTP, so open it here.
+  await app.get(SettingsService).updateSettings({ registrationEnabled: true });
   return app;
 }
 

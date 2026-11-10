@@ -11,6 +11,21 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+// Telegram / Rubika *usernames* (no @, no URL) — the storefront builds the chat link.
+class OrderContactDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^[A-Za-z0-9_]*$/, { message: 'فقط حروف انگلیسی، عدد و _ مجاز است' })
+  telegram?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  @Matches(/^[A-Za-z0-9_]*$/, { message: 'فقط حروف انگلیسی، عدد و _ مجاز است' })
+  rubika?: string;
+}
+
 class SocialLinksDto {
   @IsOptional() @IsString() instagram?: string;
   @IsOptional() @IsString() telegram?: string;
@@ -73,21 +88,6 @@ class TrustItemDto {
   @IsOptional() @IsString() @MaxLength(60) title?: string;
   @IsOptional() @IsString() @MaxLength(120) subtitle?: string;
   @IsOptional() @IsString() @MaxLength(20) bgColor?: string;
-}
-
-class PaymentSettingsDto {
-  @IsOptional()
-  @IsIn(['mock', 'zarinpal'])
-  gateway?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(50)
-  zarinpalMerchantId?: string;
-
-  @IsOptional()
-  @IsBoolean()
-  zarinpalSandbox?: boolean;
 }
 
 class ThemeDto {
@@ -192,11 +192,16 @@ export class UpdateSettingsDto {
   @Type(() => ThemeDto)
   theme?: ThemeDto;
 
-  // Payment
+  // Allow brand-new accounts to be created (OTP login for new phone numbers)
+  @IsOptional()
+  @IsBoolean()
+  registrationEnabled?: boolean;
+
+  // Where customers are sent to pay after ordering (manual, via chat with the shop)
   @IsOptional()
   @ValidateNested()
-  @Type(() => PaymentSettingsDto)
-  payment?: PaymentSettingsDto;
+  @Type(() => OrderContactDto)
+  orderContact?: OrderContactDto;
 
   // SMS
   @IsOptional()

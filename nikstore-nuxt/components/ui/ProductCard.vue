@@ -118,7 +118,7 @@ const fallbackClass = computed(() => {
   position: absolute;
   top: 8px;
   inset-inline-start: 8px;
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 800;
   padding: 3px 7px;
   border-radius: 6px;

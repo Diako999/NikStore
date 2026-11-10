@@ -37,11 +37,11 @@
       </div>
 
       <div v-if="totalPages > 1" class="pager">
-        <button type="button" class="pager__btn" :disabled="page <= 1" @click="page--">
+        <button type="button" class="pager__btn" :disabled="page <= 1" aria-label="صفحه قبل" @click="page--">
           <AppIcon name="chevron-right" :size="14" :stroke-width="2" />
         </button>
         <span class="pager__label">{{ toPersianDigits(page) }} از {{ toPersianDigits(totalPages) }}</span>
-        <button type="button" class="pager__btn" :disabled="page >= totalPages" @click="page++">
+        <button type="button" class="pager__btn" :disabled="page >= totalPages" aria-label="صفحه بعد" @click="page++">
           <AppIcon name="chevron-left" :size="14" :stroke-width="2" />
         </button>
       </div>
@@ -176,15 +176,15 @@ function formatDate(value) {
 
 .order-card__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .order-card__num { font-size: 12.5px; font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; }
-.order-card__date { font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; }
+.order-card__date { font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; }
 
 .order-card__bottom { display: flex; align-items: center; justify-content: space-between; }
-.order-card__count { font-size: 11.5px; color: var(--text-secondary); }
+.order-card__count { font-size: 12px; color: var(--text-secondary); }
 .order-card__price { font-size: 13px; font-weight: 700; color: var(--brand-light); }
 [data-theme='light'] .order-card__price { color: var(--brand-dark); }
 
 .status-badge {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   padding: 4px 9px;
   border-radius: 999px;

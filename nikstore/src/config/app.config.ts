@@ -8,5 +8,4 @@ export default registerAs('app', () => ({
     .ALLOWED_ORIGINS!.split(',')
     .map((o) => o.trim())
     .filter(Boolean),
-  paymentCallbackUrl: process.env.PAYMENT_CALLBACK_URL,
 }));

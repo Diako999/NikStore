@@ -14,6 +14,7 @@
             @keyup.enter="reload"
           />
           <AdminSelect v-model="status" :options="statusOptions" />
+          <AdminSelect v-model="paymentStatus" :options="paymentOptions" />
           <AdminButton variant="secondary" size="sm" icon="refresh" @click="reload">
             اعمال فیلتر
           </AdminButton>
@@ -37,6 +38,11 @@
         <template #cell-status="{ value }">
           <AdminBadge :variant="ORDER_STATUS_BADGE[value] || 'neutral'">
             {{ ORDER_STATUS_LABELS[value] || value }}
+          </AdminBadge>
+        </template>
+        <template #cell-paymentStatus="{ value }">
+          <AdminBadge :variant="PAYMENT_STATUS_BADGE[value || 'unpaid'] || 'neutral'">
+            {{ PAYMENT_STATUS_LABELS[value || 'unpaid'] }}
           </AdminBadge>
         </template>
         <template #cell-createdAt="{ value }">
@@ -63,13 +69,21 @@ import AdminButton from '../../components/common/AdminButton.vue'
 import AdminPagination from '../../components/common/AdminPagination.vue'
 import { orderService } from '../../services/order.service'
 import { formatPrice, formatDateTime } from '../../utils/format'
-import { ORDER_STATUSES, ORDER_STATUS_LABELS, ORDER_STATUS_BADGE } from '../../constants/orderStatus'
+import {
+  ORDER_STATUSES,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_BADGE,
+  PAYMENT_STATUSES,
+  PAYMENT_STATUS_LABELS,
+  PAYMENT_STATUS_BADGE,
+} from '../../constants/orderStatus'
 
 const columns = [
   { key: 'orderNumber', label: 'شماره سفارش' },
   { key: 'customer', label: 'مشتری' },
   { key: 'total', label: 'مبلغ', align: 'end' },
   { key: 'status', label: 'وضعیت' },
+  { key: 'paymentStatus', label: 'پرداخت' },
   { key: 'createdAt', label: 'تاریخ ثبت' },
 ]
 
@@ -78,16 +92,27 @@ const statusOptions = [
   ...ORDER_STATUSES.map((value) => ({ value, label: ORDER_STATUS_LABELS[value] })),
 ]
 
+const paymentOptions = [
+  { value: '', label: 'همه (پرداخت)' },
+  ...PAYMENT_STATUSES.map((value) => ({ value, label: PAYMENT_STATUS_LABELS[value] })),
+]
+
 const orders = ref([])
 const total = ref(0)
 const page = ref(1)
 const limit = ref(20)
 const search = ref('')
 const status = ref('')
+const paymentStatus = ref('')
 const loading = ref(false)
 const loadError = ref('')
 
 function customerName(row) {
+  // Guest orders have no account — show the recipient given at checkout.
+  if (row.isGuest || !row.userId) {
+    const a = row.shippingAddress
+    return a ? `${a.recipientName} — ${a.recipientPhone} (مهمان)` : 'مهمان'
+  }
   const user = row.userId
   if (!user || typeof user !== 'object') return '—'
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ')
@@ -102,6 +127,7 @@ async function load() {
       page: page.value,
       limit: limit.value,
       status: status.value || undefined,
+      paymentStatus: paymentStatus.value || undefined,
       search: search.value || undefined,
     })
     orders.value = data?.items ?? []

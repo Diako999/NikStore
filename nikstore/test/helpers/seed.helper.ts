@@ -10,12 +10,9 @@ import {
 import {
   Product,
   ProductDocument,
+  ProductStatus,
 } from 'src/modules/product/entities/product.schema';
 import { User, UserDocument } from 'src/modules/user/entities/user.schema';
-import {
-  Wallet,
-  WalletDocument,
-} from 'src/modules/payment/entities/wallet.schema';
 
 // ── Phone normalization (mirrors auth.service.ts) ──────────────────────────
 export function normalizePhone(phone: string): string {
@@ -78,7 +75,7 @@ export async function createTestProduct(
     name: 'محصول تست',
     slug: `test-product-${suffix}`,
     category: new Types.ObjectId(categoryId),
-    status: 'active',
+    status: ProductStatus.ACTIVE,
     variants: [
       {
         _id: variantId,
@@ -128,22 +125,4 @@ export async function addAddressToUser(
     },
   });
   return addressId.toString();
-}
-
-// ── Wallet ────────────────────────────────────────────────────────────────────
-
-/** Directly credits a user's wallet by setting balance (bypasses gateway). */
-export async function creditWallet(
-  app: INestApplication,
-  userId: string,
-  amount: number,
-): Promise<void> {
-  const walletModel = app.get<Model<WalletDocument>>(
-    getModelToken(Wallet.name),
-  );
-  await walletModel.findOneAndUpdate(
-    { userId: new Types.ObjectId(userId) },
-    { $set: { balance: amount, isActive: true } },
-    { upsert: true, new: true },
-  );
 }

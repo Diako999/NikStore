@@ -58,3 +58,11 @@ docs/
 
 # Working design reference notes (not app content)
 .design-notes/
+
+# Local browser-automation / screenshot artifacts
+.playwright-mcp/
+/*.png
+
+# Uploaded media lives on the server only (served from UPLOAD_DEST) — never commit it.
+nikstore/uploads/
+nikstore/uploads-test/

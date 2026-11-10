@@ -39,9 +39,4 @@ export class CreateReviewDto {
   @IsArray()
   @IsString({ each: true })
   cons?: string[];
-
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  images?: string[];
 }

@@ -2,6 +2,12 @@ import { INestApplication } from '@nestjs/common';
 import type { Server } from 'http';
 import request from 'supertest';
 import type Redis from 'ioredis';
+import { getModelToken } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
+import {
+  RefreshToken,
+  RefreshTokenDocument,
+} from 'src/modules/auth/entities/refresh-token.schema';
 import { REDIS_CLIENT } from 'src/redis/redis.module';
 import { createTestApp, closeTestApp } from './helpers/app.helper';
 import {
@@ -121,7 +127,7 @@ describe('Auth (e2e)', () => {
         .expect(200);
 
       const setCookie =
-        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+        (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
       const cookie = setCookie.find((c) => c.startsWith('refresh_token='));
       expect(cookie).toBeDefined();
     });
@@ -138,7 +144,7 @@ describe('Auth (e2e)', () => {
         .send({ phone, code: otp });
 
       const cookie =
-        ((res.headers['set-cookie'] as string[]) ?? []).find((c) =>
+        ((res.headers['set-cookie'] as unknown as string[]) ?? []).find((c) =>
           c.startsWith('refresh_token='),
         ) ?? '';
       expect(cookie).toMatch(/HttpOnly/i);
@@ -156,7 +162,7 @@ describe('Auth (e2e)', () => {
         .send({ phone, code: otp });
 
       const cookie =
-        ((res.headers['set-cookie'] as string[]) ?? []).find((c) =>
+        ((res.headers['set-cookie'] as unknown as string[]) ?? []).find((c) =>
           c.startsWith('refresh_token='),
         ) ?? '';
       expect(cookie).toContain('Path=/api/v1/auth');
@@ -234,7 +240,7 @@ describe('Auth (e2e)', () => {
         .expect(200);
 
       const newCookies =
-        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+        (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
       expect(newCookies.some((c) => c.startsWith('refresh_token='))).toBe(true);
     });
 
@@ -251,11 +257,26 @@ describe('Auth (e2e)', () => {
         .expect(401);
     });
 
-    it('old cookie after rotation is revoked → 401', async () => {
+    it('old cookie right after rotation still works once (two tabs refreshing together)', async () => {
       const { cookie: originalCookie } = await loginAsNewUser(app);
-      // Rotate the token
       await refreshSession(app, originalCookie);
-      // Old cookie should now be rejected
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', originalCookie)
+        .expect(200);
+    });
+
+    it('old cookie after the grace window is revoked → 401', async () => {
+      const { cookie: originalCookie } = await loginAsNewUser(app);
+      await refreshSession(app, originalCookie);
+      // Age the rotation past the grace window instead of sleeping in the test
+      const rtModel = app.get<Model<RefreshTokenDocument>>(
+        getModelToken(RefreshToken.name),
+      );
+      await rtModel.updateMany(
+        { rotatedAt: { $ne: null } },
+        { rotatedAt: new Date(Date.now() - 60_000) },
+      );
       await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
         .set('Cookie', originalCookie)
@@ -283,7 +304,7 @@ describe('Auth (e2e)', () => {
         .expect(200);
 
       const setCookies =
-        (res.headers['set-cookie'] as string[] | undefined) ?? [];
+        (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
       const cleared = setCookies.find((c) => c.startsWith('refresh_token='));
       expect(cleared).toBeDefined();
       // Expiry must be in the past or Max-Age=0
@@ -297,9 +318,9 @@ describe('Auth (e2e)', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .set('Cookie', cookie);
 
-      // Access token is NOT revoked; wallet endpoint should still respond
+      // Access token is NOT revoked; profile endpoint should still respond
       await request(app.getHttpServer())
-        .get('/api/v1/payments/wallet')
+        .get('/api/v1/users/me')
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
     });

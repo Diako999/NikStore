@@ -11,29 +11,29 @@ describe('JwtRefreshGuard', () => {
   describe('handleRequest', () => {
     it('returns user when there is no error and user is present', () => {
       const user = { sub: 'uid1', refreshToken: 'header.payload.sig' };
-      expect(guard.handleRequest(null, user, null)).toBe(user);
+      expect(guard.handleRequest(null, user, undefined)).toBe(user);
     });
 
     it('throws UnauthorizedException (not TokenExpiredError) when JWT is expired', () => {
       const tokenExpiredError = Object.assign(new Error('jwt expired'), {
         name: 'TokenExpiredError',
       });
-      expect(() => guard.handleRequest(tokenExpiredError, null, null)).toThrow(
-        UnauthorizedException,
-      );
+      expect(() =>
+        guard.handleRequest(tokenExpiredError, null, undefined),
+      ).toThrow(UnauthorizedException);
     });
 
     it('throws UnauthorizedException (not JsonWebTokenError) when JWT signature is invalid', () => {
       const jwtError = Object.assign(new Error('invalid signature'), {
         name: 'JsonWebTokenError',
       });
-      expect(() => guard.handleRequest(jwtError, null, null)).toThrow(
+      expect(() => guard.handleRequest(jwtError, null, undefined)).toThrow(
         UnauthorizedException,
       );
     });
 
     it('throws UnauthorizedException when cookie is absent (user=null, err=null)', () => {
-      expect(() => guard.handleRequest(null, null, null)).toThrow(
+      expect(() => guard.handleRequest(null, null, undefined)).toThrow(
         UnauthorizedException,
       );
     });
@@ -50,7 +50,7 @@ describe('JwtRefreshGuard', () => {
         name: 'TokenExpiredError',
       });
       try {
-        guard.handleRequest(rawError, null, null);
+        guard.handleRequest(rawError, null, undefined);
         fail('Expected UnauthorizedException to be thrown');
       } catch (e) {
         expect(e).toBeInstanceOf(UnauthorizedException);
