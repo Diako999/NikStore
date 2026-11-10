@@ -72,18 +72,11 @@ class TrustItem {
   @Prop({ default: '#EBF4FF' }) bgColor: string;
 }
 
-class PaymentSettings {
-  /** درگاه فعال: mock (تستی داخلی) یا zarinpal */
-  @Prop({ default: 'mock', enum: ['mock', 'zarinpal'] })
-  gateway: string;
-
-  /** کد پذیرنده زرین‌پال */
-  @Prop({ default: '' })
-  zarinpalMerchantId: string;
-
-  /** true = sandbox (تست) | false = production */
-  @Prop({ default: true })
-  zarinpalSandbox: boolean;
+class OrderContact {
+  /** Telegram username (without @) that handles order payments */
+  @Prop({ default: 's_nikstore' }) telegram: string;
+  /** Rubika username (without @) that handles order payments */
+  @Prop({ default: 's_nikstore' }) rubika: string;
 }
 
 @Schema({ timestamps: true })
@@ -145,12 +138,18 @@ export class SiteSettings {
   })
   theme: ThemeSettings;
 
-  // ── Payment ───────────────────────────────────────────────
+  // ── Registration ──────────────────────────────────────────
+  // Closed by default (OTP SMS provider not active yet). Existing users can still
+  // log in; only brand-new accounts are blocked. Absent/undefined also means closed.
+  @Prop({ default: false })
+  registrationEnabled: boolean;
+
+  // ── Order payment contact ──────────────────────────────────
   @Prop({
-    type: PaymentSettings,
-    default: () => ({ gateway: 'mock', zarinpalSandbox: true }),
+    type: OrderContact,
+    default: () => ({ telegram: 's_nikstore', rubika: 's_nikstore' }),
   })
-  payment: PaymentSettings;
+  orderContact: OrderContact;
 
   // ── SMS ───────────────────────────────────────────────────
   @Prop({

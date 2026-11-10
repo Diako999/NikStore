@@ -212,7 +212,7 @@ function remove(item) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.cart-item__variant { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+.cart-item__variant { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
 
 .cart-item__row {
   display: flex;
@@ -298,7 +298,7 @@ function remove(item) {
 }
 .cart-summary__value { font-size: 16px; font-weight: 800; color: var(--brand-light); }
 [data-theme='light'] .cart-summary__value { color: var(--brand-dark); }
-.cart-summary__hint { font-size: 10.5px; color: var(--text-secondary); margin-bottom: 14px; }
+.cart-summary__hint { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
 
 .btn-primary {
   display: inline-flex;

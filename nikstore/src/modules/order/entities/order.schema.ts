@@ -12,6 +12,15 @@ export enum OrderStatus {
   CANCELLED = 'cancelled',
 }
 
+/**
+ * Payment is handled manually: after ordering, the customer messages the shop on
+ * Telegram/Rubika with the order number and an admin flips this flag in the panel.
+ */
+export enum PaymentStatus {
+  UNPAID = 'unpaid',
+  PAID = 'paid',
+}
+
 export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
   [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
@@ -62,8 +71,16 @@ const ShippingAddressSchema = SchemaFactory.createForClass(ShippingAddress);
 
 @Schema({ timestamps: true })
 export class Order {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User', index: true })
-  userId: Types.ObjectId;
+  // null for guest orders (customers who order without an account)
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null, index: true })
+  userId: Types.ObjectId | null;
+
+  @Prop({ default: false, index: true })
+  isGuest: boolean;
+
+  /** SHA-256 of the secret handed to a guest once, at checkout. Never returned by queries. */
+  @Prop({ type: String, select: false })
+  guestTokenHash?: string;
 
   @Prop({ required: true, unique: true })
   orderNumber: string;
@@ -80,6 +97,12 @@ export class Order {
 
   @Prop({ enum: OrderStatus, default: OrderStatus.PENDING, index: true })
   status: OrderStatus;
+
+  @Prop({ enum: PaymentStatus, default: PaymentStatus.UNPAID, index: true })
+  paymentStatus: PaymentStatus;
+
+  @Prop({ type: Date, default: null })
+  paidAt?: Date | null;
 
   @Prop() cancelReason?: string;
   @Prop() note?: string;

@@ -107,7 +107,7 @@ function submit() {
 }
 .addr-field--full { grid-column: 1 / -1; }
 
-.addr-field { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--text-secondary); }
+.addr-field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
 .addr-field input,
 .addr-field textarea {
   border-radius: 10px;
@@ -146,7 +146,7 @@ function submit() {
 
 .addr-form__error {
   margin-top: 10px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: #E8848C;
 }
 

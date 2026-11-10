@@ -74,5 +74,5 @@ defineProps({
 }
 
 .cat-tile__lbl { font-size: 12.5px; font-weight: 700; color: var(--text-primary); position: relative; }
-.cat-tile__sub { font-size: 9.5px; color: var(--text-secondary); line-height: 1.4; position: relative; }
+.cat-tile__sub { font-size: 12px; color: var(--text-secondary); line-height: 1.4; position: relative; }
 </style>

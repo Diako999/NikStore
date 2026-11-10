@@ -108,10 +108,10 @@ function authorName(r) {
 .reviews__avg { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
 .reviews__avg-num { font-size: 26px; font-weight: 800; color: var(--text-primary); }
 .reviews__avg-stars { display: flex; gap: 2px; color: #E7C878; }
-.reviews__avg-count { font-size: 10.5px; color: var(--text-secondary); }
+.reviews__avg-count { font-size: 12px; color: var(--text-secondary); }
 
 .reviews__dist { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.reviews__dist-row { display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--text-secondary); }
+.reviews__dist-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
 .reviews__dist-track { flex: 1; height: 5px; border-radius: 3px; background: var(--glass); overflow: hidden; }
 .reviews__dist-fill { height: 100%; background: var(--brand-light); border-radius: 3px; }
 
@@ -131,7 +131,7 @@ function authorName(r) {
 .review-card__author { display: flex; align-items: center; gap: 6px; }
 .review-card__name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
 .review-card__verified {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 6px;
@@ -145,16 +145,16 @@ function authorName(r) {
 .review-card__body { font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
 
 .review-card__proscons { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
-.review-card__pros span { display: block; font-size: 11px; color: var(--brand-light); }
+.review-card__pros span { display: block; font-size: 12px; color: var(--brand-light); }
 [data-theme='light'] .review-card__pros span { color: var(--brand-dark); }
-.review-card__cons span { display: block; font-size: 11px; color: #E08585; }
+.review-card__cons span { display: block; font-size: 12px; color: #E08585; }
 
 .review-card__helpful {
   margin-top: 10px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   padding: 5px 10px;

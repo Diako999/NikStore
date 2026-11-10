@@ -65,7 +65,7 @@ useSeoMeta({ title: () => `${category.value.name} | فروشگاه پوشاک` }
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 .cat-page__crumb span { color: var(--text-primary); font-weight: 600; }
@@ -84,7 +84,7 @@ useSeoMeta({ title: () => `${category.value.name} | فروشگاه پوشاک` }
 .cat-page__subs::-webkit-scrollbar { display: none; }
 .cat-page__sub {
   flex: 0 0 auto;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 8px 14px;
   border-radius: 999px;

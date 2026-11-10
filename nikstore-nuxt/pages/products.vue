@@ -42,7 +42,7 @@ useSeoMeta({ title: 'همه محصولات | فروشگاه پوشاک' })
   color: var(--text-primary);
 }
 .products-page__head p {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 </style>

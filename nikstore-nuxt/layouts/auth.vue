@@ -7,7 +7,7 @@
 
 <script setup>
 // Focused-flow layout — no bottom nav, used for auth, checkout, and
-// payment-result screens where tab navigation would just be a distraction.
+// order-confirmation screens where tab navigation would just be a distraction.
 import AppFooter from '~/components/ui/AppFooter.vue'
 </script>
 

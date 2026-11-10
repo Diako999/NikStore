@@ -157,7 +157,7 @@ watch(activeIndex, (index) => {
   position: relative;
   color: var(--text-disabled);
 }
-.nav-item span:last-child { font-size: 9.5px; font-weight: 600; transition: color .3s ease; }
+.nav-item span:last-child { font-size: 12px; font-weight: 600; transition: color .3s ease; }
 .nav-item--active span:last-child { color: var(--brand-light); }
 [data-theme='light'] .nav-item--active span:last-child { color: var(--brand-dark); }
 

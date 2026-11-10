@@ -17,6 +17,7 @@ jest.mock('bcryptjs', () => ({
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../user/entities/user.schema';
 import { RefreshToken } from './entities/refresh-token.schema';
+import { SettingsService } from '../settings/settings.service';
 import { SmsService } from './sms/sms.service.abstract';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 
@@ -63,6 +64,7 @@ function selectResolves(value: unknown): SelectResolvesQuery {
 interface MockRedis {
   incr: jest.Mock;
   expire: jest.Mock;
+  ttl: jest.Mock;
   setex: jest.Mock;
   get: jest.Mock;
   del: jest.Mock;
@@ -85,6 +87,7 @@ describe('AuthService', () => {
     find: jest.fn(),
     findByIdAndUpdate: jest.fn(),
     findOneAndUpdate: jest.fn(),
+    updateOne: jest.fn(),
     updateMany: jest.fn(),
     deleteMany: jest.fn(),
   };
@@ -101,11 +104,13 @@ describe('AuthService', () => {
     ),
   };
   const smsService = { sendOtp: jest.fn() };
+  const settingsService = { findSettings: jest.fn() };
 
   beforeEach(async () => {
     redis = {
       incr: jest.fn().mockResolvedValue(1),
       expire: jest.fn(),
+      ttl: jest.fn().mockResolvedValue(100),
       setex: jest.fn(),
       get: jest.fn(),
       del: jest.fn(),
@@ -119,6 +124,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: jwtService },
         { provide: ConfigService, useValue: configService },
         { provide: SmsService, useValue: smsService },
+        { provide: SettingsService, useValue: settingsService },
         { provide: REDIS_CLIENT, useValue: redis },
       ],
     }).compile();
@@ -127,6 +133,10 @@ describe('AuthService', () => {
     jest.clearAllMocks();
     // Default: OTP redis gets return 1 (under rate limit)
     redis.incr.mockResolvedValue(1);
+    // Registration open by default in these tests; the gate has its own describe.
+    settingsService.findSettings.mockResolvedValue({
+      registrationEnabled: true,
+    });
   });
 
   // ── sendOtp ────────────────────────────────────────────────────
@@ -154,6 +164,59 @@ describe('AuthService', () => {
       await expect(service.sendOtp({ phone: '09121234567' })).rejects.toThrow(
         ForbiddenException,
       );
+    });
+  });
+
+  // ── registration gate ──────────────────────────────────────────
+  describe('registration gate', () => {
+    it('blocks OTP for an unknown phone while registration is closed', async () => {
+      settingsService.findSettings.mockResolvedValue({
+        registrationEnabled: false,
+      });
+      userModel.findOne.mockReturnValue(chainable(null));
+      await expect(service.sendOtp({ phone: '09121234567' })).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(smsService.sendOtp).not.toHaveBeenCalled();
+      expect(redis.incr).not.toHaveBeenCalled();
+    });
+
+    it('treats a missing flag as closed (fail-closed)', async () => {
+      settingsService.findSettings.mockResolvedValue({});
+      userModel.findOne.mockReturnValue(chainable(null));
+      await expect(service.sendOtp({ phone: '09121234567' })).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('treats a settings read error as closed', async () => {
+      settingsService.findSettings.mockRejectedValue(new Error('db down'));
+      userModel.findOne.mockReturnValue(chainable(null));
+      await expect(service.sendOtp({ phone: '09121234567' })).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('still lets an existing user request an OTP while closed', async () => {
+      settingsService.findSettings.mockResolvedValue({
+        registrationEnabled: false,
+      });
+      userModel.findOne.mockReturnValue(chainable({ isActive: true }));
+      await expect(
+        service.sendOtp({ phone: '09121234567' }),
+      ).resolves.toBeDefined();
+    });
+
+    it('verifyOtp never creates a user while closed', async () => {
+      settingsService.findSettings.mockResolvedValue({
+        registrationEnabled: false,
+      });
+      redis.get.mockResolvedValue('123456');
+      userModel.findOne.mockResolvedValue(null);
+      await expect(
+        service.verifyOtp({ phone: '09121234567', code: '123456' }, {}),
+      ).rejects.toThrow(ForbiddenException);
+      expect(userModel.create).not.toHaveBeenCalled();
     });
   });
 
@@ -312,20 +375,12 @@ describe('AuthService', () => {
   // ── refreshTokens ─────────────────────────────────────────────
   describe('refreshTokens', () => {
     const validJwt = 'header.payload.validSig';
-    const hashedSig = '$2a$10$hashed';
 
     beforeEach(() => {
-      // find() now chains .sort().limit() — mock must be a chainable object
-      rtModel.find.mockReturnValue({
-        sort: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockResolvedValue([{ _id: 'rt1', token: hashedSig }]),
-      });
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      rtModel.findOne.mockResolvedValue({ _id: 'rt1', isRevoked: false });
       userModel.findById.mockResolvedValue({ ...mockUser, _id: 'uid1' });
-      rtModel.updateMany.mockResolvedValue({});
-      rtModel.deleteMany.mockResolvedValue({});
+      rtModel.updateOne.mockResolvedValue({});
       rtModel.create.mockResolvedValue({});
-      (bcrypt.hash as jest.Mock).mockResolvedValue('$2a$10$newHashed');
     });
 
     it('returns new tokens when refresh token is valid', async () => {
@@ -334,19 +389,60 @@ describe('AuthService', () => {
       expect(rtModel.create).toHaveBeenCalled();
     });
 
-    it('revokes all existing tokens before issuing new ones (token rotation)', async () => {
+    it('looks the token up by its SHA-256 hash, not the raw value', async () => {
       await service.refreshTokens('uid1', validJwt, {});
-      expect(rtModel.updateMany).toHaveBeenCalledWith(
-        { userId: 'uid1', isRevoked: false },
-        { isRevoked: true },
+      const [query] = rtModel.findOne.mock.calls[0] as [{ token: string }];
+      expect(query.token).toMatch(/^[0-9a-f]{64}$/);
+      expect(query.token).not.toContain('validSig');
+    });
+
+    it('revokes only the presented token — other devices stay logged in', async () => {
+      await service.refreshTokens('uid1', validJwt, {});
+      expect(rtModel.updateOne).toHaveBeenCalledWith(
+        { _id: 'rt1', isRevoked: false },
+        expect.objectContaining({ isRevoked: true }),
       );
+      expect(rtModel.updateMany).not.toHaveBeenCalled();
     });
 
     it('throws UnauthorizedException when no matching token found in DB', async () => {
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+      rtModel.findOne.mockResolvedValue(null);
       await expect(service.refreshTokens('uid1', validJwt, {})).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+
+    it('rejects a revoked token once the grace window has passed', async () => {
+      rtModel.findOne.mockResolvedValue({
+        _id: 'rt1',
+        isRevoked: true,
+        rotatedAt: new Date(Date.now() - 60_000),
+      });
+      await expect(service.refreshTokens('uid1', validJwt, {})).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(rtModel.create).not.toHaveBeenCalled();
+    });
+
+    it('never gives a logged-out (revoked, not rotated) token a grace window', async () => {
+      rtModel.findOne.mockResolvedValue({
+        _id: 'rt1',
+        isRevoked: true,
+        revokedAt: new Date(Date.now() - 1_000), // revoked 1s ago by logout
+      });
+      await expect(service.refreshTokens('uid1', validJwt, {})).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('accepts a just-rotated token (two tabs refreshing together)', async () => {
+      rtModel.findOne.mockResolvedValue({
+        _id: 'rt1',
+        isRevoked: true,
+        rotatedAt: new Date(Date.now() - 1_000),
+      });
+      const res = await service.refreshTokens('uid1', validJwt, {});
+      expect(res.accessToken).toBe('tok');
     });
 
     it('throws UnauthorizedException when user is inactive', async () => {
@@ -356,21 +452,11 @@ describe('AuthService', () => {
       );
     });
 
-    it('throws UnauthorizedException when refreshToken is malformed (no signature)', async () => {
+    it('throws UnauthorizedException when refreshToken is malformed', async () => {
       await expect(
         service.refreshTokens('uid1', 'malformed', {}),
       ).rejects.toThrow(UnauthorizedException);
-      expect(rtModel.find).not.toHaveBeenCalled();
-    });
-
-    it('cleans up expired tokens after revoking active ones', async () => {
-      await service.refreshTokens('uid1', validJwt, {});
-      expect(rtModel.deleteMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: 'uid1',
-          expiresAt: expect.any(Object) as unknown,
-        }),
-      );
+      expect(rtModel.findOne).not.toHaveBeenCalled();
     });
   });
 
@@ -396,7 +482,7 @@ describe('AuthService', () => {
       });
       expect(rtModel.updateMany).toHaveBeenCalledWith(
         { userId: 'uid1' },
-        { isRevoked: true },
+        { isRevoked: true, revokedAt: expect.any(Date) as unknown },
       );
     });
 
@@ -421,7 +507,7 @@ describe('AuthService', () => {
       });
       expect(rtModel.updateMany).toHaveBeenCalledWith(
         { userId: 'uid1' },
-        { isRevoked: true },
+        { isRevoked: true, revokedAt: expect.any(Date) as unknown },
       );
     });
 

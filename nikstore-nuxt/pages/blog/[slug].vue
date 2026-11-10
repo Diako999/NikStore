@@ -218,7 +218,7 @@ const sanitizedContent = computed(() => DOMPurify.sanitize(post.value.content ||
 
 .post-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .post-tag {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 999px;
@@ -229,7 +229,7 @@ const sanitizedContent = computed(() => DOMPurify.sanitize(post.value.content ||
 
 .post-head h1 { font-size: 19px; font-weight: 800; line-height: 1.5; color: var(--text-primary); margin-bottom: 10px; }
 
-.post-meta { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-disabled); flex-wrap: wrap; }
+.post-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-disabled); flex-wrap: wrap; }
 .post-meta__dot { opacity: .6; }
 
 .post-body { margin: 0 18px 22px; }
@@ -314,7 +314,7 @@ const sanitizedContent = computed(() => DOMPurify.sanitize(post.value.content ||
 }
 .comment-submit:disabled { opacity: .5; cursor: not-allowed; }
 
-.comment-form__msg { margin-top: 8px; font-size: 11.5px; color: var(--brand-light); }
+.comment-form__msg { margin-top: 8px; font-size: 12px; color: var(--brand-light); }
 [data-theme='light'] .comment-form__msg { color: var(--brand-dark); }
 
 .comment-login-hint {
@@ -334,7 +334,7 @@ const sanitizedContent = computed(() => DOMPurify.sanitize(post.value.content ||
 }
 .comment-item__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
 .comment-item__author { font-size: 12px; font-weight: 700; color: var(--text-primary); }
-.comment-item__date { font-size: 10.5px; color: var(--text-disabled); }
+.comment-item__date { font-size: 12px; color: var(--text-disabled); }
 .comment-item__text { font-size: 12.5px; line-height: 1.8; color: var(--text-secondary); }
 
 .empty-hint { font-size: 12.5px; color: var(--text-secondary); }

@@ -95,10 +95,10 @@ defineExpose({
   resize: vertical;
 }
 
-.review-form__hint { align-self: flex-start; font-size: 10px; color: var(--text-disabled); margin-top: -6px; }
+.review-form__hint { align-self: flex-start; font-size: 12px; color: var(--text-disabled); margin-top: -6px; }
 .review-form__hint--ok { color: var(--brand-light); }
 
-.review-form__error { font-size: 11.5px; color: #E08585; }
+.review-form__error { font-size: 12px; color: #E08585; }
 
 .review-form__submit {
   padding: 13px;

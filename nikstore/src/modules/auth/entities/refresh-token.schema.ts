@@ -13,9 +13,18 @@ export class RefreshToken {
   })
   userId: Types.ObjectId;
 
-  @Prop({ required: true }) token: string;
+  /** SHA-256 (hex) of the full refresh JWT — indexed for O(1) lookup, never the raw token. */
+  @Prop({ required: true, index: true }) token: string;
   @Prop({ required: true }) expiresAt: Date;
   @Prop({ default: false }) isRevoked: boolean;
+  /** When the token was revoked (audit only). */
+  @Prop({ type: Date, default: null }) revokedAt?: Date | null;
+  /**
+   * Set ONLY when a refresh rotated this token. A rotated token may be exchanged once
+   * more for a few seconds (two tabs refreshing together). Logout / logout-all /
+   * password change never set it, so those tokens are rejected immediately.
+   */
+  @Prop({ type: Date, default: null }) rotatedAt?: Date | null;
   @Prop() userAgent?: string;
   @Prop() ip?: string;
 }

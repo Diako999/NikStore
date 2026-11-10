@@ -75,7 +75,7 @@ const socialLinks = computed(() => {
   width: auto;
 }
 .footer__tagline {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-secondary);
   margin-top: 1px;
 }
@@ -102,7 +102,7 @@ const socialLinks = computed(() => {
   gap: 12px;
 }
 .footer__social a {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 999px;
@@ -112,7 +112,7 @@ const socialLinks = computed(() => {
 }
 
 .footer__copyright {
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--text-disabled, var(--text-secondary));
 }
 </style>

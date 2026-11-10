@@ -5,10 +5,6 @@ import { AdminService } from './admin.service';
 import { User, UserSchema } from '../user/entities/user.schema';
 import { Order, OrderSchema } from '../order/entities/order.schema';
 import { Product, ProductSchema } from '../product/entities/product.schema';
-import {
-  Transaction,
-  TransactionSchema,
-} from '../payment/entities/transaction.schema';
 
 @Module({
   imports: [
@@ -16,7 +12,6 @@ import {
       { name: User.name, schema: UserSchema },
       { name: Order.name, schema: OrderSchema },
       { name: Product.name, schema: ProductSchema },
-      { name: Transaction.name, schema: TransactionSchema },
     ]),
   ],
   controllers: [AdminController],

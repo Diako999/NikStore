@@ -1,3 +1,4 @@
+import { escapeRegex } from '../../common/utils/escape-regex';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, SortOrder, Types } from 'mongoose';
@@ -49,9 +50,9 @@ export class BlogService {
 
     if (query.search) {
       filter.$or = [
-        { title: { $regex: query.search, $options: 'i' } },
-        { excerpt: { $regex: query.search, $options: 'i' } },
-        { tags: { $regex: query.search, $options: 'i' } },
+        { title: { $regex: escapeRegex(query.search), $options: 'i' } },
+        { excerpt: { $regex: escapeRegex(query.search), $options: 'i' } },
+        { tags: { $regex: escapeRegex(query.search), $options: 'i' } },
       ];
     }
 
@@ -269,7 +270,7 @@ export class BlogService {
     if (query.status === 'pending') filter.isApproved = false;
     if (query.status === 'approved') filter.isApproved = true;
     if (query.search) {
-      filter.content = { $regex: query.search, $options: 'i' };
+      filter.content = { $regex: escapeRegex(query.search), $options: 'i' };
     }
 
     const [items, total, pendingCount] = await Promise.all([

@@ -28,11 +28,16 @@
         </ul>
         <div class="order-summary__total">
           <span>جمع کل</span>
-          <span>{{ formatPrice(cartStore.totalPrice) }}</span>
+          <span>{{ formatPrice(displayTotal) }}</span>
         </div>
       </section>
 
-      <section class="checkout-section">
+      <section v-if="isGuest" class="checkout-section">
+        <h2 class="checkout-section__title">اطلاعات گیرنده و آدرس</h2>
+        <GuestShippingForm :model="guestForm" />
+      </section>
+
+      <section v-else class="checkout-section">
         <div class="checkout-section__head">
           <h2 class="checkout-section__title">آدرس تحویل</h2>
           <button v-if="!showForm" type="button" class="checkout-section__add" @click="showForm = true">
@@ -62,22 +67,38 @@
         />
       </section>
 
+      <section class="checkout-section">
+        <label v-if="!isGuest" class="checkout-coupon__label" for="coupon">کد تخفیف (اختیاری)</label>
+        <input
+          v-if="!isGuest"
+          id="coupon"
+          v-model="couponCode"
+          class="checkout-coupon__input"
+          type="text"
+          dir="ltr"
+          maxlength="30"
+          autocomplete="off"
+          placeholder="CODE"
+        >
+        <p class="checkout-pay-hint">پرداخت پس از ثبت سفارش و از طریق گفتگو با ادمین (تلگرام یا روبیکا) انجام می‌شود.</p>
+      </section>
+
       <p v-if="placeError" class="checkout-place-error">{{ placeError }}</p>
 
       <button
         type="button"
         class="btn-primary btn-primary--block"
-        :disabled="!selectedAddressId || placingOrder || showForm"
+        :disabled="placingOrder || (!isGuest && (!selectedAddressId || showForm))"
         @click="placeOrder"
       >
-        {{ placingOrder ? 'در حال ثبت سفارش...' : `پرداخت ${formatPrice(cartStore.totalPrice)}` }}
+        {{ placingOrder ? 'در حال ثبت سفارش...' : `ثبت سفارش · ${formatPrice(displayTotal)}` }}
       </button>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppIcon from '~/components/icons/AppIcon.vue'
 import AddressCard from '~/components/checkout/AddressCard.vue'
@@ -87,11 +108,18 @@ import { useCartStore } from '~/stores/cart.store'
 import { cartService } from '~/services/cart.service'
 import { userService } from '~/services/user.service'
 import { orderService } from '~/services/order.service'
-import { paymentService, PaymentMethod } from '~/services/payment.service'
+import GuestShippingForm from '~/components/checkout/GuestShippingForm.vue'
+import { useAuthStore } from '~/stores/auth.store'
+import { addGuestOrder, loadGuestProfile, saveGuestProfile } from '~/utils/guestStore'
 
-definePageMeta({ layout: 'auth', middleware: 'auth' })
+// No auth middleware: customers can check out as guests.
+definePageMeta({ layout: 'auth' })
 
 const cartStore = useCartStore()
+const auth = useAuthStore()
+// The auth plugin restores the session before this page renders, so this is accurate.
+const isGuest = computed(() => !auth.isLoggedIn)
+const guestForm = reactive(loadGuestProfile())
 const router = useRouter()
 
 const loading = ref(true)
@@ -103,6 +131,11 @@ const addingAddress = ref(false)
 const addAddressError = ref('')
 const placingOrder = ref(false)
 const placeError = ref('')
+const couponCode = ref('')
+// Logged-in users: the server cart re-prices items, so show ITS subtotal rather than
+// the possibly stale local one. Guests are re-priced on submit (see order page).
+const serverSubtotal = ref(null)
+const displayTotal = computed(() => serverSubtotal.value ?? cartStore.totalPrice)
 
 function extractErrorMessage(err) {
   const msg = err?.response?.data?.message
@@ -140,8 +173,12 @@ async function init() {
   loading.value = true
   initError.value = ''
   try {
-    await syncCartToServer()
-    await loadAddresses()
+    if (!isGuest.value) {
+      await syncCartToServer()
+      const { data: srvCart } = await cartService.get()
+      if (typeof srvCart?.subtotal === 'number') serverSubtotal.value = srvCart.subtotal
+      await loadAddresses()
+    }
   } catch (e) {
     initError.value = extractErrorMessage(e)
   } finally {
@@ -171,26 +208,70 @@ async function submitNewAddress(payload) {
   }
 }
 
-async function placeOrder() {
-  if (!selectedAddressId.value || placingOrder.value) return
+const PHONE_RE = /^(\+98|0)?9\d{9}$/
+const POSTAL_RE = /^\d{10}$/
+
+function validateGuestForm() {
+  const f = guestForm
+  if (!f.recipientName || !f.province || !f.city || !f.street || !f.detail) return 'لطفاً همه فیلدهای آدرس را کامل کنید'
+  if (!PHONE_RE.test(f.recipientPhone)) return 'شماره موبایل معتبر نیست'
+  if (!POSTAL_RE.test(f.postalCode)) return 'کد پستی باید ۱۰ رقم باشد'
+  return ''
+}
+
+async function placeGuestOrder() {
+  const problem = validateGuestForm()
+  if (problem) {
+    placeError.value = problem
+    return
+  }
   placingOrder.value = true
   placeError.value = ''
   try {
-    const { data: order } = await orderService.create({ addressId: selectedAddressId.value })
-    const { data: payment } = await paymentService.pay({
+    const { data } = await orderService.createGuest({
+      items: cartStore.items.map((i) => ({
+        productId: i.productId,
+        variantId: i.variant,
+        quantity: i.qty,
+      })),
+      shipping: { ...guestForm },
+    })
+    const { order, accessToken } = data
+
+    // Keep the contact details + the order key in this browser so the customer
+    // can find the order again later (the token is never shown again by the server).
+    saveGuestProfile(guestForm)
+    addGuestOrder({
       orderId: order._id,
-      method: PaymentMethod.GATEWAY,
-      callbackUrl: `${window.location.origin}/payment/result?orderId=${order._id}`,
+      orderNumber: order.orderNumber,
+      token: accessToken,
+      total: order.total,
     })
 
     cartStore.clear()
+    await router.replace({ path: '/order-placed', query: { orderId: order._id } })
+  } catch (e) {
+    placeError.value = extractErrorMessage(e)
+    placingOrder.value = false
+  }
+}
 
-    if (payment?.gatewayUrl) {
-      window.location.href = payment.gatewayUrl
-      return
-    }
+async function placeOrder() {
+  if (placingOrder.value) return
+  if (isGuest.value) return placeGuestOrder()
+  if (!selectedAddressId.value) return
+  placingOrder.value = true
+  placeError.value = ''
+  try {
+    const payload = { addressId: selectedAddressId.value }
+    const code = couponCode.value.trim()
+    if (code) payload.couponCode = code
+    const { data: order } = await orderService.create(payload)
 
-    router.push({ path: '/payment/result', query: { orderId: order._id } })
+    // No online payment: the order is saved as unpaid and the customer settles up
+    // by chatting with the admin (see /order-placed).
+    cartStore.clear()
+    await router.replace({ path: '/order-placed', query: { orderId: order._id } })
   } catch (e) {
     placeError.value = extractErrorMessage(e)
     placingOrder.value = false
@@ -199,6 +280,13 @@ async function placeOrder() {
 </script>
 
 <style scoped>
+.checkout-coupon__label { display: block; font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.checkout-coupon__input {
+  width: 100%; padding: 11px 14px; border-radius: 12px; font-size: 13px; text-transform: uppercase;
+  color: var(--text-primary); background: var(--glass); border: 1px solid var(--glass-border);
+}
+.checkout-pay-hint { margin-top: 10px; font-size: 12px; line-height: 1.8; color: var(--text-secondary); }
+
 .checkout-page {
   padding: 18px 18px 32px;
 }
@@ -250,7 +338,7 @@ async function placeOrder() {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--brand-light);
   background: transparent;

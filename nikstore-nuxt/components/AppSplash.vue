@@ -204,7 +204,7 @@ onUnmounted(() => {
 .splash__tagline {
   direction: ltr;
   font-family: 'Vazirmatn', Tahoma, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 4px;
   color: rgba(245, 247, 243, .65);
@@ -223,7 +223,7 @@ onUnmounted(() => {
 
 .splash__loading-text {
   font-family: 'Vazirmatn', Tahoma, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 1px;
   color: rgba(231, 175, 66, .85);

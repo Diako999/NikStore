@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'crypto';
+import { Throttle } from '@nestjs/throttler';
 import {
   Body,
   Controller,
@@ -45,7 +47,7 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {
     const { sameSite, secure } = cookieConfig();
-    this.logger.log(
+    this.logger.debug(
       `Cookie config — sameSite: ${sameSite}, secure: ${secure}, NODE_ENV: ${process.env.NODE_ENV}`,
     );
   }
@@ -69,7 +71,10 @@ export class AuthController {
     res.clearCookie(COOKIE_NAME, { path: COOKIE_PATH, secure, sameSite });
   }
 
+  // Per-IP limits (on top of the per-phone counters in AuthService) so one client
+  // can't pump SMS to many numbers or lock many accounts out.
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
   sendOtp(@Body() dto: SendOtpDto) {
@@ -77,6 +82,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   async verifyOtp(
@@ -93,6 +99,7 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('admin-login')
   @HttpCode(HttpStatus.OK)
   async adminLogin(
@@ -113,12 +120,20 @@ export class AuthController {
    * Requires SEED_SECRET env var; disabled if env var is absent.
    */
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
   @Post('admin-setup')
   @HttpCode(HttpStatus.OK)
   async adminSetup(@Body() dto: AdminSetupDto) {
     const expected = process.env.SEED_SECRET;
-    if (!expected || dto.secret !== expected) {
-      throw new Error('Forbidden');
+    const given = Buffer.from(dto.secret ?? '');
+    const want = Buffer.from(expected ?? '');
+    // Constant-time compare; a bare `Error` here used to surface as a 500 + stack log.
+    if (
+      !expected ||
+      given.length !== want.length ||
+      !timingSafeEqual(given, want)
+    ) {
+      throw new ForbiddenException('Forbidden');
     }
     await this.authService.setAdminPassword(dto.phone, dto.password);
     return { message: 'رمز عبور مدیر با موفقیت تنظیم شد' };
@@ -149,7 +164,7 @@ export class AuthController {
   ) {
     if (!user.isAdmin && (user.role as UserRole) !== UserRole.ADMIN) {
       throw new ForbiddenException(
-        'فقط مدیران ارشد می‌توانند رمز عبور را تغییر دهند',
+        'فقط مدیران می‌توانند رمز عبور را تغییر دهند',
       );
     }
     await this.authService.changePassword(user._id.toString(), dto);

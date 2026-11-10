@@ -84,7 +84,7 @@ defineEmits(['select'])
 .addr-card__top { display: flex; align-items: center; gap: 8px; }
 .addr-card__title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .addr-card__badge {
-  font-size: 9.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
@@ -93,7 +93,7 @@ defineEmits(['select'])
 }
 [data-theme='light'] .addr-card__badge { color: var(--brand-dark); background: rgba(61, 139, 82, .14); }
 
-.addr-card__line { font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; }
+.addr-card__line { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
 .addr-card__line--muted { color: var(--text-disabled); }
-.addr-card__recipient { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.addr-card__recipient { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 </style>

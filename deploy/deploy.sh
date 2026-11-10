@@ -20,8 +20,26 @@ echo ">>> Recording current commit for rollback..."
 git rev-parse HEAD > "$APP_DIR/.last-deploy-sha"
 echo "Previous commit: $(cat "$APP_DIR/.last-deploy-sha")"
 
+# Uploaded images live in nikstore/uploads and are NOT in git. Older commits did
+# track them, so a pull across that boundary would delete them from disk —
+# snapshot first and restore anything that went missing.
+UPLOADS_DIR="$APP_DIR/nikstore/uploads"
+UPLOADS_BAK=""
+if [ -d "$UPLOADS_DIR" ]; then
+  UPLOADS_BAK=$(mktemp -d /tmp/nikstore-uploads.XXXXXX)
+  cp -a "$UPLOADS_DIR/." "$UPLOADS_BAK/"
+  echo ">>> Uploads snapshot: $UPLOADS_BAK ($(find "$UPLOADS_BAK" -type f | wc -l) files)"
+fi
+
 echo ">>> Pulling latest code..."
 git pull origin master
+
+if [ -n "$UPLOADS_BAK" ]; then
+  mkdir -p "$UPLOADS_DIR"
+  cp -an "$UPLOADS_BAK/." "$UPLOADS_DIR/" || true   # -n: never overwrite newer files
+  rm -rf "$UPLOADS_BAK"
+  echo ">>> Uploads intact: $(find "$UPLOADS_DIR" -type f | wc -l) files"
+fi
 
 echo ">>> Building backend..."
 cd "$APP_DIR/nikstore"

@@ -40,7 +40,7 @@ defineProps({
 }
 
 .trust-strip__item span {
-  font-size: 9.5px;
+  font-size: 12px;
   color: var(--text-secondary);
   line-height: 1.4;
   display: block;

@@ -39,11 +39,11 @@
       <div class="product-page__qty">
         <span class="product-page__qty-label">تعداد</span>
         <div class="product-page__qty-stepper">
-          <button type="button" :disabled="qty <= 1" @click="qty--">
+          <button type="button" :disabled="qty <= 1" aria-label="کاهش تعداد" @click="qty--">
             <AppIcon name="minus" :size="13" :stroke-width="2" />
           </button>
           <span>{{ toPersianDigits(qty) }}</span>
-          <button type="button" :disabled="qty >= maxQty" @click="qty++">
+          <button type="button" :disabled="qty >= maxQty" aria-label="افزایش تعداد" @click="qty++">
             <AppIcon name="plus" :size="13" :stroke-width="2" />
           </button>
         </div>
@@ -391,17 +391,17 @@ useSeoMeta({
 
 .product-page__body { padding: 18px; }
 
-.product-page__cat { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; }
+.product-page__cat { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
 .product-page__name { font-size: 17px; font-weight: 800; color: var(--text-primary); line-height: 1.5; margin-bottom: 8px; }
 
-.product-page__rating { display: flex; align-items: center; gap: 4px; color: #E7C878; font-size: 11px; margin-bottom: 10px; }
+.product-page__rating { display: flex; align-items: center; gap: 4px; color: #E7C878; font-size: 12px; margin-bottom: 10px; }
 .product-page__rating span { color: var(--text-secondary); margin-inline-start: 4px; }
 
 .product-page__price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
 .product-page__compare { font-size: 12.5px; text-decoration: line-through; color: var(--text-disabled); }
 .product-page__price { font-size: 19px; font-weight: 800; color: var(--text-primary); }
 .product-page__discount {
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 3px 8px;
   border-radius: 8px;
@@ -432,7 +432,7 @@ useSeoMeta({
 }
 .product-page__qty-stepper button:disabled { opacity: .35; }
 .product-page__qty-stepper span { font-size: 13px; font-weight: 700; min-width: 16px; text-align: center; }
-.product-page__lowstock { font-size: 10.5px; color: #E0A855; }
+.product-page__lowstock { font-size: 12px; color: #E0A855; }
 
 .product-page__cta {
   width: 100%;
@@ -449,7 +449,7 @@ useSeoMeta({
   box-shadow: 0 10px 24px rgba(40, 55, 46, .3);
 }
 .product-page__cta:disabled { opacity: .45; box-shadow: none; }
-.product-page__added { margin-top: 8px; text-align: center; font-size: 11.5px; color: var(--brand-light); }
+.product-page__added { margin-top: 8px; text-align: center; font-size: 12px; color: var(--brand-light); }
 [data-theme='light'] .product-page__added { color: var(--brand-dark); }
 
 .product-page__tabs { display: flex; gap: 6px; margin-top: 26px; border-bottom: 1px solid var(--glass-border); }

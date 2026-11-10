@@ -382,35 +382,102 @@ export class DiscountsService {
     };
   }
 
-  async recordCouponUsage(
+  /**
+   * Atomically claims one use of a coupon *before* the order is created.
+   * Enforces the per-user limit (unique `seq` index) and the global cap
+   * (conditional `$inc`) so parallel checkouts can't over-redeem. Returns the
+   * usage id to pass to `attachCouponOrder` / `releaseCoupon`.
+   */
+  async claimCoupon(
     discountId: string,
     userId: string,
-    orderId: string,
     discountAmount: number,
-  ): Promise<void> {
-    await Promise.all([
-      this.usageModel.create({
-        discountId: new Types.ObjectId(discountId),
-        userId: new Types.ObjectId(userId),
-        orderId: new Types.ObjectId(orderId),
+  ): Promise<string> {
+    const did = new Types.ObjectId(discountId);
+    const uid = new Types.ObjectId(userId);
+
+    const discount = await this.discountModel
+      .findById(did)
+      .select('perUserLimit')
+      .lean<DiscountDocument>();
+    if (!discount) throw new BadRequestException('کد تخفیف یافت نشد');
+    const perUserLimit = discount.perUserLimit ?? 1;
+
+    const used = await this.usageModel.countDocuments({
+      discountId: did,
+      userId: uid,
+    });
+    if (used >= perUserLimit)
+      throw new BadRequestException(
+        'شما قبلاً از این کد تخفیف استفاده کرده‌اید',
+      );
+
+    let usageId: string;
+    try {
+      const usage = await this.usageModel.create({
+        discountId: did,
+        userId: uid,
+        orderId: null,
         discountAmount,
-      }),
-      // TODO: per-user race (TOCTOU between validateCoupon countDocuments and here)
-      // requires unique compound index on (discountId, userId) or a Mongoose transaction.
-      this.discountModel.updateOne(
-        {
-          _id: new Types.ObjectId(discountId),
-          $expr: {
-            $lt: [
-              '$usageCount',
-              { $ifNull: ['$maxUsageCount', Number.MAX_SAFE_INTEGER] },
-            ],
-          },
+        seq: used + 1,
+      });
+      usageId = usage._id.toString();
+    } catch (err) {
+      if ((err as { code?: number }).code === 11000)
+        throw new BadRequestException(
+          'درخواست همزمان برای این کد تخفیف ثبت شد. دوباره تلاش کنید',
+        );
+      throw err;
+    }
+
+    const res = await this.discountModel.updateOne(
+      {
+        _id: did,
+        $expr: {
+          $lt: [
+            '$usageCount',
+            { $ifNull: ['$maxUsageCount', Number.MAX_SAFE_INTEGER] },
+          ],
         },
-        { $inc: { usageCount: 1 } },
-      ),
-    ]);
-    this.logger.log('Coupon usage recorded', { discountId, userId, orderId });
+      },
+      { $inc: { usageCount: 1 } },
+    );
+    if (res.modifiedCount !== 1) {
+      await this.usageModel.deleteOne({ _id: usageId });
+      throw new BadRequestException('ظرفیت این کد تخفیف تکمیل شده است');
+    }
+
+    this.logger.log('Coupon claimed', { discountId, userId, usageId });
+    return usageId;
+  }
+
+  async attachCouponOrder(usageId: string, orderId: string): Promise<void> {
+    await this.usageModel.updateOne(
+      { _id: usageId },
+      { orderId: new Types.ObjectId(orderId) },
+    );
+  }
+
+  /** Undo a claim (order creation failed). Safe to call twice. */
+  async releaseCoupon(usageId: string): Promise<void> {
+    const usage = await this.usageModel.findOneAndDelete({ _id: usageId });
+    if (usage)
+      await this.discountModel.updateOne(
+        { _id: usage.discountId, usageCount: { $gt: 0 } },
+        { $inc: { usageCount: -1 } },
+      );
+  }
+
+  /** Give the coupon back when its order is cancelled. */
+  async releaseCouponByOrder(orderId: string): Promise<void> {
+    const usage = await this.usageModel.findOneAndDelete({
+      orderId: new Types.ObjectId(orderId),
+    });
+    if (usage)
+      await this.discountModel.updateOne(
+        { _id: usage.discountId, usageCount: { $gt: 0 } },
+        { $inc: { usageCount: -1 } },
+      );
   }
 
   // ── Price calculation (for product service) ───────────────────

@@ -70,7 +70,7 @@ defineEmits(['update:modelValue', 'open-filter'])
   gap: 6px;
   border-radius: 999px;
   padding: 8px 12px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
   background: var(--glass);
@@ -97,7 +97,7 @@ defineEmits(['update:modelValue', 'open-filter'])
   border-radius: 999px;
   background: var(--brand);
   color: #fff;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -112,7 +112,7 @@ defineEmits(['update:modelValue', 'open-filter'])
   outline: none;
   color: inherit;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding-inline-end: 2px;
 }

@@ -170,7 +170,7 @@ function resetAndApply() {
 
 .fp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .fp-chip {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 7px 13px;
   border-radius: 999px;
@@ -197,7 +197,7 @@ function resetAndApply() {
   border: 1px solid var(--glass-border);
   outline: none;
 }
-.fp-price-sep { font-size: 11.5px; color: var(--text-secondary); }
+.fp-price-sep { font-size: 12px; color: var(--text-secondary); }
 
 .fp-toggle {
   display: flex;

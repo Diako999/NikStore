@@ -374,7 +374,7 @@ const trustItems = [
 
 .flash-t1 { font-size: 14px; font-weight: 700; margin-bottom: 3px; color: #fff; }
 [data-theme='light'] .flash-t1 { color: var(--text-primary); }
-.flash-t2 { font-size: 11px; color: rgba(245, 247, 243, .75); }
+.flash-t2 { font-size: 12px; color: rgba(245, 247, 243, .75); }
 [data-theme='light'] .flash-t2 { color: var(--text-secondary); }
 
 .timer { display: flex; gap: 5px; }
@@ -408,7 +408,7 @@ const trustItems = [
 .empty-hint { margin: 0 18px; font-size: 12.5px; color: var(--text-secondary); }
 
 .promo-txt { position: relative; }
-.promo-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; margin-bottom: 6px; color: var(--brand-light); }
+.promo-kicker { font-size: 12px; font-weight: 700; letter-spacing: .5px; margin-bottom: 6px; color: var(--brand-light); }
 [data-theme='light'] .promo-kicker { color: var(--brand-dark); }
 .promo-title { font-size: 17px; font-weight: 800; margin-bottom: 10px; color: #fff; }
 [data-theme='light'] .promo-title { color: var(--text-primary); }
@@ -457,7 +457,7 @@ const trustItems = [
   color: var(--text-primary);
 }
 .brand-chip__name {
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
   white-space: nowrap;

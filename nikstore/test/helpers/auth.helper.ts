@@ -65,7 +65,7 @@ export async function loginAsNewUser(
 
   const body = res.body as VerifyOtpResponseBody;
   const setCookieHeader =
-    (res.headers['set-cookie'] as string[] | undefined) ?? [];
+    (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
   const fullCookie =
     setCookieHeader.find((c) => c.startsWith('refresh_token=')) ?? '';
   // Cookie header for subsequent requests must be just 'refresh_token=JWT'
@@ -89,7 +89,7 @@ export async function refreshSession(
 
   const body = res.body as RefreshResponseBody;
   const setCookieHeader =
-    (res.headers['set-cookie'] as string[] | undefined) ?? [];
+    (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
   const fullCookie =
     setCookieHeader.find((c) => c.startsWith('refresh_token=')) ?? '';
   const newCookie = fullCookie.split(';')[0];

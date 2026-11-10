@@ -1,3 +1,4 @@
+import { clampPagination } from '../../common/utils/pagination';
 import {
   Controller,
   Delete,
@@ -25,7 +26,8 @@ export class WishlistController {
     @Query('page') page = 1,
     @Query('limit') limit = 20,
   ) {
-    return this.wishlistService.getWishlist(uid(user), +page, +limit);
+    const p = clampPagination(page, limit);
+    return this.wishlistService.getWishlist(uid(user), p.page, p.limit);
   }
 
   @Post(':productId')

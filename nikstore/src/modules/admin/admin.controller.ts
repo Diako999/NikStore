@@ -1,3 +1,4 @@
+import { clampPagination } from '../../common/utils/pagination';
 import {
   Body,
   Controller,
@@ -52,7 +53,9 @@ export class AdminController {
 
   @Get('stats/recent-orders')
   getRecentOrders(@Query('limit') limit = 10) {
-    return this.adminService.getRecentOrders(+limit);
+    return this.adminService.getRecentOrders(
+      clampPagination(1, limit, { defaultLimit: 10 }).limit,
+    );
   }
 
   // ── Products ──────────────────────────────────────────────────
@@ -63,7 +66,9 @@ export class AdminController {
 
   @Get('products/top-selling')
   getTopProducts(@Query('limit') limit = 10) {
-    return this.adminService.getTopProducts(+limit);
+    return this.adminService.getTopProducts(
+      clampPagination(1, limit, { defaultLimit: 10 }).limit,
+    );
   }
 
   // ── Users ─────────────────────────────────────────────────────

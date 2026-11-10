@@ -56,3 +56,10 @@
     margin-inline: auto;
   }
 }
+
+
+/* Visible keyboard focus for every interactive element (WCAG 2.4.7) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand-light, #6EB082);
+  outline-offset: 2px;
+}

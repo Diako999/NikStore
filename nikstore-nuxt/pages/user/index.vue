@@ -155,7 +155,7 @@ async function onLogout() {
 }
 .link-card__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .link-card__title { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
-.link-card__sub { font-size: 11px; color: var(--text-secondary); }
+.link-card__sub { font-size: 12px; color: var(--text-secondary); }
 .link-card__chev { color: var(--text-disabled); flex-shrink: 0; }
 
 .logout {

@@ -38,3 +38,17 @@ export const ORDER_TRANSITIONS = {
   delivered: [],
   cancelled: [],
 }
+
+// Payment is confirmed manually by an admin after the customer pays via
+// Telegram/Rubika chat — mirrors PaymentStatus in order.schema.ts.
+export const PAYMENT_STATUSES = ['unpaid', 'paid']
+
+export const PAYMENT_STATUS_LABELS = {
+  unpaid: 'پرداخت نشده',
+  paid: 'پرداخت شده',
+}
+
+export const PAYMENT_STATUS_BADGE = {
+  unpaid: 'pending',
+  paid: 'success',
+}

@@ -10,7 +10,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { HydratedDocument, Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { randomInt, randomUUID } from 'crypto';
+import { createHash, randomInt, randomUUID } from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
@@ -25,6 +25,13 @@ import {
   RefreshTokenDocument,
 } from './entities/refresh-token.schema';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { SettingsService } from '../settings/settings.service';
+
+// bcrypt hash of a random string — only used to equalise timing for unknown users.
+const DUMMY_BCRYPT_HASH =
+  '$2b$12$q8XGWk7flVI5B9wnzkZIFuAUAWTKg57/oA0OPgxu6qX0Kon7V6Qm.';
+
+const REFRESH_GRACE_MS = 10_000;
 
 @Injectable()
 export class AuthService {
@@ -38,7 +45,25 @@ export class AuthService {
     private configService: ConfigService,
     private smsService: SmsService,
     @Inject(REDIS_CLIENT) private redis: Redis,
+    private settingsService: SettingsService,
   ) {}
+
+  // ── Registration gate ─────────────────────────────────────────
+  /** Fail-closed: a missing flag or a settings read error both mean "closed". */
+  private async assertRegistrationOpen(): Promise<void> {
+    let open = false;
+    try {
+      const s = await this.settingsService.findSettings();
+      open = s.registrationEnabled === true;
+    } catch {
+      open = false;
+    }
+    if (!open) {
+      throw new ForbiddenException(
+        'ثبت‌نام کاربران جدید موقتاً غیرفعال است. کاربران قبلی می‌توانند وارد شوند',
+      );
+    }
+  }
 
   // ── OTP ──────────────────────────────────────────────────────
   async sendOtp(dto: SendOtpDto) {
@@ -49,6 +74,9 @@ export class AuthService {
       .findOne({ phone })
       .select('isActive')
       .lean();
+    // New phone number = new account. Blocked until registration is opened in
+    // Settings (checked before any SMS is sent or rate-limit counter is touched).
+    if (!existingUser) await this.assertRegistrationOpen();
     if (existingUser && !existingUser.isActive) {
       this.logger.warn(`OTP blocked — inactive user: ${this.maskPhone(phone)}`);
       throw new ForbiddenException(
@@ -57,8 +85,7 @@ export class AuthService {
     }
 
     const rlKey = `otp:rl:${phone}`;
-    const attempts = await this.redis.incr(rlKey);
-    if (attempts === 1) await this.redis.expire(rlKey, 600);
+    const attempts = await this.hit(rlKey, 600);
     if (attempts > 3) {
       this.logger.warn(
         `OTP rate-limit hit: ${this.maskPhone(phone)} (attempts=${attempts})`,
@@ -86,8 +113,7 @@ export class AuthService {
     const verifyKey = `otp:verify:${phone}`;
 
     // Brute-force guard: max 5 attempts per OTP window (300 s)
-    const attempts = await this.redis.incr(verifyKey);
-    if (attempts === 1) await this.redis.expire(verifyKey, 300);
+    const attempts = await this.hit(verifyKey, 300);
     if (attempts > 5) {
       this.logger.warn(
         `OTP verify rate-limit: ${this.maskPhone(phone)} (attempts=${attempts})`,
@@ -114,6 +140,7 @@ export class AuthService {
     const isNewUser = !user;
 
     if (!user) {
+      await this.assertRegistrationOpen();
       user = await this.userModel.create({ phone });
       this.logger.log(`New user registered: ${this.maskPhone(phone)}`);
     } else if (!user.isActive) {
@@ -137,8 +164,7 @@ export class AuthService {
 
     // Brute-force guard: 10 attempts / 10 min
     const rlKey = `admin:login:rl:${phone}`;
-    const attempts = await this.redis.incr(rlKey);
-    if (attempts === 1) await this.redis.expire(rlKey, 600);
+    const attempts = await this.hit(rlKey, 600);
     if (attempts > 10) {
       this.logger.warn(`Admin login rate-limit: ${this.maskPhone(phone)}`);
       throw new BadRequestException(
@@ -150,8 +176,18 @@ export class AuthService {
 
     // Use same error message for "not found" and "wrong password" to avoid user enumeration
     if (!user || !user.password) {
+      // Burn comparable CPU so response time doesn't reveal whether the phone exists.
+      await bcrypt.compare(dto.password, DUMMY_BCRYPT_HASH);
       this.logger.warn(
         `Admin login — no password set: ${this.maskPhone(phone)}`,
+      );
+      throw new UnauthorizedException('شماره یا رمز عبور اشتباه است');
+    }
+
+    const valid = await bcrypt.compare(dto.password, user.password);
+    if (!valid) {
+      this.logger.warn(
+        `Admin login — wrong password: ${this.maskPhone(phone)}`,
       );
       throw new UnauthorizedException('شماره یا رمز عبور اشتباه است');
     }
@@ -169,14 +205,6 @@ export class AuthService {
         `Admin login denied — insufficient role: ${this.maskPhone(phone)}`,
       );
       throw new ForbiddenException('دسترسی به پنل مدیریت ندارید');
-    }
-
-    const valid = await bcrypt.compare(dto.password, user.password);
-    if (!valid) {
-      this.logger.warn(
-        `Admin login — wrong password: ${this.maskPhone(phone)}`,
-      );
-      throw new UnauthorizedException('شماره یا رمز عبور اشتباه است');
     }
 
     await this.redis.del(rlKey); // clear rate-limit on success
@@ -229,44 +257,48 @@ export class AuthService {
     await this.userModel.findByIdAndUpdate(userId, { password: hashed });
 
     // Revoke all existing refresh tokens — force re-login on other devices
-    await this.rtModel.updateMany({ userId }, { isRevoked: true });
+    await this.rtModel.updateMany(
+      { userId },
+      { isRevoked: true, revokedAt: new Date() },
+    );
   }
 
   // ── Tokens ────────────────────────────────────────────────────
+  /**
+   * Rotates a refresh token. Only the token that was presented is revoked, so
+   * other devices/tabs keep their own sessions. A token rotated within the last
+   * REFRESH_GRACE_MS may still be exchanged once more — two tabs refreshing at
+   * the same moment both carry the same cookie and must not log each other out.
+   */
   async refreshTokens(
     userId: string,
     refreshToken: string,
     meta: { userAgent?: string; ip?: string },
   ) {
-    const sig = refreshToken?.split('.')?.[2];
-    if (!sig) {
+    if (!refreshToken || refreshToken.split('.').length !== 3) {
       this.logger.warn(`Refresh — malformed token payload: userId=${userId}`);
       throw new UnauthorizedException('توکن نامعتبر است');
     }
 
-    // Limit to the 3 most recent non-revoked tokens.
-    // bcrypt.compare on a slow VPS takes ~2-3s per round; iterating all accumulated
-    // tokens (one created per page-refresh) causes the request to exceed the 15s
-    // client timeout after just 5-6 refreshes.
-    const candidates = await this.rtModel
-      .find({
-        userId,
-        isRevoked: false,
-        expiresAt: { $gt: new Date() },
-      })
-      .sort({ createdAt: -1 })
-      .limit(3);
-
-    let doc: RefreshTokenDocument | null = null;
-    for (const candidate of candidates) {
-      if (await bcrypt.compare(sig, candidate.token)) {
-        doc = candidate;
-        break;
-      }
-    }
+    const doc = await this.rtModel.findOne({
+      userId,
+      token: this.hashToken(refreshToken),
+      expiresAt: { $gt: new Date() },
+    });
     if (!doc) {
       this.logger.warn(`Refresh token invalid/expired: userId=${userId}`);
       throw new UnauthorizedException('توکن نامعتبر است');
+    }
+
+    if (doc.isRevoked) {
+      // Only a *rotated* token gets the grace window — never one revoked by logout.
+      const withinGrace =
+        !!doc.rotatedAt &&
+        Date.now() - new Date(doc.rotatedAt).getTime() < REFRESH_GRACE_MS;
+      if (!withinGrace) {
+        this.logger.warn(`Refresh token reuse/revoked: userId=${userId}`);
+        throw new UnauthorizedException('توکن نامعتبر است');
+      }
     }
 
     const user = await this.userModel.findById(userId);
@@ -275,25 +307,21 @@ export class AuthService {
       throw new UnauthorizedException('کاربر یافت نشد');
     }
 
-    // Token rotation: revoke ALL active tokens for this user before issuing a new one.
-    // This keeps exactly one active token in DB at all times, eliminating bcrypt
-    // accumulation from repeated page refreshes. Explicit logout-all still works.
-    await this.rtModel.updateMany(
-      { userId, isRevoked: false },
-      { isRevoked: true },
-    );
-    await this.rtModel.deleteMany({ userId, expiresAt: { $lte: new Date() } });
+    if (!doc.isRevoked) {
+      await this.rtModel.updateOne(
+        { _id: doc._id, isRevoked: false },
+        { isRevoked: true, revokedAt: new Date(), rotatedAt: new Date() },
+      );
+    }
     return this.issueTokens(user, meta);
   }
 
   async logout(userId: string, token: string) {
-    const sig = token.split('.')[2] || token;
-    const active = await this.rtModel.find({ userId, isRevoked: false });
-    for (const doc of active) {
-      if (await bcrypt.compare(sig, doc.token)) {
-        await this.rtModel.findByIdAndUpdate(doc._id, { isRevoked: true });
-        break;
-      }
+    if (token) {
+      await this.rtModel.updateOne(
+        { userId, token: this.hashToken(token), isRevoked: false },
+        { isRevoked: true, revokedAt: new Date() },
+      );
     }
     return { message: 'خروج موفق' };
   }
@@ -301,12 +329,27 @@ export class AuthService {
   async logoutAll(userId: string) {
     await this.rtModel.updateMany(
       { userId, isRevoked: false },
-      { isRevoked: true },
+      { isRevoked: true, revokedAt: new Date() },
     );
     return { message: 'خروج از همه دستگاه‌ها' };
   }
 
   // ── Helpers ───────────────────────────────────────────────────
+  /**
+   * Increments a rate-limit counter and guarantees it has a TTL. `INCR` + `EXPIRE`
+   * as two calls can leave a key with no expiry if the process dies in between,
+   * which would lock that phone out forever — so a missing TTL is repaired here.
+   */
+  private async hit(key: string, ttlSeconds: number): Promise<number> {
+    const n = await this.redis.incr(key);
+    if (n === 1) {
+      await this.redis.expire(key, ttlSeconds);
+    } else if ((await this.redis.ttl(key)) === -1) {
+      await this.redis.expire(key, ttlSeconds);
+    }
+    return n;
+  }
+
   private async issueTokens(
     user: HydratedDocument<User>,
     meta: { userAgent?: string; ip?: string },
@@ -322,10 +365,7 @@ export class AuthService {
       },
     );
 
-    // Hash only the JWT signature (last segment) to stay within bcrypt's 72-byte limit.
-    // Full JWTs for the same user share a long common prefix, making the full-JWT hash collide.
-    const sig = refreshToken.split('.')[2];
-    const hashedToken = await bcrypt.hash(sig, 10);
+    const hashedToken = this.hashToken(refreshToken);
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
     await this.rtModel.create({
       userId: user._id,
@@ -335,6 +375,12 @@ export class AuthService {
     });
 
     return { accessToken, refreshToken };
+  }
+
+  // Refresh JWTs are high-entropy and signed, so a fast SHA-256 is sufficient
+  // (bcrypt cost ~2-3 s per compare on the VPS was the reason refreshes timed out).
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   private normalizePhone(phone: string): string {

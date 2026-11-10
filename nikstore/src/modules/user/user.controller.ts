@@ -1,3 +1,4 @@
+import { clampPagination } from '../../common/utils/pagination';
 import {
   Body,
   Controller,
@@ -78,7 +79,8 @@ export class UserController {
     @Query('isBlocked') isBlocked?: string,
     @Query('role') role?: string,
   ) {
-    return this.userService.findAll(+page, +limit, search, isBlocked, role);
+    const p = clampPagination(page, limit);
+    return this.userService.findAll(p.page, p.limit, search, isBlocked, role);
   }
 
   @UseGuards(AdminGuard)
@@ -94,7 +96,8 @@ export class UserController {
     @Query('page') page = 1,
     @Query('limit') limit = 10,
   ) {
-    return this.userService.getUserReviews(id, +page, +limit);
+    const p = clampPagination(page, limit, { defaultLimit: 10 });
+    return this.userService.getUserReviews(id, p.page, p.limit);
   }
 
   @UseGuards(AdminGuard)

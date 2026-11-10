@@ -1,3 +1,4 @@
+import { clampPagination } from '../../common/utils/pagination';
 import {
   Body,
   Controller,
@@ -44,7 +45,8 @@ export class ReviewController {
     @Query('page') page = 1,
     @Query('limit') limit = 10,
   ) {
-    return this.reviewService.getMyReviews(uid(user), +page, +limit);
+    const p = clampPagination(page, limit, { defaultLimit: 10 });
+    return this.reviewService.getMyReviews(uid(user), p.page, p.limit);
   }
 
   @UseGuards(JwtAuthGuard)

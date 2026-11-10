@@ -3,7 +3,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
-import { OrderStatus } from './entities/order.schema';
+import { OrderStatus, PaymentStatus } from './entities/order.schema';
 import type { UserDocument } from '../user/entities/user.schema';
 
 const mockService = {
@@ -116,12 +116,14 @@ describe('OrderController', () => {
         1,
         20,
         OrderStatus.PENDING,
+        PaymentStatus.UNPAID,
         'test',
         '2024-01-01',
         '2024-12-31',
       );
       expect(mockService.adminFindAll).toHaveBeenCalledWith(1, 20, {
         status: OrderStatus.PENDING,
+        paymentStatus: PaymentStatus.UNPAID,
         search: 'test',
         startDate: '2024-01-01',
         endDate: '2024-12-31',

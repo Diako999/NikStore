@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -44,7 +44,12 @@ export class LocalStorageProvider extends StorageProvider {
   }
 
   delete(key: string): Promise<void> {
-    const filePath = path.join(this.dest, key);
+    const root = path.resolve(this.dest);
+    const filePath = path.resolve(root, key);
+    // Refuse keys like ../../etc/passwd — the target must stay inside the uploads root.
+    if (!filePath.startsWith(root + path.sep)) {
+      throw new BadRequestException('کلید فایل نامعتبر است');
+    }
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
       this.logger.debug(`Deleted file: ${key}`);

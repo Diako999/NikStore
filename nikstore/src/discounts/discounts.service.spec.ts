@@ -271,3 +271,99 @@ describe('DiscountsService — discount created notification', () => {
     expect(eventEmitter.emit).not.toHaveBeenCalled();
   });
 });
+
+describe('DiscountsService — coupon claim / release', () => {
+  let service: DiscountsService;
+  const did = new Types.ObjectId();
+  const uid = new Types.ObjectId().toString();
+
+  const discountModel = {
+    findById: jest.fn(),
+    updateOne: jest.fn(),
+  };
+  const usageModel = {
+    countDocuments: jest.fn(),
+    create: jest.fn(),
+    deleteOne: jest.fn(),
+    findOneAndDelete: jest.fn(),
+    updateOne: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    jest.resetAllMocks();
+    discountModel.findById.mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        lean: jest.fn().mockResolvedValue({ perUserLimit: 1 }),
+      }),
+    });
+    usageModel.countDocuments.mockResolvedValue(0);
+    usageModel.create.mockResolvedValue({ _id: new Types.ObjectId() });
+    discountModel.updateOne.mockResolvedValue({ modifiedCount: 1 });
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DiscountsService,
+        { provide: getModelToken(Discount.name), useValue: discountModel },
+        { provide: getModelToken(DiscountUsage.name), useValue: usageModel },
+        {
+          provide: AppLoggerService,
+          useValue: {
+            setContext: jest.fn(),
+            log: jest.fn(),
+            warn: jest.fn(),
+            error: jest.fn(),
+            debug: jest.fn(),
+          },
+        },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        {
+          provide: REDIS_CLIENT,
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
+      ],
+    }).compile();
+    service = module.get(DiscountsService);
+  });
+
+  it('claims a use: inserts a numbered usage then bumps the counter', async () => {
+    const id = await service.claimCoupon(did.toString(), uid, 5000);
+    expect(typeof id).toBe('string');
+    expect(usageModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ seq: 1, orderId: null }),
+    );
+    expect(discountModel.updateOne).toHaveBeenCalled();
+  });
+
+  it('rejects when the per-user limit is already reached', async () => {
+    usageModel.countDocuments.mockResolvedValue(1);
+    await expect(
+      service.claimCoupon(did.toString(), uid, 5000),
+    ).rejects.toThrow(BadRequestException);
+    expect(usageModel.create).not.toHaveBeenCalled();
+  });
+
+  it('turns a duplicate-key collision (parallel redemption) into a 400', async () => {
+    usageModel.create.mockRejectedValue({ code: 11000 });
+    await expect(
+      service.claimCoupon(did.toString(), uid, 5000),
+    ).rejects.toThrow(BadRequestException);
+    expect(discountModel.updateOne).not.toHaveBeenCalled();
+  });
+
+  it('rolls the usage row back when the global cap is full', async () => {
+    discountModel.updateOne.mockResolvedValue({ modifiedCount: 0 });
+    await expect(
+      service.claimCoupon(did.toString(), uid, 5000),
+    ).rejects.toThrow(/ظرفیت/);
+    expect(usageModel.deleteOne).toHaveBeenCalled();
+  });
+
+  it('releaseCouponByOrder deletes the usage and decrements the counter', async () => {
+    usageModel.findOneAndDelete.mockResolvedValue({ discountId: did });
+    await service.releaseCouponByOrder(new Types.ObjectId().toString());
+    expect(discountModel.updateOne).toHaveBeenCalledWith(
+      { _id: did, usageCount: { $gt: 0 } },
+      { $inc: { usageCount: -1 } },
+    );
+  });
+});
