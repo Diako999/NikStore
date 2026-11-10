@@ -436,6 +436,7 @@ describe('AuthService', () => {
     });
 
     it('accepts a just-rotated token (two tabs refreshing together)', async () => {
+      rtModel.findOneAndUpdate.mockResolvedValue({ _id: 'rt1' });
       rtModel.findOne.mockResolvedValue({
         _id: 'rt1',
         isRevoked: true,
@@ -443,6 +444,20 @@ describe('AuthService', () => {
       });
       const res = await service.refreshTokens('uid1', validJwt, {});
       expect(res.accessToken).toBe('tok');
+    });
+
+    it('allows the grace exchange only once (replay of a rotated token is rejected)', async () => {
+      rtModel.findOne.mockResolvedValue({
+        _id: 'rt1',
+        isRevoked: true,
+        rotatedAt: new Date(Date.now() - 1_000),
+        graceUsedAt: new Date(),
+      });
+      rtModel.findOneAndUpdate.mockResolvedValue(null); // claim lost: already spent
+      await expect(service.refreshTokens('uid1', validJwt, {})).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(rtModel.create).not.toHaveBeenCalled();
     });
 
     it('throws UnauthorizedException when user is inactive', async () => {

@@ -266,6 +266,19 @@ describe('Auth (e2e)', () => {
         .expect(200);
     });
 
+    it('the grace exchange is single-use — a second replay is rejected', async () => {
+      const { cookie: originalCookie } = await loginAsNewUser(app);
+      await refreshSession(app, originalCookie);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', originalCookie)
+        .expect(200); // first replay inside the window
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', originalCookie)
+        .expect(401); // second replay: grace already spent
+    });
+
     it('old cookie after the grace window is revoked → 401', async () => {
       const { cookie: originalCookie } = await loginAsNewUser(app);
       await refreshSession(app, originalCookie);

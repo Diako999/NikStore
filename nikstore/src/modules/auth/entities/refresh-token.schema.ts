@@ -25,6 +25,8 @@ export class RefreshToken {
    * password change never set it, so those tokens are rejected immediately.
    */
   @Prop({ type: Date, default: null }) rotatedAt?: Date | null;
+  /** Set when the one-time grace exchange of a rotated token is spent — it can't be replayed. */
+  @Prop({ type: Date, default: null }) graceUsedAt?: Date | null;
   @Prop() userAgent?: string;
   @Prop() ip?: string;
 }

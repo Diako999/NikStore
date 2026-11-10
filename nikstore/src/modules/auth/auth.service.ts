@@ -307,7 +307,18 @@ export class AuthService {
       throw new UnauthorizedException('کاربر یافت نشد');
     }
 
-    if (!doc.isRevoked) {
+    if (doc.isRevoked) {
+      // Grace exchange is SINGLE-USE and atomic: only the first replay inside the
+      // window wins, so a stolen cookie can't mint a stream of new tokens.
+      const claimed = await this.rtModel.findOneAndUpdate(
+        { _id: doc._id, graceUsedAt: null },
+        { graceUsedAt: new Date() },
+      );
+      if (!claimed) {
+        this.logger.warn(`Refresh grace already used: userId=${userId}`);
+        throw new UnauthorizedException('توکن نامعتبر است');
+      }
+    } else {
       await this.rtModel.updateOne(
         { _id: doc._id, isRevoked: false },
         { isRevoked: true, revokedAt: new Date(), rotatedAt: new Date() },
