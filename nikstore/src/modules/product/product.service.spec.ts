@@ -817,6 +817,36 @@ describe('ProductService', () => {
     });
   });
 
+  describe('findAll — ids filter', () => {
+    const a = '6af35f6336b61e385d0fefb4';
+    const b = '6af35f6336b61e385d0fefb5';
+
+    it('restricts the query to the given product ids (guest favorites)', async () => {
+      await service.findAll({ ids: `${a},${b}` });
+      const [filter] = (model.find as unknown as jest.Mock).mock.calls[0] as [
+        { $and: { _id: { $in: { toString(): string }[] } }[] },
+      ];
+      const idClause = filter.$and.find((c) => c._id);
+      expect(idClause?._id.$in.map((x) => x.toString())).toEqual([a, b]);
+    });
+
+    it('ignores malformed ids instead of throwing a CastError', async () => {
+      await service.findAll({ ids: `${a},not-an-id` });
+      const [filter] = (model.find as unknown as jest.Mock).mock.calls[0] as [
+        { $and: { _id: { $in: unknown[] } }[] },
+      ];
+      expect(filter.$and.find((c) => c._id)?._id.$in).toHaveLength(1);
+    });
+
+    it('adds no id restriction when ids is not provided', async () => {
+      await service.findAll({});
+      const [filter] = (model.find as unknown as jest.Mock).mock.calls[0] as [
+        Record<string, unknown>,
+      ];
+      expect(filter.$and).toBeUndefined();
+    });
+  });
+
   describe('variant images', () => {
     it('passes variant images through to the model on create', async () => {
       const variantImages = [

@@ -230,7 +230,7 @@ function formatDate(value) {
 .summary__top { display: flex; align-items: flex-start; justify-content: space-between; }
 .summary__num { font-size: 14px; font-weight: 700; color: var(--text-primary); unicode-bidi: plaintext; margin-bottom: 3px; }
 .summary__date { font-size: 12px; color: var(--text-secondary); }
-.summary__cancel-reason { margin-top: 10px; font-size: 12px; color: #E8837F; }
+.summary__cancel-reason { margin-top: 10px; font-size: 12px; color: var(--danger-text); }
 
 .status-badge {
   font-size: 12px;
@@ -285,7 +285,7 @@ function formatDate(value) {
 .order-note { margin-top: 12px; font-size: 12px; color: var(--text-secondary); }
 
 .msg { font-size: 12px; margin: 0 0 10px; }
-.msg--error { color: #E8837F; }
+.msg--error { color: var(--danger-text); }
 
 .cancel-row { display: flex; }
 .btn-danger-outline {
@@ -295,7 +295,7 @@ function formatDate(value) {
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 700;
-  color: #E8837F;
+  color: var(--danger-text);
   background: transparent;
   border: 1px solid rgba(232, 131, 127, .5);
   cursor: pointer;

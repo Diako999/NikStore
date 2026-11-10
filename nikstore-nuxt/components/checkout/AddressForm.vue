@@ -102,12 +102,12 @@ function submit() {
 
 .addr-form__grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
 }
 .addr-field--full { grid-column: 1 / -1; }
 
-.addr-field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.addr-field { min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-secondary); }
 .addr-field input,
 .addr-field textarea {
   border-radius: 10px;
@@ -147,7 +147,7 @@ function submit() {
 .addr-form__error {
   margin-top: 10px;
   font-size: 12px;
-  color: #E8848C;
+  color: var(--danger-text);
 }
 
 .addr-form__actions {

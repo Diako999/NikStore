@@ -201,7 +201,7 @@ async function onResend() {
 
 .otp__error {
   font-size: 12px;
-  color: #E8837F;
+  color: var(--danger-text);
   text-align: center;
 }
 

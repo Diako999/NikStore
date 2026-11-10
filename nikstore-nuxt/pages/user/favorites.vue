@@ -37,13 +37,17 @@ import AppIcon from '~/components/icons/AppIcon.vue'
 import SectionHead from '~/components/ui/SectionHead.vue'
 import ProductCard from '~/components/ui/ProductCard.vue'
 import { wishlistService } from '~/services/wishlist.service'
+import { productService } from '~/services/product.service'
+import { useAuthStore } from '~/stores/auth.store'
 import { useWishlistStore } from '~/stores/wishlist.store'
 import { toPersianDigits } from '~/utils/format'
 
-definePageMeta({ layout: 'default', middleware: 'auth' })
+// No auth middleware: guests keep favorites in this browser, so they must be able to open them.
+definePageMeta({ layout: 'default' })
 useSeoMeta({ title: 'علاقه‌مندی‌ها | نیک' })
 
 const wishlistStore = useWishlistStore()
+const auth = useAuthStore()
 
 const page = ref(1)
 const products = ref([])
@@ -53,9 +57,21 @@ const loading = ref(false)
 async function loadWishlist() {
   loading.value = true
   try {
-    const { data } = await wishlistService.get({ page: page.value, limit: 20 })
-    products.value = data.products || []
-    totalPages.value = data.totalPages || 1
+    if (auth.isLoggedIn) {
+      const { data } = await wishlistService.get({ page: page.value, limit: 20 })
+      products.value = data.products || []
+      totalPages.value = data.totalPages || 1
+    } else {
+      // Guest: the favorites are only product ids in localStorage — fetch their details.
+      const ids = wishlistStore.ids.slice()
+      if (!ids.length) {
+        products.value = []
+      } else {
+        const { data } = await productService.getByIds(ids)
+        products.value = data.products || []
+      }
+      totalPages.value = 1
+    }
   } finally {
     loading.value = false
   }

@@ -13,6 +13,7 @@
   --text-primary: #F5F7F3;
   --text-secondary: #C3D2C7;
   --text-disabled: #7E8F84;
+  --danger-text: #E8848C; /* error text — 7.3:1 on the dark page */
   --glass: rgba(255, 255, 255, .10);
   --glass-strong: rgba(255, 255, 255, .16);
   --glass-border: rgba(255, 255, 255, .22);
@@ -33,7 +34,8 @@
   --brand-light: #6EB082;
   --text-primary: #1E2822;
   --text-secondary: #5C6B62;
-  --text-disabled: #9AA79E;
+  --text-disabled: #5F6D64; /* hints/placeholders: 4.9:1 on the cream page (was 2.3:1) */
+  --danger-text: #B42318;   /* error text — 6:1 on cream (the dark-theme red was 2.4:1) */
   --glass: rgba(255, 255, 255, .52);
   --glass-strong: rgba(255, 255, 255, .72);
   --glass-border: rgba(255, 255, 255, .85);

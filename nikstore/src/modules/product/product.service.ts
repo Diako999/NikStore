@@ -167,6 +167,7 @@ export class ProductService {
       limit = 20,
       gender,
       hasDiscount,
+      ids,
     } = query;
 
     const filter: Record<string, any> = {
@@ -175,6 +176,18 @@ export class ProductService {
 
     const catIds = category ? await this.resolveCategoryIds(category) : null;
     if (catIds?.length) filter.category = { $in: catIds };
+    if (ids) {
+      const idList = ids
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => Types.ObjectId.isValid(s))
+        .map((s) => new Types.ObjectId(s));
+      // $and (not filter._id) — other branches below also use _id for "no match".
+      filter.$and = [
+        ...((filter.$and as Record<string, unknown>[] | undefined) ?? []),
+        { _id: { $in: idList } },
+      ];
+    }
     if (brand && Types.ObjectId.isValid(brand))
       filter.brand = new Types.ObjectId(brand);
     if (minPrice !== undefined) filter.minPrice = { $gte: minPrice };

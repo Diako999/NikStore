@@ -154,7 +154,8 @@ useSeoMeta({ title: () => (q.value ? `جستجو: ${q.value}` : 'جستجو') })
 </script>
 
 <style scoped>
-.search-page__bar :deep(.search-bar) { margin-top: 18px; }
+/* 14px offset + 42px ThemeToggle + gap — keeps the search field clear of the toggle */
+.search-page__bar :deep(.search-bar) { margin-top: 66px; }
 
 .search-page__query {
   margin: 0 18px 12px;

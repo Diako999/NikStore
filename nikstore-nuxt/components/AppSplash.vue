@@ -1,5 +1,5 @@
 <template>
-  <div v-if="visible" ref="root" class="splash" :class="{ 'splash--leaving': leaving }">
+  <div v-if="visible" ref="root" class="splash" :class="{ 'splash--leaving': leaving }" @click="skip">
     <div class="splash__stage">
       <p ref="sentenceEl" class="splash__sentence">
         <span ref="letterN" class="splash__letter">N</span><span ref="restNew" class="splash__rest">EW</span><span ref="dotA" class="splash__dot">&middot;</span><span ref="letterI" class="splash__letter">I</span><span ref="restIconic" class="splash__rest">CONIC</span><span ref="dotB" class="splash__dot">&middot;</span><span ref="letterK" class="splash__letter">K</span><span ref="restKnown" class="splash__rest">NOWN</span>
@@ -7,6 +7,8 @@
     </div>
 
     <p ref="taglineEl" class="splash__tagline">NEW &middot; ICONIC &middot; KNOWN</p>
+
+    <button type="button" class="splash__skip" @click.stop="skip">رد کردن</button>
 
     <div ref="loadingEl" class="splash__loading">
       <span class="splash__loading-text">در حال بارگذاری...</span>
@@ -42,7 +44,50 @@ const fillEl = ref(null)
 let ctx = null
 let gsapInstance = null
 
+// The splash is a brand moment, not a gate: it must never hold the page hostage.
+//  - it only plays on the first visit of a session, when landing on the home page, and not
+//    for people who asked for reduced motion (decided before paint by the inline script in
+//    app.vue, which puts `no-splash` on <html>);
+//  - a tap / Escape / the "رد کردن" button skips it;
+//  - a hard timeout ends it even if animation frames are slow (GSAP slows its clock on
+//    slow devices, which used to stretch ~5 s into 20 s+).
+const FAILSAFE_MS = 6500
+let failsafe = null
+let finished = false
+
+function finish() {
+  if (finished) return
+  finished = true
+  clearTimeout(failsafe)
+  visible.value = false
+  emit('done')
+}
+
+function skip() {
+  if (finished) return
+  leaving.value = true
+  ctx?.revert()
+  if (gsapInstance && root.value) {
+    gsapInstance.killTweensOf(root.value)
+    gsapInstance.to(root.value, { autoAlpha: 0, duration: 0.25, onComplete: finish })
+  } else {
+    finish()
+  }
+}
+
+function onKey(e) {
+  if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') skip()
+}
+
 onMounted(async () => {
+  if (document.documentElement.classList.contains('no-splash')) {
+    finish()
+    return
+  }
+  try { sessionStorage.setItem('nik-splash', '1') } catch { /* private mode */ }
+  failsafe = setTimeout(skip, FAILSAFE_MS)
+  window.addEventListener('keydown', onKey)
+
   if (!root.value) return
   const { gsap } = await import('gsap')
   gsapInstance = gsap
@@ -136,14 +181,13 @@ function startExit() {
     duration: 0.6,
     delay: 0.45,
     ease: 'power2.inOut',
-    onComplete: () => {
-      visible.value = false
-      emit('done')
-    },
+    onComplete: finish,
   })
 }
 
 onUnmounted(() => {
+  clearTimeout(failsafe)
+  window.removeEventListener('keydown', onKey)
   ctx?.revert()
 })
 </script>
@@ -242,4 +286,24 @@ onUnmounted(() => {
   inset: 0;
   background: linear-gradient(90deg, transparent, #E7C878, transparent);
 }
+
+.splash__skip {
+  position: absolute;
+  inset-block-end: max(20px, env(safe-area-inset-bottom));
+  inset-inline-end: 18px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #C3D2C7;
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .22);
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* Set before first paint by the inline script in app.vue — no flash of splash. */
+html.no-splash .splash { display: none !important; }
 </style>

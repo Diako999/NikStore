@@ -307,9 +307,9 @@ async function onDeleteAddress(addr) {
 .panel { margin: 0 18px; }
 
 .form { display: flex; flex-direction: column; gap: 14px; }
-.form__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 
-.field { display: flex; flex-direction: column; gap: 6px; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .field__label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
 .field__input {
   padding: 12px 14px;
@@ -336,7 +336,7 @@ async function onDeleteAddress(addr) {
 .checkbox input { width: 16px; height: 16px; accent-color: var(--brand); }
 
 .msg { font-size: 12px; margin: 0; }
-.msg--error { color: #E8837F; }
+.msg--error { color: var(--danger-text); }
 .msg--ok { color: var(--brand-light); }
 [data-theme='light'] .msg--ok { color: var(--brand-dark); }
 
@@ -420,7 +420,7 @@ async function onDeleteAddress(addr) {
   border: 1px solid var(--glass-border);
   cursor: pointer;
 }
-.addr-card__action--danger { color: #E8837F; }
+.addr-card__action--danger { color: var(--danger-text); }
 .addr-card__action:disabled { opacity: .5; cursor: not-allowed; }
 
 .add-btn {
