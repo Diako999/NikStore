@@ -87,4 +87,6 @@ Both frontends mirror the backend's module list 1:1 with a `services/<name>.serv
 
 Single-VPS deployment via PM2 (`deploy/ecosystem.config.js` defines the three processes: `nikstore-backend`, `nikstore-nuxt`, `nikstore-admin`) behind Nginx (`deploy/nginx.conf` / `nginx-domain.conf`). See `README.md` for the full first-deploy / domain-setup / common-commands sequence (`bash deploy/setup.sh`, `bash deploy/deploy.sh`, `pm2 logs`, etc.) — that sequence is the source of truth for VPS operations, not reproduced here.
 
+**Native variant (what production runs):** `deploy/setup-native.sh` sets up Ubuntu 24.04 with MongoDB installed natively (no Docker), Redis with a password, a firewall, key-only SSH, swap, and the native `backup-native.sh` / `healthcheck-native.sh` cron jobs. `deploy/nginx-domain.conf` is the production nginx config (nginx 1.24 syntax — `http2 on;` is not supported there). Build apps one at a time on a 2 GB server, and keep each app's `package-lock.json` in sync with `package.json` (`npm ci` refuses a stale lock).
+
 Env files are per-app and not committed: copy `deploy/backend.env.example` → `nikstore/.env` and `deploy/nuxt.env.example` → `nikstore-nuxt/.env` before running. `nikstore-admin` takes its config from PM2 `env` block / process env, not a `.env` file.
